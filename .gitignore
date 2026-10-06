@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.*
+*.log
+.vite/
+test-results/
+playwright-report/
+.DS_Store
+Thumbs.db
+
+# Never commit the original reference files or a real payroll column setup.
+Book1.xlsx
+Book1.pdf
+column-setup*.json
+.vitest/

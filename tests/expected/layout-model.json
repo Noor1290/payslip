@@ -1,0 +1,5370 @@
+[
+  {
+    "template": {
+      "id": "table",
+      "version": "built-in-1"
+    },
+    "page": {
+      "size": "A4",
+      "orientation": "portrait"
+    },
+    "fonts": {
+      "excel": "Book Antiqua",
+      "print": "TeX Gyre Pagella"
+    },
+    "columnWidths": [
+      28.77734375,
+      32.77734375,
+      35.6640625,
+      40.5546875
+    ],
+    "firstExcelRow": 4,
+    "rows": [
+      {
+        "id": "title",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Payslip",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "company",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "ABC Co Ltd",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "12 Example Street",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Port Louis",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "brn",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "BRN : C1234567",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "period",
+        "cells": [
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Pay period: September 2026",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-band",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Employee Info",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-name",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Name :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "DOE JANE",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Date of Employment :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "date",
+            "text": "15-Mar-21",
+            "bold": false,
+            "size": 11,
+            "align": "left",
+            "isoDate": "2021-03-15"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "employee-nic",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "NIC :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "X0000000000001",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "spacer",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "headings",
+        "cells": [
+          {
+            "col": 0,
+            "span": 2,
+            "kind": "text",
+            "text": "Earnings",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          },
+          {
+            "col": 2,
+            "span": 2,
+            "kind": "text",
+            "text": "Deductions",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "currency",
+        "cells": [
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Basic Salary",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "18,000",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 1800000,
+            "lineId": "basic"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Contributions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Govt Increment",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "635",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 63500,
+            "lineId": "increment"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-3",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Allowances",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "allowances"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "CSG",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "279.52",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 27952,
+            "lineId": "csg"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-4",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Transport Allowance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "2,450",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 245000,
+            "lineId": "transport"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "NSF",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "210.85",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 21085,
+            "lineId": "nsf"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-5",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Presence Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "presenceBonus"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "PAYE",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "paye"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-6",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Productivity Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "productivityBonus"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-7",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Advance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "advance"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Others Deductions :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-8",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Absences :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "absences"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-9",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Lateness",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "lateness"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-1",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "totals",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Earnings",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "21,085",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 2108500,
+            "lineId": "totalEarnings",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "basic",
+                "increment",
+                "allowances",
+                "transport",
+                "presenceBonus",
+                "productivityBonus",
+                "advance"
+              ]
+            }
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Deductions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "490.37",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 49037,
+            "lineId": "totalDeductions",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "csg",
+                "nsf",
+                "paye",
+                "absences",
+                "lateness"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-2",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-3",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "net-pay",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Net Pay :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "20,594.63",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 2059463,
+            "lineId": "netPay",
+            "formula": {
+              "op": "subtract",
+              "lineIds": [
+                "totalEarnings",
+                "totalDeductions"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-4",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "signatures",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employee :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employer :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "sign-date",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Date :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "date",
+            "text": "28-Sep-26",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "isoDate": "2026-09-28"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-5",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "end",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      }
+    ],
+    "dividerFromRowId": "headings",
+    "employeeName": "DOE JANE",
+    "period": "2026-09"
+  },
+  {
+    "template": {
+      "id": "table",
+      "version": "built-in-1"
+    },
+    "page": {
+      "size": "A4",
+      "orientation": "portrait"
+    },
+    "fonts": {
+      "excel": "Book Antiqua",
+      "print": "TeX Gyre Pagella"
+    },
+    "columnWidths": [
+      28.77734375,
+      32.77734375,
+      35.6640625,
+      40.5546875
+    ],
+    "firstExcelRow": 4,
+    "rows": [
+      {
+        "id": "title",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Payslip",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "company",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "ABC Co Ltd",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "12 Example Street",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Port Louis",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "brn",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "BRN : C1234567",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "period",
+        "cells": [
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Pay period: September 2026",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-band",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Employee Info",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-name",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Name :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "PALMYRE JEAN MARC",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Date of Employment :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "date",
+            "text": "4-Nov-19",
+            "bold": false,
+            "size": 11,
+            "align": "left",
+            "isoDate": "2019-11-04"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "employee-nic",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "NIC :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "X0000000000002",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "spacer",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "headings",
+        "cells": [
+          {
+            "col": 0,
+            "span": 2,
+            "kind": "text",
+            "text": "Earnings",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          },
+          {
+            "col": 2,
+            "span": 2,
+            "kind": "text",
+            "text": "Deductions",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "currency",
+        "cells": [
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Basic Salary",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "19,480",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 1948000,
+            "lineId": "basic"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Contributions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Govt Increment",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "635",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 63500,
+            "lineId": "increment"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-3",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Allowances",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "allowances"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "CSG",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "301.72",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 30172,
+            "lineId": "csg"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-4",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Transport Allowance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "transport"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "NSF",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "201.15",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 20115,
+            "lineId": "nsf"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-5",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Presence Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "presenceBonus"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "PAYE",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "paye"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-6",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Productivity Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "productivityBonus"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-7",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Advance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "advance"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Others Deductions :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-8",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Absences :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "absences"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-9",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Lateness",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "lateness"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-1",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "totals",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Earnings",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "20,115",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 2011500,
+            "lineId": "totalEarnings",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "basic",
+                "increment",
+                "allowances",
+                "transport",
+                "presenceBonus",
+                "productivityBonus",
+                "advance"
+              ]
+            }
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Deductions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "502.87",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 50287,
+            "lineId": "totalDeductions",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "csg",
+                "nsf",
+                "paye",
+                "absences",
+                "lateness"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-2",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-3",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "net-pay",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Net Pay :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "19,612.13",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 1961213,
+            "lineId": "netPay",
+            "formula": {
+              "op": "subtract",
+              "lineIds": [
+                "totalEarnings",
+                "totalDeductions"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-4",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "signatures",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employee :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employer :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "sign-date",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Date :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "date",
+            "text": "28-Sep-26",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "isoDate": "2026-09-28"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-5",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "end",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      }
+    ],
+    "dividerFromRowId": "headings",
+    "employeeName": "PALMYRE JEAN MARC",
+    "period": "2026-09"
+  },
+  {
+    "template": {
+      "id": "table",
+      "version": "built-in-1"
+    },
+    "page": {
+      "size": "A4",
+      "orientation": "portrait"
+    },
+    "fonts": {
+      "excel": "Book Antiqua",
+      "print": "TeX Gyre Pagella"
+    },
+    "columnWidths": [
+      28.77734375,
+      32.77734375,
+      35.6640625,
+      40.5546875
+    ],
+    "firstExcelRow": 4,
+    "rows": [
+      {
+        "id": "title",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Payslip",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "company",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "ABC Co Ltd",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "12 Example Street",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Port Louis",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "brn",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "BRN : C1234567",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "period",
+        "cells": [
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Pay period: September 2026",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-band",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Employee Info",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-name",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Name :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "SAMPLE ALEX",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Date of Employment :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "employee-nic",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "NIC :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "X0000000000003",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "spacer",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "headings",
+        "cells": [
+          {
+            "col": 0,
+            "span": 2,
+            "kind": "text",
+            "text": "Earnings",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          },
+          {
+            "col": 2,
+            "span": 2,
+            "kind": "text",
+            "text": "Deductions",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "currency",
+        "cells": [
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Basic Salary",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "31,000",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 3100000,
+            "lineId": "basic"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Contributions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Govt Increment",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "635",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 63500,
+            "lineId": "increment"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-3",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Allowances",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "1,500",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 150000,
+            "lineId": "allowances"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "CSG",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "474.52",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 47452,
+            "lineId": "csg"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-4",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Transport Allowance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "1,200",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 120000,
+            "lineId": "transport"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "NSF",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "297.10",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 29710,
+            "lineId": "nsf"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-5",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Presence Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "presenceBonus"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "PAYE",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "paye"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-6",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Productivity Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "productivityBonus"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-7",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Advance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "advance"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Others Deductions :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-8",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Absences :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "absences"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-9",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Lateness",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "lateness"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-1",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "totals",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Earnings",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "34,335",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 3433500,
+            "lineId": "totalEarnings",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "basic",
+                "increment",
+                "allowances",
+                "transport",
+                "presenceBonus",
+                "productivityBonus",
+                "advance"
+              ]
+            }
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Deductions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "771.62",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 77162,
+            "lineId": "totalDeductions",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "csg",
+                "nsf",
+                "paye",
+                "absences",
+                "lateness"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-2",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-3",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "net-pay",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Net Pay :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "33,563.38",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 3356338,
+            "lineId": "netPay",
+            "formula": {
+              "op": "subtract",
+              "lineIds": [
+                "totalEarnings",
+                "totalDeductions"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-4",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "signatures",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employee :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employer :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "sign-date",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Date :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "date",
+            "text": "28-Sep-26",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "isoDate": "2026-09-28"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-5",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "end",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      }
+    ],
+    "dividerFromRowId": "headings",
+    "employeeName": "SAMPLE ALEX",
+    "period": "2026-09"
+  },
+  {
+    "template": {
+      "id": "table",
+      "version": "built-in-1"
+    },
+    "page": {
+      "size": "A4",
+      "orientation": "portrait"
+    },
+    "fonts": {
+      "excel": "Book Antiqua",
+      "print": "TeX Gyre Pagella"
+    },
+    "columnWidths": [
+      28.77734375,
+      32.77734375,
+      35.6640625,
+      40.5546875
+    ],
+    "firstExcelRow": 4,
+    "rows": [
+      {
+        "id": "title",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Payslip",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "company",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "ABC Co Ltd",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "12 Example Street",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Port Louis",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "brn",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "BRN : C1234567",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "period",
+        "cells": [
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Pay period: September 2026",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-band",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Employee Info",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-name",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Name :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "TESTER SAM",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Date of Employment :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "employee-nic",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "NIC :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "X0000000000004",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "spacer",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "headings",
+        "cells": [
+          {
+            "col": 0,
+            "span": 2,
+            "kind": "text",
+            "text": "Earnings",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          },
+          {
+            "col": 2,
+            "span": 2,
+            "kind": "text",
+            "text": "Deductions",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "currency",
+        "cells": [
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Basic Salary",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "49,365",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 4936500,
+            "lineId": "basic"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Contributions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Govt Increment",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "635",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 63500,
+            "lineId": "increment"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-3",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Allowances",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "allowances"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "CSG",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "750",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 75000,
+            "lineId": "csg"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-4",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Transport Allowance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "transport"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "NSF",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "297.10",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 29710,
+            "lineId": "nsf"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-5",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Presence Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "presenceBonus"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "PAYE",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "1,250",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 125000,
+            "lineId": "paye"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-6",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Productivity Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "productivityBonus"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-7",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Advance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "advance"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Others Deductions :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-8",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Absences :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "absences"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-9",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Lateness",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "lateness"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-1",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "totals",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Earnings",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "50,000",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 5000000,
+            "lineId": "totalEarnings",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "basic",
+                "increment",
+                "allowances",
+                "transport",
+                "presenceBonus",
+                "productivityBonus",
+                "advance"
+              ]
+            }
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Deductions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "2,297.10",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 229710,
+            "lineId": "totalDeductions",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "csg",
+                "nsf",
+                "paye",
+                "absences",
+                "lateness"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-2",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-3",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "net-pay",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Net Pay :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "47,702.90",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 4770290,
+            "lineId": "netPay",
+            "formula": {
+              "op": "subtract",
+              "lineIds": [
+                "totalEarnings",
+                "totalDeductions"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-4",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "signatures",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employee :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employer :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "sign-date",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Date :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "date",
+            "text": "28-Sep-26",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "isoDate": "2026-09-28"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-5",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "end",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      }
+    ],
+    "dividerFromRowId": "headings",
+    "employeeName": "TESTER SAM",
+    "period": "2026-09"
+  },
+  {
+    "template": {
+      "id": "table",
+      "version": "built-in-1"
+    },
+    "page": {
+      "size": "A4",
+      "orientation": "portrait"
+    },
+    "fonts": {
+      "excel": "Book Antiqua",
+      "print": "TeX Gyre Pagella"
+    },
+    "columnWidths": [
+      28.77734375,
+      32.77734375,
+      35.6640625,
+      40.5546875
+    ],
+    "firstExcelRow": 4,
+    "rows": [
+      {
+        "id": "title",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Payslip",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "company",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "ABC Co Ltd",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "12 Example Street",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Port Louis",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "brn",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "BRN : C1234567",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "period",
+        "cells": [
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Pay period: September 2026",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-band",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Employee Info",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-name",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Name :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "EXEMPLE PRIYA",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Date of Employment :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "employee-nic",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "NIC :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "X0000000000005",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "spacer",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "headings",
+        "cells": [
+          {
+            "col": 0,
+            "span": 2,
+            "kind": "text",
+            "text": "Earnings",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          },
+          {
+            "col": 2,
+            "span": 2,
+            "kind": "text",
+            "text": "Deductions",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "currency",
+        "cells": [
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Basic Salary",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "49,365.01",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 4936501,
+            "lineId": "basic"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Contributions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Govt Increment",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "635",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 63500,
+            "lineId": "increment"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-3",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Allowances",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "allowances"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "CSG",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "1,500",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 150000,
+            "lineId": "csg"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-4",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Transport Allowance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "transport"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "NSF",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "297.10",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 29710,
+            "lineId": "nsf"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-5",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Presence Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "presenceBonus"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "PAYE",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "1,250",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 125000,
+            "lineId": "paye"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-6",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Productivity Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "productivityBonus"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-7",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Advance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "advance"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Others Deductions :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-8",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Absences :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "absences"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-9",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Lateness",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "lateness"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-1",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "totals",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Earnings",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "50,000.01",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 5000001,
+            "lineId": "totalEarnings",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "basic",
+                "increment",
+                "allowances",
+                "transport",
+                "presenceBonus",
+                "productivityBonus",
+                "advance"
+              ]
+            }
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Deductions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "3,047.10",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 304710,
+            "lineId": "totalDeductions",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "csg",
+                "nsf",
+                "paye",
+                "absences",
+                "lateness"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-2",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-3",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "net-pay",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Net Pay :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "46,952.91",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 4695291,
+            "lineId": "netPay",
+            "formula": {
+              "op": "subtract",
+              "lineIds": [
+                "totalEarnings",
+                "totalDeductions"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-4",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "signatures",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employee :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employer :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "sign-date",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Date :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "date",
+            "text": "28-Sep-26",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "isoDate": "2026-09-28"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-5",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "end",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      }
+    ],
+    "dividerFromRowId": "headings",
+    "employeeName": "EXEMPLE PRIYA",
+    "period": "2026-09"
+  },
+  {
+    "template": {
+      "id": "table",
+      "version": "built-in-1"
+    },
+    "page": {
+      "size": "A4",
+      "orientation": "portrait"
+    },
+    "fonts": {
+      "excel": "Book Antiqua",
+      "print": "TeX Gyre Pagella"
+    },
+    "columnWidths": [
+      28.77734375,
+      32.77734375,
+      35.6640625,
+      40.5546875
+    ],
+    "firstExcelRow": 4,
+    "rows": [
+      {
+        "id": "title",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Payslip",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "company",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "ABC Co Ltd",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "12 Example Street",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Port Louis",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "brn",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "BRN : C1234567",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "period",
+        "cells": [
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Pay period: September 2026",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-band",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Employee Info",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-name",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Name :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "FICTIF MARIE",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Date of Employment :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "employee-nic",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "NIC :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "X0000000000006",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "spacer",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "headings",
+        "cells": [
+          {
+            "col": 0,
+            "span": 2,
+            "kind": "text",
+            "text": "Earnings",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          },
+          {
+            "col": 2,
+            "span": 2,
+            "kind": "text",
+            "text": "Deductions",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "currency",
+        "cells": [
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Basic Salary",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "45,000",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 4500000,
+            "lineId": "basic"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Contributions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Govt Increment",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "increment"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-3",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Allowances",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "2,000",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 200000,
+            "lineId": "allowances"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "CSG",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "675",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 67500,
+            "lineId": "csg"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-4",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Transport Allowance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "transport"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "NSF",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "nsf"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-5",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Presence Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "presenceBonus"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "PAYE",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "800",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 80000,
+            "lineId": "paye"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-6",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Productivity Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "productivityBonus"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-7",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Advance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "advance"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Others Deductions :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-8",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Absences :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "absences"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-9",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Lateness",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "lateness"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-1",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "totals",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Earnings",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "47,000",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 4700000,
+            "lineId": "totalEarnings",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "basic",
+                "increment",
+                "allowances",
+                "transport",
+                "presenceBonus",
+                "productivityBonus",
+                "advance"
+              ]
+            }
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Deductions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "1,475",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 147500,
+            "lineId": "totalDeductions",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "csg",
+                "nsf",
+                "paye",
+                "absences",
+                "lateness"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-2",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-3",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "net-pay",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Net Pay :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "45,525",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 4552500,
+            "lineId": "netPay",
+            "formula": {
+              "op": "subtract",
+              "lineIds": [
+                "totalEarnings",
+                "totalDeductions"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-4",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "signatures",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employee :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employer :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "sign-date",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Date :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "date",
+            "text": "28-Sep-26",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "isoDate": "2026-09-28"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-5",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "end",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      }
+    ],
+    "dividerFromRowId": "headings",
+    "employeeName": "FICTIF MARIE",
+    "period": "2026-09"
+  },
+  {
+    "template": {
+      "id": "table",
+      "version": "built-in-1"
+    },
+    "page": {
+      "size": "A4",
+      "orientation": "portrait"
+    },
+    "fonts": {
+      "excel": "Book Antiqua",
+      "print": "TeX Gyre Pagella"
+    },
+    "columnWidths": [
+      28.77734375,
+      32.77734375,
+      35.6640625,
+      40.5546875
+    ],
+    "firstExcelRow": 4,
+    "rows": [
+      {
+        "id": "title",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Payslip",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "company",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "ABC Co Ltd",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "12 Example Street",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "address-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Port Louis",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "brn",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "BRN : C1234567",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "grey"
+      },
+      {
+        "id": "period",
+        "cells": [
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Pay period: September 2026",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-band",
+        "cells": [
+          {
+            "col": 0,
+            "span": 4,
+            "kind": "text",
+            "text": "Employee Info",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": "66CCFF",
+        "ruleBelow": "black"
+      },
+      {
+        "id": "employee-name",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Name :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "TEMPO LEA",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Date of Employment :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "employee-nic",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "NIC :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "X0000000000007",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "spacer",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": "black"
+      },
+      {
+        "id": "headings",
+        "cells": [
+          {
+            "col": 0,
+            "span": 2,
+            "kind": "text",
+            "text": "Earnings",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          },
+          {
+            "col": 2,
+            "span": 2,
+            "kind": "text",
+            "text": "Deductions",
+            "bold": true,
+            "size": 12,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "currency",
+        "cells": [
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "text",
+            "text": "Rs",
+            "bold": false,
+            "size": 11,
+            "align": "center"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-1",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Basic Salary",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "9,875.50",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 987550,
+            "lineId": "basic"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Contributions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-2",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Govt Increment",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "increment"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-3",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Allowances",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "allowances"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "CSG",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "148.13",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 14813,
+            "lineId": "csg"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-4",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Transport Allowance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "600.25",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 60025,
+            "lineId": "transport"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "NSF",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "104.76",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 10476,
+            "lineId": "nsf"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-5",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Presence Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "presenceBonus"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "PAYE",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "paye"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-6",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Productivity Bonus",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "productivityBonus"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-7",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Advance",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "advance"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Others Deductions :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-8",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Absences :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "absences"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "body-9",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Lateness",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "-",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 0,
+            "lineId": "lateness"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-1",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "totals",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Earnings",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "money",
+            "text": "10,475.75",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 1047575,
+            "lineId": "totalEarnings",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "basic",
+                "increment",
+                "allowances",
+                "transport",
+                "presenceBonus",
+                "productivityBonus",
+                "advance"
+              ]
+            }
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Total Deductions",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "252.89",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 25289,
+            "lineId": "totalDeductions",
+            "formula": {
+              "op": "sum",
+              "lineIds": [
+                "csg",
+                "nsf",
+                "paye",
+                "absences",
+                "lateness"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-2",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-3",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "net-pay",
+        "cells": [
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Net Pay :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 3,
+            "span": 1,
+            "kind": "money",
+            "text": "10,222.86",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "cents": 1022286,
+            "lineId": "netPay",
+            "formula": {
+              "op": "subtract",
+              "lineIds": [
+                "totalEarnings",
+                "totalDeductions"
+              ]
+            }
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-4",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "signatures",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employee :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 2,
+            "span": 1,
+            "kind": "text",
+            "text": "Signature Employer :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "sign-date",
+        "cells": [
+          {
+            "col": 0,
+            "span": 1,
+            "kind": "text",
+            "text": "Date :",
+            "bold": false,
+            "size": 11,
+            "align": "left"
+          },
+          {
+            "col": 1,
+            "span": 1,
+            "kind": "date",
+            "text": "28-Sep-26",
+            "bold": false,
+            "size": 11,
+            "align": "right",
+            "isoDate": "2026-09-28"
+          }
+        ],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "gap-5",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      },
+      {
+        "id": "end",
+        "cells": [],
+        "fill": null,
+        "ruleBelow": null
+      }
+    ],
+    "dividerFromRowId": "headings",
+    "employeeName": "TEMPO LEA",
+    "period": "2026-09"
+  }
+]

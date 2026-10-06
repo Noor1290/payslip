@@ -1,0 +1,4014 @@
+[
+  {
+    "name": "DOE JANE",
+    "pageSetup": {
+      "paperSize": 9,
+      "orientation": "portrait",
+      "fitToPage": true,
+      "fitToWidth": 1,
+      "fitToHeight": 1,
+      "margins": {
+        "left": 0.7,
+        "right": 0.7,
+        "top": 0.75,
+        "bottom": 0.75,
+        "header": 0.3,
+        "footer": 0.3
+      }
+    },
+    "columnWidths": {
+      "B": 28.77734375,
+      "C": 32.77734375,
+      "D": 35.6640625,
+      "E": 40.5546875
+    },
+    "rowHeights": {
+      "4": 16.2,
+      "5": 16.2,
+      "6": 16.2,
+      "7": 16.2,
+      "8": 16.2,
+      "9": 16.2,
+      "10": 16.2,
+      "14": 15.6
+    },
+    "merges": [
+      "B10:E10",
+      "B14:C14",
+      "B4:E4",
+      "B5:E5",
+      "B6:E6",
+      "B7:E7",
+      "B8:E8",
+      "D14:E14"
+    ],
+    "cells": {
+      "B4": {
+        "value": "Payslip",
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "fill": {
+          "type": "pattern",
+          "pattern": "solid",
+          "fgColor": {
+            "argb": "FF66CCFF"
+          },
+          "bgColor": {
+            "argb": "FF66CCFF"
+          }
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "C4": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "fill": {
+          "type": "pattern",
+          "pattern": "solid",
+          "fgColor": {
+            "argb": "FF66CCFF"
+          },
+          "bgColor": {
+            "argb": "FF66CCFF"
+          }
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "D4": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "fill": {
+          "type": "pattern",
+          "pattern": "solid",
+          "fgColor": {
+            "argb": "FF66CCFF"
+          },
+          "bgColor": {
+            "argb": "FF66CCFF"
+          }
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "E4": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "fill": {
+          "type": "pattern",
+          "pattern": "solid",
+          "fgColor": {
+            "argb": "FF66CCFF"
+          },
+          "bgColor": {
+            "argb": "FF66CCFF"
+          }
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "B5": {
+        "value": "ABC Co Ltd",
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "C5": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "D5": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "E5": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "B6": {
+        "value": "12 Example Street",
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "C6": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "D6": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "E6": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "B7": {
+        "value": "Port Louis",
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "C7": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "D7": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "E7": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "B8": {
+        "value": "BRN : C1234567",
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "C8": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "D8": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "E8": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "B9": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C9": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D9": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E9": {
+        "value": "Pay period: September 2026",
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FFCCCCCC"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "B10": {
+        "value": "Employee Info",
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "fill": {
+          "type": "pattern",
+          "pattern": "solid",
+          "fgColor": {
+            "argb": "FF66CCFF"
+          },
+          "bgColor": {
+            "argb": "FF66CCFF"
+          }
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "C10": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "fill": {
+          "type": "pattern",
+          "pattern": "solid",
+          "fgColor": {
+            "argb": "FF66CCFF"
+          },
+          "bgColor": {
+            "argb": "FF66CCFF"
+          }
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "D10": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "fill": {
+          "type": "pattern",
+          "pattern": "solid",
+          "fgColor": {
+            "argb": "FF66CCFF"
+          },
+          "bgColor": {
+            "argb": "FF66CCFF"
+          }
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "E10": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "fill": {
+          "type": "pattern",
+          "pattern": "solid",
+          "fgColor": {
+            "argb": "FF66CCFF"
+          },
+          "bgColor": {
+            "argb": "FF66CCFF"
+          }
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "B11": {
+        "value": "Name :",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C11": {
+        "value": "DOE JANE",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D11": {
+        "value": "Date of Employment :",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E11": {
+        "value": "2021-03-15T00:00:00.000Z",
+        "numFmt": "d-mmm-yy",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B12": {
+        "value": "NIC :",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C12": {
+        "value": "X0000000000001",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D12": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E12": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B13": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C13": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D13": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E13": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B14": {
+        "value": "Earnings",
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "C14": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "D14": {
+        "value": "Deductions",
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "E14": {
+        "font": {
+          "bold": true,
+          "size": 12,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "top": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "B15": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C15": {
+        "value": "Rs",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "D15": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E15": {
+        "value": "Rs",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "center",
+          "vertical": "middle"
+        }
+      },
+      "B16": {
+        "value": "Basic Salary",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C16": {
+        "value": 18000,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "D16": {
+        "value": "Contributions",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E16": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B17": {
+        "value": "Govt Increment",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C17": {
+        "value": 635,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "D17": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E17": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B18": {
+        "value": "Allowances",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C18": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "D18": {
+        "value": "CSG",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E18": {
+        "value": 279.52,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "B19": {
+        "value": "Transport Allowance",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C19": {
+        "value": 2450,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "D19": {
+        "value": "NSF",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E19": {
+        "value": 210.85,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "B20": {
+        "value": "Presence Bonus",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C20": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "D20": {
+        "value": "PAYE",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E20": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "B21": {
+        "value": "Productivity Bonus",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C21": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "D21": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E21": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B22": {
+        "value": "Advance",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C22": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "D22": {
+        "value": "Others Deductions :",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E22": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B23": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C23": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D23": {
+        "value": "Absences :",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E23": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "B24": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C24": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D24": {
+        "value": "Lateness",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E24": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "B25": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C25": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D25": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E25": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B26": {
+        "value": "Total Earnings",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C26": {
+        "formula": "C16+C17+C18+C19+C20+C21+C22",
+        "result": 21085,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "D26": {
+        "value": "Total Deductions",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E26": {
+        "formula": "E18+E19+E20+E23+E24",
+        "result": 490.37,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "B27": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C27": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D27": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E27": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B28": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C28": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D28": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E28": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B29": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C29": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D29": {
+        "value": "Net Pay :",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E29": {
+        "formula": "C26-E26",
+        "result": 20594.63,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "B30": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C30": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D30": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E30": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B31": {
+        "value": "Signature Employee :",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C31": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D31": {
+        "value": "Signature Employer :",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E31": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B32": {
+        "value": "Date :",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C32": {
+        "value": "2026-09-28T00:00:00.000Z",
+        "numFmt": "d-mmm-yy",
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "right",
+          "vertical": "middle"
+        }
+      },
+      "D32": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E32": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B33": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C33": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D33": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E33": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "B34": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "left": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "C34": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "thick",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "D34": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      },
+      "E34": {
+        "font": {
+          "size": 11,
+          "name": "Book Antiqua"
+        },
+        "border": {
+          "right": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          },
+          "bottom": {
+            "style": "medium",
+            "color": {
+              "argb": "FF000000"
+            }
+          }
+        },
+        "alignment": {
+          "horizontal": "left",
+          "vertical": "middle"
+        }
+      }
+    }
+  },
+  {
+    "name": "PALMYRE JEAN MARC",
+    "pageSetup": {
+      "paperSize": 9,
+      "orientation": "portrait",
+      "fitToPage": true,
+      "fitToWidth": 1,
+      "fitToHeight": 1,
+      "margins": {
+        "left": 0.7,
+        "right": 0.7,
+        "top": 0.75,
+        "bottom": 0.75,
+        "header": 0.3,
+        "footer": 0.3
+      }
+    },
+    "columnWidths": {
+      "B": 28.77734375,
+      "C": 32.77734375,
+      "D": 35.6640625,
+      "E": 40.5546875
+    },
+    "rowHeights": {
+      "4": 16.2,
+      "5": 16.2,
+      "6": 16.2,
+      "7": 16.2,
+      "8": 16.2,
+      "9": 16.2,
+      "10": 16.2,
+      "14": 15.6
+    },
+    "merges": [
+      "B10:E10",
+      "B14:C14",
+      "B4:E4",
+      "B5:E5",
+      "B6:E6",
+      "B7:E7",
+      "B8:E8",
+      "D14:E14"
+    ],
+    "cells": {
+      "B4": {
+        "value": "Payslip"
+      },
+      "B5": {
+        "value": "ABC Co Ltd"
+      },
+      "B6": {
+        "value": "12 Example Street"
+      },
+      "B7": {
+        "value": "Port Louis"
+      },
+      "B8": {
+        "value": "BRN : C1234567"
+      },
+      "E9": {
+        "value": "Pay period: September 2026"
+      },
+      "B10": {
+        "value": "Employee Info"
+      },
+      "B11": {
+        "value": "Name :"
+      },
+      "C11": {
+        "value": "PALMYRE JEAN MARC"
+      },
+      "D11": {
+        "value": "Date of Employment :"
+      },
+      "E11": {
+        "value": "2019-11-04T00:00:00.000Z",
+        "numFmt": "d-mmm-yy"
+      },
+      "B12": {
+        "value": "NIC :"
+      },
+      "C12": {
+        "value": "X0000000000002"
+      },
+      "B14": {
+        "value": "Earnings"
+      },
+      "D14": {
+        "value": "Deductions"
+      },
+      "C15": {
+        "value": "Rs"
+      },
+      "E15": {
+        "value": "Rs"
+      },
+      "B16": {
+        "value": "Basic Salary"
+      },
+      "C16": {
+        "value": 19480,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D16": {
+        "value": "Contributions"
+      },
+      "B17": {
+        "value": "Govt Increment"
+      },
+      "C17": {
+        "value": 635,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B18": {
+        "value": "Allowances"
+      },
+      "C18": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D18": {
+        "value": "CSG"
+      },
+      "E18": {
+        "value": 301.72,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B19": {
+        "value": "Transport Allowance"
+      },
+      "C19": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D19": {
+        "value": "NSF"
+      },
+      "E19": {
+        "value": 201.15,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B20": {
+        "value": "Presence Bonus"
+      },
+      "C20": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D20": {
+        "value": "PAYE"
+      },
+      "E20": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B21": {
+        "value": "Productivity Bonus"
+      },
+      "C21": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B22": {
+        "value": "Advance"
+      },
+      "C22": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D22": {
+        "value": "Others Deductions :"
+      },
+      "D23": {
+        "value": "Absences :"
+      },
+      "E23": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D24": {
+        "value": "Lateness"
+      },
+      "E24": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B26": {
+        "value": "Total Earnings"
+      },
+      "C26": {
+        "formula": "C16+C17+C18+C19+C20+C21+C22",
+        "result": 20115,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D26": {
+        "value": "Total Deductions"
+      },
+      "E26": {
+        "formula": "E18+E19+E20+E23+E24",
+        "result": 502.87,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "D29": {
+        "value": "Net Pay :"
+      },
+      "E29": {
+        "formula": "C26-E26",
+        "result": 19612.13,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B31": {
+        "value": "Signature Employee :"
+      },
+      "D31": {
+        "value": "Signature Employer :"
+      },
+      "B32": {
+        "value": "Date :"
+      },
+      "C32": {
+        "value": "2026-09-28T00:00:00.000Z",
+        "numFmt": "d-mmm-yy"
+      }
+    }
+  },
+  {
+    "name": "SAMPLE ALEX",
+    "pageSetup": {
+      "paperSize": 9,
+      "orientation": "portrait",
+      "fitToPage": true,
+      "fitToWidth": 1,
+      "fitToHeight": 1,
+      "margins": {
+        "left": 0.7,
+        "right": 0.7,
+        "top": 0.75,
+        "bottom": 0.75,
+        "header": 0.3,
+        "footer": 0.3
+      }
+    },
+    "columnWidths": {
+      "B": 28.77734375,
+      "C": 32.77734375,
+      "D": 35.6640625,
+      "E": 40.5546875
+    },
+    "rowHeights": {
+      "4": 16.2,
+      "5": 16.2,
+      "6": 16.2,
+      "7": 16.2,
+      "8": 16.2,
+      "9": 16.2,
+      "10": 16.2,
+      "14": 15.6
+    },
+    "merges": [
+      "B10:E10",
+      "B14:C14",
+      "B4:E4",
+      "B5:E5",
+      "B6:E6",
+      "B7:E7",
+      "B8:E8",
+      "D14:E14"
+    ],
+    "cells": {
+      "B4": {
+        "value": "Payslip"
+      },
+      "B5": {
+        "value": "ABC Co Ltd"
+      },
+      "B6": {
+        "value": "12 Example Street"
+      },
+      "B7": {
+        "value": "Port Louis"
+      },
+      "B8": {
+        "value": "BRN : C1234567"
+      },
+      "E9": {
+        "value": "Pay period: September 2026"
+      },
+      "B10": {
+        "value": "Employee Info"
+      },
+      "B11": {
+        "value": "Name :"
+      },
+      "C11": {
+        "value": "SAMPLE ALEX"
+      },
+      "D11": {
+        "value": "Date of Employment :"
+      },
+      "B12": {
+        "value": "NIC :"
+      },
+      "C12": {
+        "value": "X0000000000003"
+      },
+      "B14": {
+        "value": "Earnings"
+      },
+      "D14": {
+        "value": "Deductions"
+      },
+      "C15": {
+        "value": "Rs"
+      },
+      "E15": {
+        "value": "Rs"
+      },
+      "B16": {
+        "value": "Basic Salary"
+      },
+      "C16": {
+        "value": 31000,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D16": {
+        "value": "Contributions"
+      },
+      "B17": {
+        "value": "Govt Increment"
+      },
+      "C17": {
+        "value": 635,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B18": {
+        "value": "Allowances"
+      },
+      "C18": {
+        "value": 1500,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D18": {
+        "value": "CSG"
+      },
+      "E18": {
+        "value": 474.52,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B19": {
+        "value": "Transport Allowance"
+      },
+      "C19": {
+        "value": 1200,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D19": {
+        "value": "NSF"
+      },
+      "E19": {
+        "value": 297.1,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B20": {
+        "value": "Presence Bonus"
+      },
+      "C20": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D20": {
+        "value": "PAYE"
+      },
+      "E20": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B21": {
+        "value": "Productivity Bonus"
+      },
+      "C21": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B22": {
+        "value": "Advance"
+      },
+      "C22": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D22": {
+        "value": "Others Deductions :"
+      },
+      "D23": {
+        "value": "Absences :"
+      },
+      "E23": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D24": {
+        "value": "Lateness"
+      },
+      "E24": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B26": {
+        "value": "Total Earnings"
+      },
+      "C26": {
+        "formula": "C16+C17+C18+C19+C20+C21+C22",
+        "result": 34335,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D26": {
+        "value": "Total Deductions"
+      },
+      "E26": {
+        "formula": "E18+E19+E20+E23+E24",
+        "result": 771.62,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "D29": {
+        "value": "Net Pay :"
+      },
+      "E29": {
+        "formula": "C26-E26",
+        "result": 33563.38,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B31": {
+        "value": "Signature Employee :"
+      },
+      "D31": {
+        "value": "Signature Employer :"
+      },
+      "B32": {
+        "value": "Date :"
+      },
+      "C32": {
+        "value": "2026-09-28T00:00:00.000Z",
+        "numFmt": "d-mmm-yy"
+      }
+    }
+  },
+  {
+    "name": "TESTER SAM",
+    "pageSetup": {
+      "paperSize": 9,
+      "orientation": "portrait",
+      "fitToPage": true,
+      "fitToWidth": 1,
+      "fitToHeight": 1,
+      "margins": {
+        "left": 0.7,
+        "right": 0.7,
+        "top": 0.75,
+        "bottom": 0.75,
+        "header": 0.3,
+        "footer": 0.3
+      }
+    },
+    "columnWidths": {
+      "B": 28.77734375,
+      "C": 32.77734375,
+      "D": 35.6640625,
+      "E": 40.5546875
+    },
+    "rowHeights": {
+      "4": 16.2,
+      "5": 16.2,
+      "6": 16.2,
+      "7": 16.2,
+      "8": 16.2,
+      "9": 16.2,
+      "10": 16.2,
+      "14": 15.6
+    },
+    "merges": [
+      "B10:E10",
+      "B14:C14",
+      "B4:E4",
+      "B5:E5",
+      "B6:E6",
+      "B7:E7",
+      "B8:E8",
+      "D14:E14"
+    ],
+    "cells": {
+      "B4": {
+        "value": "Payslip"
+      },
+      "B5": {
+        "value": "ABC Co Ltd"
+      },
+      "B6": {
+        "value": "12 Example Street"
+      },
+      "B7": {
+        "value": "Port Louis"
+      },
+      "B8": {
+        "value": "BRN : C1234567"
+      },
+      "E9": {
+        "value": "Pay period: September 2026"
+      },
+      "B10": {
+        "value": "Employee Info"
+      },
+      "B11": {
+        "value": "Name :"
+      },
+      "C11": {
+        "value": "TESTER SAM"
+      },
+      "D11": {
+        "value": "Date of Employment :"
+      },
+      "B12": {
+        "value": "NIC :"
+      },
+      "C12": {
+        "value": "X0000000000004"
+      },
+      "B14": {
+        "value": "Earnings"
+      },
+      "D14": {
+        "value": "Deductions"
+      },
+      "C15": {
+        "value": "Rs"
+      },
+      "E15": {
+        "value": "Rs"
+      },
+      "B16": {
+        "value": "Basic Salary"
+      },
+      "C16": {
+        "value": 49365,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D16": {
+        "value": "Contributions"
+      },
+      "B17": {
+        "value": "Govt Increment"
+      },
+      "C17": {
+        "value": 635,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B18": {
+        "value": "Allowances"
+      },
+      "C18": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D18": {
+        "value": "CSG"
+      },
+      "E18": {
+        "value": 750,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B19": {
+        "value": "Transport Allowance"
+      },
+      "C19": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D19": {
+        "value": "NSF"
+      },
+      "E19": {
+        "value": 297.1,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B20": {
+        "value": "Presence Bonus"
+      },
+      "C20": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D20": {
+        "value": "PAYE"
+      },
+      "E20": {
+        "value": 1250,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B21": {
+        "value": "Productivity Bonus"
+      },
+      "C21": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B22": {
+        "value": "Advance"
+      },
+      "C22": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D22": {
+        "value": "Others Deductions :"
+      },
+      "D23": {
+        "value": "Absences :"
+      },
+      "E23": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D24": {
+        "value": "Lateness"
+      },
+      "E24": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B26": {
+        "value": "Total Earnings"
+      },
+      "C26": {
+        "formula": "C16+C17+C18+C19+C20+C21+C22",
+        "result": 50000,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D26": {
+        "value": "Total Deductions"
+      },
+      "E26": {
+        "formula": "E18+E19+E20+E23+E24",
+        "result": 2297.1,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "D29": {
+        "value": "Net Pay :"
+      },
+      "E29": {
+        "formula": "C26-E26",
+        "result": 47702.9,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B31": {
+        "value": "Signature Employee :"
+      },
+      "D31": {
+        "value": "Signature Employer :"
+      },
+      "B32": {
+        "value": "Date :"
+      },
+      "C32": {
+        "value": "2026-09-28T00:00:00.000Z",
+        "numFmt": "d-mmm-yy"
+      }
+    }
+  },
+  {
+    "name": "EXEMPLE PRIYA",
+    "pageSetup": {
+      "paperSize": 9,
+      "orientation": "portrait",
+      "fitToPage": true,
+      "fitToWidth": 1,
+      "fitToHeight": 1,
+      "margins": {
+        "left": 0.7,
+        "right": 0.7,
+        "top": 0.75,
+        "bottom": 0.75,
+        "header": 0.3,
+        "footer": 0.3
+      }
+    },
+    "columnWidths": {
+      "B": 28.77734375,
+      "C": 32.77734375,
+      "D": 35.6640625,
+      "E": 40.5546875
+    },
+    "rowHeights": {
+      "4": 16.2,
+      "5": 16.2,
+      "6": 16.2,
+      "7": 16.2,
+      "8": 16.2,
+      "9": 16.2,
+      "10": 16.2,
+      "14": 15.6
+    },
+    "merges": [
+      "B10:E10",
+      "B14:C14",
+      "B4:E4",
+      "B5:E5",
+      "B6:E6",
+      "B7:E7",
+      "B8:E8",
+      "D14:E14"
+    ],
+    "cells": {
+      "B4": {
+        "value": "Payslip"
+      },
+      "B5": {
+        "value": "ABC Co Ltd"
+      },
+      "B6": {
+        "value": "12 Example Street"
+      },
+      "B7": {
+        "value": "Port Louis"
+      },
+      "B8": {
+        "value": "BRN : C1234567"
+      },
+      "E9": {
+        "value": "Pay period: September 2026"
+      },
+      "B10": {
+        "value": "Employee Info"
+      },
+      "B11": {
+        "value": "Name :"
+      },
+      "C11": {
+        "value": "EXEMPLE PRIYA"
+      },
+      "D11": {
+        "value": "Date of Employment :"
+      },
+      "B12": {
+        "value": "NIC :"
+      },
+      "C12": {
+        "value": "X0000000000005"
+      },
+      "B14": {
+        "value": "Earnings"
+      },
+      "D14": {
+        "value": "Deductions"
+      },
+      "C15": {
+        "value": "Rs"
+      },
+      "E15": {
+        "value": "Rs"
+      },
+      "B16": {
+        "value": "Basic Salary"
+      },
+      "C16": {
+        "value": 49365.01,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "D16": {
+        "value": "Contributions"
+      },
+      "B17": {
+        "value": "Govt Increment"
+      },
+      "C17": {
+        "value": 635,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B18": {
+        "value": "Allowances"
+      },
+      "C18": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D18": {
+        "value": "CSG"
+      },
+      "E18": {
+        "value": 1500,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B19": {
+        "value": "Transport Allowance"
+      },
+      "C19": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D19": {
+        "value": "NSF"
+      },
+      "E19": {
+        "value": 297.1,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B20": {
+        "value": "Presence Bonus"
+      },
+      "C20": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D20": {
+        "value": "PAYE"
+      },
+      "E20": {
+        "value": 1250,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B21": {
+        "value": "Productivity Bonus"
+      },
+      "C21": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B22": {
+        "value": "Advance"
+      },
+      "C22": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D22": {
+        "value": "Others Deductions :"
+      },
+      "D23": {
+        "value": "Absences :"
+      },
+      "E23": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D24": {
+        "value": "Lateness"
+      },
+      "E24": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B26": {
+        "value": "Total Earnings"
+      },
+      "C26": {
+        "formula": "C16+C17+C18+C19+C20+C21+C22",
+        "result": 50000.01,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "D26": {
+        "value": "Total Deductions"
+      },
+      "E26": {
+        "formula": "E18+E19+E20+E23+E24",
+        "result": 3047.1,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "D29": {
+        "value": "Net Pay :"
+      },
+      "E29": {
+        "formula": "C26-E26",
+        "result": 46952.91,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B31": {
+        "value": "Signature Employee :"
+      },
+      "D31": {
+        "value": "Signature Employer :"
+      },
+      "B32": {
+        "value": "Date :"
+      },
+      "C32": {
+        "value": "2026-09-28T00:00:00.000Z",
+        "numFmt": "d-mmm-yy"
+      }
+    }
+  },
+  {
+    "name": "FICTIF MARIE",
+    "pageSetup": {
+      "paperSize": 9,
+      "orientation": "portrait",
+      "fitToPage": true,
+      "fitToWidth": 1,
+      "fitToHeight": 1,
+      "margins": {
+        "left": 0.7,
+        "right": 0.7,
+        "top": 0.75,
+        "bottom": 0.75,
+        "header": 0.3,
+        "footer": 0.3
+      }
+    },
+    "columnWidths": {
+      "B": 28.77734375,
+      "C": 32.77734375,
+      "D": 35.6640625,
+      "E": 40.5546875
+    },
+    "rowHeights": {
+      "4": 16.2,
+      "5": 16.2,
+      "6": 16.2,
+      "7": 16.2,
+      "8": 16.2,
+      "9": 16.2,
+      "10": 16.2,
+      "14": 15.6
+    },
+    "merges": [
+      "B10:E10",
+      "B14:C14",
+      "B4:E4",
+      "B5:E5",
+      "B6:E6",
+      "B7:E7",
+      "B8:E8",
+      "D14:E14"
+    ],
+    "cells": {
+      "B4": {
+        "value": "Payslip"
+      },
+      "B5": {
+        "value": "ABC Co Ltd"
+      },
+      "B6": {
+        "value": "12 Example Street"
+      },
+      "B7": {
+        "value": "Port Louis"
+      },
+      "B8": {
+        "value": "BRN : C1234567"
+      },
+      "E9": {
+        "value": "Pay period: September 2026"
+      },
+      "B10": {
+        "value": "Employee Info"
+      },
+      "B11": {
+        "value": "Name :"
+      },
+      "C11": {
+        "value": "FICTIF MARIE"
+      },
+      "D11": {
+        "value": "Date of Employment :"
+      },
+      "B12": {
+        "value": "NIC :"
+      },
+      "C12": {
+        "value": "X0000000000006"
+      },
+      "B14": {
+        "value": "Earnings"
+      },
+      "D14": {
+        "value": "Deductions"
+      },
+      "C15": {
+        "value": "Rs"
+      },
+      "E15": {
+        "value": "Rs"
+      },
+      "B16": {
+        "value": "Basic Salary"
+      },
+      "C16": {
+        "value": 45000,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D16": {
+        "value": "Contributions"
+      },
+      "B17": {
+        "value": "Govt Increment"
+      },
+      "C17": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B18": {
+        "value": "Allowances"
+      },
+      "C18": {
+        "value": 2000,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D18": {
+        "value": "CSG"
+      },
+      "E18": {
+        "value": 675,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B19": {
+        "value": "Transport Allowance"
+      },
+      "C19": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D19": {
+        "value": "NSF"
+      },
+      "E19": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B20": {
+        "value": "Presence Bonus"
+      },
+      "C20": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D20": {
+        "value": "PAYE"
+      },
+      "E20": {
+        "value": 800,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B21": {
+        "value": "Productivity Bonus"
+      },
+      "C21": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B22": {
+        "value": "Advance"
+      },
+      "C22": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D22": {
+        "value": "Others Deductions :"
+      },
+      "D23": {
+        "value": "Absences :"
+      },
+      "E23": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D24": {
+        "value": "Lateness"
+      },
+      "E24": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B26": {
+        "value": "Total Earnings"
+      },
+      "C26": {
+        "formula": "C16+C17+C18+C19+C20+C21+C22",
+        "result": 47000,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D26": {
+        "value": "Total Deductions"
+      },
+      "E26": {
+        "formula": "E18+E19+E20+E23+E24",
+        "result": 1475,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D29": {
+        "value": "Net Pay :"
+      },
+      "E29": {
+        "formula": "C26-E26",
+        "result": 45525,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B31": {
+        "value": "Signature Employee :"
+      },
+      "D31": {
+        "value": "Signature Employer :"
+      },
+      "B32": {
+        "value": "Date :"
+      },
+      "C32": {
+        "value": "2026-09-28T00:00:00.000Z",
+        "numFmt": "d-mmm-yy"
+      }
+    }
+  },
+  {
+    "name": "TEMPO LEA",
+    "pageSetup": {
+      "paperSize": 9,
+      "orientation": "portrait",
+      "fitToPage": true,
+      "fitToWidth": 1,
+      "fitToHeight": 1,
+      "margins": {
+        "left": 0.7,
+        "right": 0.7,
+        "top": 0.75,
+        "bottom": 0.75,
+        "header": 0.3,
+        "footer": 0.3
+      }
+    },
+    "columnWidths": {
+      "B": 28.77734375,
+      "C": 32.77734375,
+      "D": 35.6640625,
+      "E": 40.5546875
+    },
+    "rowHeights": {
+      "4": 16.2,
+      "5": 16.2,
+      "6": 16.2,
+      "7": 16.2,
+      "8": 16.2,
+      "9": 16.2,
+      "10": 16.2,
+      "14": 15.6
+    },
+    "merges": [
+      "B10:E10",
+      "B14:C14",
+      "B4:E4",
+      "B5:E5",
+      "B6:E6",
+      "B7:E7",
+      "B8:E8",
+      "D14:E14"
+    ],
+    "cells": {
+      "B4": {
+        "value": "Payslip"
+      },
+      "B5": {
+        "value": "ABC Co Ltd"
+      },
+      "B6": {
+        "value": "12 Example Street"
+      },
+      "B7": {
+        "value": "Port Louis"
+      },
+      "B8": {
+        "value": "BRN : C1234567"
+      },
+      "E9": {
+        "value": "Pay period: September 2026"
+      },
+      "B10": {
+        "value": "Employee Info"
+      },
+      "B11": {
+        "value": "Name :"
+      },
+      "C11": {
+        "value": "TEMPO LEA"
+      },
+      "D11": {
+        "value": "Date of Employment :"
+      },
+      "B12": {
+        "value": "NIC :"
+      },
+      "C12": {
+        "value": "X0000000000007"
+      },
+      "B14": {
+        "value": "Earnings"
+      },
+      "D14": {
+        "value": "Deductions"
+      },
+      "C15": {
+        "value": "Rs"
+      },
+      "E15": {
+        "value": "Rs"
+      },
+      "B16": {
+        "value": "Basic Salary"
+      },
+      "C16": {
+        "value": 9875.5,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "D16": {
+        "value": "Contributions"
+      },
+      "B17": {
+        "value": "Govt Increment"
+      },
+      "C17": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B18": {
+        "value": "Allowances"
+      },
+      "C18": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D18": {
+        "value": "CSG"
+      },
+      "E18": {
+        "value": 148.13,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B19": {
+        "value": "Transport Allowance"
+      },
+      "C19": {
+        "value": 600.25,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "D19": {
+        "value": "NSF"
+      },
+      "E19": {
+        "value": 104.76,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B20": {
+        "value": "Presence Bonus"
+      },
+      "C20": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D20": {
+        "value": "PAYE"
+      },
+      "E20": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B21": {
+        "value": "Productivity Bonus"
+      },
+      "C21": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B22": {
+        "value": "Advance"
+      },
+      "C22": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D22": {
+        "value": "Others Deductions :"
+      },
+      "D23": {
+        "value": "Absences :"
+      },
+      "E23": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "D24": {
+        "value": "Lateness"
+      },
+      "E24": {
+        "value": 0,
+        "numFmt": "_-* #,##0_-;-* #,##0_-;_-* \"-\"??_-;_-@"
+      },
+      "B26": {
+        "value": "Total Earnings"
+      },
+      "C26": {
+        "formula": "C16+C17+C18+C19+C20+C21+C22",
+        "result": 10475.75,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "D26": {
+        "value": "Total Deductions"
+      },
+      "E26": {
+        "formula": "E18+E19+E20+E23+E24",
+        "result": 252.89,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "D29": {
+        "value": "Net Pay :"
+      },
+      "E29": {
+        "formula": "C26-E26",
+        "result": 10222.86,
+        "numFmt": "_-* #,##0.00_-;-* #,##0.00_-;_-* \"-\"??_-;_-@"
+      },
+      "B31": {
+        "value": "Signature Employee :"
+      },
+      "D31": {
+        "value": "Signature Employer :"
+      },
+      "B32": {
+        "value": "Date :"
+      },
+      "C32": {
+        "value": "2026-09-28T00:00:00.000Z",
+        "numFmt": "d-mmm-yy"
+      }
+    }
+  }
+]

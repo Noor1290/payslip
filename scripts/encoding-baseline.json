@@ -1,0 +1,12 @@
+{
+  "docs/INTEGRATION.md": {
+    "U+2026": 2,
+    "U+2192": 10
+  },
+  "tests/layoutModel.test.ts": {
+    "U+4E2D": 2
+  },
+  "tests/pdf.test.ts": {
+    "U+4E2D": 1
+  }
+}
