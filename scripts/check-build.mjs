@@ -93,7 +93,10 @@ try {
 
   // A real file through the file picker: the fake "problems" sample, one problem per employee.
   await page.locator('input[type="file"]').setInputFiles(join(root, 'samples', 'PROBLEMS ABC Co Ltd-pdf-fill-2026-09.json'))
-  await page.getByRole('dialog', { name: 'Replace the payroll data?' }).getByRole('button', { name: 'Replace' }).click()
+  // Same company, month and people as the data already open: adding is not possible, so Replace.
+  const importDialog = page.getByRole('dialog', { name: 'Import payroll data' })
+  if (!(await importDialog.getByRole('radio', { name: /Add to the 7 employees/ }).isDisabled())) problems.push('Add to was offered for employees who are already in the list.')
+  await importDialog.getByRole('button', { name: 'Replace with 7 employees' }).click()
   const badges = await page.getByRole('region', { name: 'Employees' }).locator('.card-header .badge').allTextContents()
   note(`problems sample: ${badges.join(', ')}`)
   if (badges.join(', ') !== '1 ready, 3 to accept, 3 to fix') problems.push(`Problems sample gave "${badges.join(', ')}".`)

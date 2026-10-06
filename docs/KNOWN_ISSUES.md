@@ -1,6 +1,6 @@
 # Known issues
 
-Found while building Phase 1 (October 2026) and deliberately not changed, because each one needs the owner's decision. All evidence uses fake data (ABC Co Ltd).
+Found while building Phases 1 and 2 (October 2026) and deliberately not changed, because each one needs the owner's decision. All evidence uses fake data (ABC Co Ltd).
 
 ## 1. A long name has little room on the payslip
 
@@ -57,3 +57,23 @@ Found while building Phase 1 (October 2026) and deliberately not changed, becaus
 **What happens.** Nothing is stored in the browser, so after a reload the app follows the system theme again.
 
 **To decide.** Whether the theme is worth an exception to "nothing is stored in the browser".
+
+## 9. The link with the real dashboard can only be seen after both are deployed
+
+**What happens.** The bridge file only trusts the deployed dashboard at https://noor1290.github.io. It does not connect on localhost, and the dashboard still lists this app as "coming soon" with no URL.
+
+**Evidence.** `npm run check:bridge` runs the built app in a frame under a stand-in dashboard page at that address (answered locally; nothing reaches the real site) and passes: ready, ping, data waiting until confirmed, a repeated message id, refused rows, Add to, Replace, "Get from dashboard", nothing in browser storage.
+
+**To decide.** Nothing. To see it for real: deploy this app, then do item 2 of `docs/HUB_CHANGES.md` in the hub repo and deploy the dashboard.
+
+## 10. "Get from dashboard" always asks for the latest run
+
+**What happens.** The button asks the dashboard for its latest payroll run. There is no way yet to ask for a particular month from inside this app; the dashboard can still send any month it chooses.
+
+**To decide.** Whether to add a month choice now, or with the month comparison in Phase 5, which needs last month's figures anyway.
+
+## 11. "Add to" needs the same company, the same month and nobody twice
+
+**What happens.** When data arrives while other data is open, "Add to" is offered only if the company and pay month are the same and no employee is in both. Otherwise the reason is shown and only "Replace" is possible. The PDF form filler adds freely; a payslip run should not mix months or count a person twice.
+
+**To decide.** Whether that is strict enough, or too strict (for example, a corrected row for one employee cannot be swapped in; the whole month has to be replaced).

@@ -265,7 +265,7 @@ export function importPayrollRows(
   })
 
   for (const key of COMPANY_KEYS) {
-    if (missingCompanyKeys.has(key)) errors.push({ message: `"${key}" is missing from the file. ${COMPANY_HINT}` })
+    if (missingCompanyKeys.has(key)) errors.push({ message: `"${key}" is missing from the data. ${COMPANY_HINT}` })
   }
   if (companies.size > 1) {
     errors.push({

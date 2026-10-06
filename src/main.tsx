@@ -1,3 +1,4 @@
+import './payrollHubBridge.js' // defines window.PayrollHubBridge; does nothing outside the dashboard
 import '@fontsource-variable/geist'
 import '@fontsource-variable/geist-mono'
 import './index.css'

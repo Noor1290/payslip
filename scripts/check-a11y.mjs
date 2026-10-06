@@ -6,9 +6,11 @@
 //   - dialogs trap focus, close on Escape and give focus back to what opened them;
 //   - the payslip page stays white paper in both themes.
 // Run after `npm run build`: node scripts/check-a11y.mjs
+import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 import { startPreview } from './lib/preview-server.mjs'
 
+const sample = fileURLToPath(new URL('../samples/ABC Co Ltd-pdf-fill-2026-09.json', import.meta.url))
 const problems = []
 const fail = (theme, text) => problems.push(`[${theme}] ${text}`)
 
@@ -181,6 +183,19 @@ try {
     }
 
     await checkDialog(page, theme, /Accept 3 rounding differences/, 'Accept the rounding differences?')
+
+    // The import dialog (a second file while data is open): named controls, contrast, keyboard.
+    await page.locator('input[type="file"]').setInputFiles(sample)
+    const importDialog = page.getByRole('dialog', { name: 'Import payroll data' })
+    await importDialog.waitFor()
+    await checkScreen(page, theme, 'import dialog')
+    for (let step = 0; step < 6; step++) {
+      await page.keyboard.press('Tab')
+      const inside = await page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]')))
+      if (!inside) fail(theme, 'import dialog: Tab left the dialog')
+    }
+    await page.keyboard.press('Escape')
+    await importDialog.waitFor({ state: 'detached' })
 
     await page.getByRole('button', { name: 'Template' }).click()
     await page.getByRole('heading', { name: 'Where each line comes from' }).waitFor()

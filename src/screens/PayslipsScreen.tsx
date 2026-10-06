@@ -26,6 +26,8 @@ import type { TemplateMapping } from '../lib/template'
 interface Props {
   data: ImportedPayroll | null
   onData: (data: ImportedPayroll | null) => void
+  /** Data is already open: the new data goes to the import dialog (Add to or Replace). */
+  onOfferImport: (data: ImportedPayroll) => void
   period: string
   onPeriod: (period: string) => void
   issueDate: string
@@ -72,7 +74,6 @@ export function PayslipsScreen(props: Props) {
   const { data, onData, period, onPeriod, issueDate, onIssueDate, prepared, accepted, onAccepted, onTreatAsZero } = props
   const [importErrors, setImportErrors] = useState<ImportError[] | null>(null)
   const [reading, setReading] = useState(false)
-  const [pendingReplace, setPendingReplace] = useState<ImportedPayroll | null>(null)
   const [selected, setSelected] = useState<Set<number>>(() => new Set())
   const [current, setCurrent] = useState(0)
   const [busy, setBusy] = useState<'pdf' | 'excel' | null>(null)
@@ -91,7 +92,7 @@ export function PayslipsScreen(props: Props) {
 
   const accept = (next: ImportedPayroll) => {
     setImportErrors(null)
-    if (data) setPendingReplace(next)
+    if (data) props.onOfferImport(next)
     else onData(next)
   }
 
@@ -478,36 +479,6 @@ export function PayslipsScreen(props: Props) {
             </div>
           </section>
         </div>
-      )}
-
-      {pendingReplace && (
-        <Dialog
-          title="Replace the payroll data?"
-          description={`${data.company.name}, ${data.rows.length} employees, will be replaced by ${pendingReplace.company.name}, ${pendingReplace.rows.length} employees.`}
-          icon={<Replace />}
-          tone="warn"
-          onClose={() => setPendingReplace(null)}
-          actions={
-            <>
-              <button type="button" className="btn" onClick={() => setPendingReplace(null)}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                data-autofocus
-                onClick={() => {
-                  onData(pendingReplace)
-                  setPendingReplace(null)
-                }}
-              >
-                Replace
-              </button>
-            </>
-          }
-        >
-          <p className="m-0 text-sm text-muted">The differences you accepted for the current data will be cleared.</p>
-        </Dialog>
       )}
 
       {roundingOpen && (
