@@ -1,0 +1,131 @@
+{
+  "schema": 1,
+  "kind": "table",
+  "labels": {
+    "title": "Payslip",
+    "brnPrefix": "BRN : ",
+    "payPeriodPrefix": "Pay period: ",
+    "employeeInfo": "Employee Info",
+    "name": "Name :",
+    "dateOfEmployment": "Date of Employment :",
+    "nic": "NIC :",
+    "earnings": "Earnings",
+    "deductions": "Deductions",
+    "currency": "Rs",
+    "totalEarnings": "Total Earnings",
+    "totalDeductions": "Total Deductions",
+    "netPay": "Net Pay :",
+    "signatureEmployee": "Signature Employee :",
+    "signatureEmployer": "Signature Employer :",
+    "date": "Date :"
+  },
+  "earnings": [
+    {
+      "id": "basic",
+      "label": "Basic Salary"
+    },
+    {
+      "id": "increment",
+      "label": "Govt Increment"
+    },
+    {
+      "id": "allowances",
+      "label": "Allowances"
+    },
+    {
+      "id": "transport",
+      "label": "Transport Allowance"
+    },
+    {
+      "id": "presenceBonus",
+      "label": "Presence Bonus"
+    },
+    {
+      "id": "productivityBonus",
+      "label": "Productivity Bonus"
+    },
+    {
+      "id": "advance",
+      "label": "Advance"
+    }
+  ],
+  "deductionGroups": [
+    {
+      "label": "Contributions",
+      "gapAfterLabel": true,
+      "lines": [
+        {
+          "id": "csg",
+          "label": "CSG"
+        },
+        {
+          "id": "nsf",
+          "label": "NSF"
+        },
+        {
+          "id": "paye",
+          "label": "PAYE"
+        }
+      ]
+    },
+    {
+      "label": "Others Deductions :",
+      "lines": [
+        {
+          "id": "absences",
+          "label": "Absences :"
+        },
+        {
+          "id": "lateness",
+          "label": "Lateness"
+        }
+      ]
+    }
+  ],
+  "mapping": {
+    "lines": {
+      "basic": {
+        "key": "Basic Salary"
+      },
+      "increment": {
+        "key": "Govt Increment"
+      },
+      "allowances": {
+        "key": "Allowances"
+      },
+      "transport": {
+        "key": "Travelling",
+        "toConfirm": true
+      },
+      "presenceBonus": {
+        "key": null
+      },
+      "productivityBonus": {
+        "key": null
+      },
+      "advance": {
+        "key": null
+      },
+      "csg": {
+        "key": "Employee CSG"
+      },
+      "nsf": {
+        "key": "Employee NSF"
+      },
+      "paye": {
+        "key": "PAYE"
+      },
+      "absences": {
+        "key": null
+      },
+      "lateness": {
+        "key": null
+      }
+    },
+    "crossCheck": {
+      "csgBase": "New Basic Salary",
+      "nsfBase": "Gross Pay",
+      "nsfBaseToConfirm": true
+    }
+  }
+}
