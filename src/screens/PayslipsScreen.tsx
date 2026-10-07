@@ -34,6 +34,12 @@ interface Props {
   onIssueDate: (date: string) => void
   prepared: PreparedPayslip[]
   mapping: TemplateMapping
+  /** Which template and version the payslips are built with: always shown. */
+  templateChip: string
+  templateKind: 'built-in' | 'built-in-edited' | 'published' | 'draft'
+  /** Why this template cannot be exported (a draft, or a choice still to make). Null when it can. */
+  exportBlock: string | null
+  onOpenTemplate: () => void
   accepted: Record<number, AcceptedChecks>
   onAccepted: Dispatch<SetStateAction<Record<number, AcceptedChecks>>>
   treatAsZero: Map<number, Set<string>>
@@ -210,7 +216,9 @@ export function PayslipsScreen(props: Props) {
   const item = prepared[current] as PreparedPayslip | undefined
   const selectedItems = prepared.filter((p) => selected.has(p.computation.rowIndex))
   const notReady = selectedItems.filter((p) => statusOf(p) !== 'ready').length
-  const blockReason = !hasPeriod
+  const blockReason = props.exportBlock
+    ? props.exportBlock
+    : !hasPeriod
     ? 'Choose the pay month first.'
     : selectedItems.length === 0
       ? 'Select at least one employee.'
@@ -294,6 +302,17 @@ export function PayslipsScreen(props: Props) {
               {data.fileName ? ` from ${data.fileName}` : ''}
             </p>
           </div>
+          <div className="min-w-0">
+            <p className="m-0 text-xs uppercase tracking-wider text-subtle">Template</p>
+            <p className="m-0 flex flex-wrap items-center gap-2">
+              <span className={`badge ${props.templateKind === 'published' || props.templateKind === 'built-in' ? 'tone-accent' : 'tone-warn'}`} data-testid="template-chip">
+                {props.templateChip}
+              </span>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={props.onOpenTemplate}>
+                Change<span className="sr-only"> the template</span>
+              </button>
+            </p>
+          </div>
           <div className="field">
             <label className="field-label" htmlFor={periodId}>
               Pay month
@@ -322,6 +341,19 @@ export function PayslipsScreen(props: Props) {
           <div className="flex flex-wrap gap-2">{importControls}</div>
         </div>
       </section>
+
+      {props.templateKind === 'draft' && (
+        <div className="panel tone-warn" role="status" data-testid="draft-banner">
+          <TriangleAlert aria-hidden="true" />
+          <div>
+            <p className="m-0 font-medium">Draft, not published</p>
+            <p className="m-0 text-sm text-muted">
+              You are previewing a draft template. It shows how the payslips would look. They can be exported only from a
+              published version or the built-in template.
+            </p>
+          </div>
+        </div>
+      )}
 
       {!hasPeriod ? (
         <div className="panel tone-warn" role="status">

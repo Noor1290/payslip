@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, extname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
+import { lowContrast, unnamedControls } from './lib/a11y-page.mjs'
 import { createFakeHub } from './lib/fake-hub.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -21,6 +22,8 @@ const TYPES = {
   '.otf': 'font/otf',
 }
 const problems = []
+// Set PAYSLIP_SHOTS to a folder to keep three screenshots of the embedded pages (fake data only).
+const shots = process.env.PAYSLIP_SHOTS
 const check = (condition, text) => {
   if (!condition) problems.push(text)
 }
@@ -45,6 +48,7 @@ const DASHBOARD = `<!doctype html><meta charset="utf-8"><title>Fake dashboard (t
   window.requestAnswer = null
   ${createFakeHub.toString()}
   window.hub = createFakeHub()
+  if (window.seedHub) window.seedHub(window.hub)
   window.send = (id, payload) => post('send-data', payload, id)
   window.addEventListener('message', (event) => {
     if (event.source !== frame.contentWindow) return
@@ -105,6 +109,9 @@ try {
 
   // 1b. With no payroll data open, rates load read-only for the dashboard's company: no save.
   const hub = (change) => page.evaluate(change)
+  const shot = async (name) => {
+    if (shots) await page.locator('#app').screenshot({ path: join(shots, `${name}.png`) })
+  }
   const nav = (name) => app.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name, exact: true }).click()
   const addRates = app.getByRole('button', { name: 'Add rates from month...' })
   await nav('Statutory rates')
@@ -209,10 +216,34 @@ try {
   check((await savesOf('statutory-rates')).length === 0, 'Rates: an invalid form was sent.')
   await app.getByRole('button', { name: 'Cancel' }).click()
 
+  // Accessibility of what only exists inside the dashboard: names, contrast, dialog keyboard.
+  const appFrame = () => page.frame({ url: `${HUB}/payslip/` })
+  const accessible = async (name) => {
+    for (const html of await appFrame().evaluate(unnamedControls)) check(false, `${name}: control without a name: ${html}`)
+    for (const item of await appFrame().evaluate(lowContrast)) check(false, `${name}: low contrast ${item}`)
+  }
+  const dialogKeyboard = async (dialogLocator, opener, name) => {
+    const inside = () => appFrame().evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]')))
+    check(await inside(), `${name}: focus did not move into the dialog.`)
+    for (let step = 0; step < 6; step++) {
+      await page.keyboard.press(step % 3 === 2 ? 'Shift+Tab' : 'Tab')
+      check(await inside(), `${name}: Tab left the dialog.`)
+    }
+    await page.keyboard.press('Escape')
+    await dialogLocator.waitFor({ state: 'detached' })
+    check(await opener.evaluate((el) => el === document.activeElement), `${name}: focus did not return to the button that opened it.`)
+  }
+
   // The first version: before/after confirmation, then one row with the BRN and expected_revision 0.
   await addRates.click()
   await app.getByLabel('Effective from').fill('2026-07')
   await app.getByLabel('Source note').fill('Sample figures, not the real ones')
+  await accessible('rates form')
+  await app.getByRole('button', { name: 'Review the change' }).focus()
+  await page.keyboard.press('Enter')
+  await confirmRates.waitFor()
+  await accessible('rates confirmation')
+  await dialogKeyboard(confirmRates, app.getByRole('button', { name: 'Review the change' }), 'rates confirmation')
   await app.getByRole('button', { name: 'Review the change' }).click()
   await confirmRates.waitFor()
   check((await confirmRates.textContent()).includes('From July 2026, as revision 1, for BRN C1234567'), 'Rates: the confirmation does not say month, revision and company.')
@@ -254,6 +285,7 @@ try {
   await confirmRates.getByRole('button', { name: 'Save to the dashboard' }).click()
   await app.getByTestId('rates-outcome').filter({ hasText: 'Someone saved a newer version first' }).waitFor()
   const stale = await app.getByTestId('rates-stale').textContent()
+  await shot('rates-stale')
   check(stale.includes('revision 4, Another admin') && stale.includes('31,000') && stale.includes('29,800'), 'Rates: a stale save does not show what changed.')
   check(await page.evaluate(() => window.hub.state.rates.length === 4 && window.hub.state.rates[3].nsf_ceiling === 31000), 'Rates: a stale save overwrote the newer version.')
   check((await app.getByLabel('NSF salary ceiling, Rs').inputValue()) === '29800', 'Rates: a stale save lost what was typed.')
@@ -296,6 +328,157 @@ try {
   console.log(`  rates: first version, no-change, unavailable (stored and not stored), stale, forbidden, wrong company, no answer (${waited.toFixed(1)} s)`)
   await nav('Payslips')
 
+  // 8c. Templates: create, save a draft, preview, publish, use.
+  const chip = app.getByTestId('template-chip')
+  const pdfButton = app.getByRole('button', { name: 'Download PDFs (zip)' })
+  const editorCard = app.getByTestId('template-editor')
+  const titleInput = app.getByLabel('Title', { exact: true })
+  const saveDraftButton = app.getByRole('button', { name: 'Save draft' })
+  const templateSaves = async () => (await savesOf('payslip-template')).map((rows) => rows[0])
+  const hubTemplate = () => page.evaluate(() => window.hub.state.templates[0])
+  check((await chip.textContent()) === 'Table (built-in)', 'The Payslips page does not say which template is used.')
+  await app.getByRole('button', { name: 'Change the template' }).click()
+  await app.getByTestId('template-empty').waitFor()
+  check((await app.getByTestId('template-company').textContent()).includes('ABC Co Ltd, BRN C1234567'), 'Templates: the company is not shown.')
+
+  await app.getByRole('button', { name: 'New template' }).click()
+  await editorCard.waitFor()
+  check((await app.getByTestId('template-problems').textContent()).includes('Give the template a name.'), 'A template with no name can be saved.')
+  check(await saveDraftButton.isDisabled(), 'Save draft is enabled for a template with no name.')
+  check(await app.getByRole('button', { name: /^Publish as version/ }).isDisabled(), 'A draft that was never saved can be published.')
+  for (const required of ['CSG', 'NSF', 'PAYE']) {
+    check(await app.getByRole('button', { name: `Remove ${required}`, exact: true }).isDisabled(), `The ${required} line can be removed.`)
+  }
+  check((await app.getByLabel('Payroll column for CSG', { exact: true }).locator('option[value=""]').count()) === 0, 'The CSG line can be left unmapped.')
+  check((await app.getByLabel('Payroll column for CSG', { exact: true }).locator('option[value="CSG"]').count()) === 0, 'The employer CSG column is offered for a line.')
+  await app.getByLabel('Template name').fill('Monthly payslip')
+  await titleInput.fill('Pay advice')
+  await app.getByRole('button', { name: 'Add a line to Earnings' }).click()
+  await app.getByLabel('Label of New line').fill('Year-end bonus')
+  check((await app.getByTestId('editor-status').textContent()).includes('Draft, never saved'), 'A new template is not marked as a draft that was never saved.')
+  await accessible('template editor')
+  await shot('template-editor')
+  await saveDraftButton.click()
+  await app.getByTestId('template-saved').filter({ hasText: 'Draft saved as revision 1' }).waitFor()
+  const [created] = await templateSaves()
+  check(created.action === 'save-draft' && !('template_id' in created) && created.expected_revision === 0 && created.brn === 'C1234567', `Templates: the first save is wrong: ${JSON.stringify({ ...created, body: '...' })}`)
+  check(created.body.labels.title === 'Pay advice' && created.body.earnings.at(-1).label === 'Year-end bonus', 'Templates: the saved body does not hold the edits.')
+  check(!/\d{3}/.test(JSON.stringify(created.body).replace(/line-[0-9a-f]{8}/g, '')) && !JSON.stringify(created.body).includes('DOE'), 'Templates: the saved body holds something that looks like payroll data.')
+  check((await app.getByTestId('editor-status').textContent()).includes('Draft, revision 1') && (await app.getByTestId('editor-status').textContent()).includes('Never published'), 'Draft and published state are not shown.')
+
+  // A draft can be previewed under a banner, never exported.
+  await app.getByLabel('Preview this draft on the Payslips page').check()
+  await nav('Payslips')
+  await app.getByTestId('draft-banner').filter({ hasText: 'Draft, not published' }).waitFor()
+  check((await chip.textContent()) === 'Monthly payslip, draft revision 1 (not published)', 'The chip does not say a draft is previewed.')
+  await shot('payslips-draft')
+  check((await app.getByTestId('payslip-page').textContent()).includes('Pay advice'), 'The preview does not show the draft.')
+  check((await app.getByTestId('payslip-page').textContent()).includes('Year-end bonus'), 'The preview does not show the added line.')
+  check(await pdfButton.isDisabled(), 'A draft can be exported as PDF.')
+  check(await app.getByRole('button', { name: 'Download Excel' }).isDisabled(), 'A draft can be exported as Excel.')
+  check((await app.getByRole('region', { name: 'Employees' }).textContent()).includes('This is a draft, not published.'), 'No reason is given for the blocked export.')
+  await nav(/^Template/)
+
+  // Publish: exactly the saved draft, as version 1. Then use it.
+  await app.getByRole('button', { name: 'Publish as version 1' }).click()
+  await app.getByTestId('template-saved').filter({ hasText: 'Published as version 1' }).waitFor()
+  const publishRow = (await templateSaves())[1]
+  check(publishRow.action === 'publish' && publishRow.expected_revision === 1 && publishRow.brn === 'C1234567' && !('body' in publishRow), `Templates: the publish row is wrong: ${JSON.stringify(publishRow)}`)
+  await app.getByLabel('Preview this draft on the Payslips page').uncheck()
+  await app.getByRole('button', { name: 'Use version 1 of Monthly payslip' }).click()
+  await app.getByTestId('template-in-use').filter({ hasText: 'Monthly payslip, version 1 (published)' }).waitFor()
+  await nav('Payslips')
+  check((await chip.textContent()) === 'Monthly payslip, version 1 (published)', 'The chip does not say which published version is used.')
+  check((await app.getByTestId('draft-banner').count()) === 0, 'The draft banner is shown for a published version.')
+  check(!(await app.getByRole('region', { name: 'Employees' }).textContent()).includes('This is a draft'), 'A published version is still blocked as a draft.')
+  // The fake data has three rounding differences to accept; once accepted, the export is open.
+  await app.getByRole('button', { name: /Accept 3 rounding differences/ }).click()
+  await app.getByRole('dialog', { name: 'Accept the rounding differences?' }).getByRole('button', { name: /^Accept/ }).click()
+  await app.getByText(/7 payslips for October 2026 ready to download/).waitFor()
+  check(!(await pdfButton.isDisabled()), 'A published version cannot be exported.')
+  check((await app.getByTestId('payslip-page').textContent()).includes('Pay advice'), 'The payslip does not use the published version.')
+  await nav(/^Template/)
+
+  // Stale: someone else saved the draft first. Nothing is overwritten; my changes are kept aside.
+  await titleInput.fill('My title')
+  await page.evaluate(() => {
+    const [template] = window.hub.state.templates
+    window.hub.otherAdminSavesDraft(template.id, { body: { ...template.body, labels: { ...template.body.labels, title: 'Their title' } } })
+  })
+  await saveDraftButton.click()
+  await app.getByTestId('template-outcome').filter({ hasText: 'Someone saved a newer version first' }).waitFor()
+  const conflict = await app.getByTestId('template-conflict').textContent()
+  check(conflict.includes('now "Their title", yours "My title"'), `Templates: a stale save does not show what changed: ${conflict}`)
+  check((await titleInput.inputValue()) === 'Their title', 'Templates: after a stale save the editor does not show the newer draft.')
+  check((await hubTemplate()).body.labels.title === 'Their title' && (await hubTemplate()).revision === 2, 'Templates: a stale save overwrote the newer draft.')
+  check((await app.getByRole('navigation', { name: 'Sections' }).textContent()).includes('Unsaved'), 'Unsaved template changes are not flagged in the navigation.')
+  // Leaving or switching first asks; my changes stay until I say so.
+  await app.getByRole('button', { name: 'New template' }).click()
+  const leaveDialog = app.getByRole('dialog', { name: 'Start a new template?' })
+  await leaveDialog.waitFor()
+  await accessible('template, stale save and leave dialog')
+  await leaveDialog.getByRole('button', { name: 'Keep editing' }).click()
+  await app.getByRole('button', { name: 'New template' }).focus()
+  await page.keyboard.press('Enter')
+  await leaveDialog.waitFor()
+  await dialogKeyboard(leaveDialog, app.getByRole('button', { name: 'New template' }), 'leave dialog')
+  await nav('Payslips')
+  await nav(/^Template/)
+  check((await app.getByTestId('template-conflict').count()) === 1, 'Templates: my unsaved changes were lost by visiting another page.')
+  await app.getByRole('button', { name: 'I am done with this list' }).click()
+  await app.getByTestId('template-conflict').waitFor({ state: 'detached' })
+
+  // "unavailable" on a draft save that WAS stored: found by the reload, not sent twice.
+  await titleInput.fill('Final title')
+  await hub(() => (window.hub.state.nextSave = { mode: 'unavailable' }))
+  const before = (await templateSaves()).length
+  await saveDraftButton.click()
+  await app.getByTestId('template-saved').filter({ hasText: 'Draft saved as revision 3' }).waitFor()
+  check((await templateSaves()).length === before + 1, 'Templates: an unconfirmed draft save was sent again.')
+
+  // "unavailable" on a publish that was NOT stored: the reload shows it, then "Publish again".
+  await hub(() => (window.hub.state.nextSave = { mode: 'unavailable-unsaved' }))
+  await app.getByRole('button', { name: 'Publish as version 2' }).click()
+  await app.getByTestId('template-outcome').filter({ hasText: 'nothing was published' }).waitFor()
+  check(await page.evaluate(() => window.hub.state.versions.length === 1), 'Templates: a publish that was not stored shows as published.')
+  await app.getByRole('button', { name: 'Publish again' }).click()
+  await app.getByTestId('template-saved').filter({ hasText: 'Published as version 2' }).waitFor()
+  check((await app.getByTestId('template-in-use').textContent()) === 'Monthly payslip, version 1 (published)', 'Publishing changed the version in use without being asked.')
+  // Publishing the same draft again: nothing needed saving.
+  await app.getByRole('button', { name: 'Publish as version 3' }).click()
+  await app.getByTestId('template-outcome').filter({ hasText: 'Nothing needed saving' }).waitFor()
+
+  // A member, not an admin: refused, then read-only with the reason. Reload asks again.
+  await titleInput.fill('Viewer title')
+  await hub(() => (window.hub.state.role = 'viewer'))
+  await saveDraftButton.click()
+  await app.getByTestId('template-outcome').filter({ hasText: 'Only an admin of this company can save' }).waitFor()
+  check((await app.getByTestId('template-cannot-save').textContent()).includes('Only an admin of this company can save or publish a template'), 'Templates: not read-only after "forbidden".')
+  check(await saveDraftButton.isDisabled(), 'Templates: Save draft stays enabled for a member.')
+  await hub(() => (window.hub.state.role = 'admin'))
+  await app.getByRole('button', { name: 'Close', exact: true }).click()
+  await app.getByRole('dialog', { name: 'Close the editor?' }).getByRole('button', { name: 'Discard my changes' }).click()
+  await editorCard.waitFor({ state: 'detached' })
+
+  // A stored body that maps an employer column is refused on load, with the reason.
+  await page.evaluate(() => {
+    const [good] = window.hub.state.templates
+    const body = JSON.parse(JSON.stringify(good.body))
+    body.mapping.lines.transport.key = 'CSG'
+    window.hub.state.templates.push({ id: '20000000-0000-4000-8000-000000000002', name: 'Tampered', body, revision: 1, updatedAt: '2026-10-07T10:00:00+04:00', by: 'other' })
+    window.hub.state.versions.push({ templateId: '20000000-0000-4000-8000-000000000002', version: 1, name: 'Tampered', body, publishedAt: '2026-10-07T10:00:00+04:00', by: 'other' })
+  })
+  await app.getByRole('button', { name: 'Reload' }).click()
+  await app.getByRole('button', { name: 'Open the draft of Tampered' }).click()
+  await app.getByTestId('template-refused').filter({ hasText: 'is mapped to "CSG", a column that must never be on a payslip' }).waitFor()
+  check((await editorCard.count()) === 0, 'A refused body was opened in the editor.')
+  await app.getByRole('button', { name: 'Use version 1 of Tampered' }).click()
+  await app.getByTestId('template-refused').filter({ hasText: 'Tampered, version 1' }).waitFor()
+  check((await app.getByTestId('template-in-use').textContent()) === 'Monthly payslip, version 1 (published)', 'A refused body became the template in use.')
+  console.log('  templates: create, draft, preview (no export), publish, use, stale, unavailable (stored and not stored), no-change, forbidden, refused body')
+  await nav('Payslips')
+
+  // 9. Every message came from this app at the hub's origin, and nothing was stored.
   const messages = await page.evaluate(() => window.log)
   check(messages.every((m) => m.from === 'payslip' && m.to === 'dashboard' && m.version === 1), 'A message did not come from "payslip" to "dashboard".')
   check(messages.every((m) => m.origin === HUB), 'A message came from another origin.')
@@ -319,6 +502,63 @@ try {
   check((await alone.getByRole('button', { name: /Add rates/ }).count()) === 0, 'Standalone: rates can be added.')
   check((await alone.getByTestId('rates-cannot-save').textContent()).includes('cannot save rates'), 'Standalone: no explanation that rates cannot be saved.')
   check((await alone.getByTestId('max-nsf').textContent()).includes('297.10'), 'Standalone: the default rates are not shown.')
+  // The built-in template can be changed in memory, labelled "Not saved", and nothing can be saved.
+  await alone.getByRole('button', { name: 'Template', exact: true }).click()
+  await alone.getByTestId('template-editor').waitFor()
+  check((await alone.getByRole('region', { name: 'Templates saved in the dashboard' }).count()) === 0, 'Standalone: a dashboard template list is shown.')
+  check((await alone.getByRole('button', { name: /Save draft|Publish|New template/ }).count()) === 0, 'Standalone: a template can be saved or published.')
+  check((await alone.getByTestId('template-cannot-save').textContent()).includes('cannot save templates'), 'Standalone: no explanation that templates cannot be saved.')
+  await alone.getByLabel('Title', { exact: true }).fill('Pay advice')
+  check((await alone.getByTestId('editor-status').textContent()) === 'Not saved', 'Standalone: changes are not labelled "Not saved".')
+  check((await alone.getByTestId('template-in-use').textContent()) === 'Table (built-in, with your changes, not saved)', 'Standalone: the template in use does not say it has unsaved changes.')
+  await alone.getByRole('button', { name: 'Payslips', exact: true }).click()
+  await alone.getByRole('button', { name: 'Try with fake sample data' }).click()
+  await alone.getByRole('img', { name: /Payslip of DOE JANE/ }).waitFor()
+  check((await alone.getByTestId('payslip-page').textContent()).includes('Pay advice'), 'Standalone: the in-memory change is not used.')
+  check((await alone.getByTestId('draft-banner').count()) === 0, 'Standalone: the built-in template is treated as a draft.')
+  check(!(await alone.getByRole('region', { name: 'Employees' }).textContent()).includes('draft'), 'Standalone: the export is blocked as a draft.')
+
+  // 11. Which template a payslip uses when the app opens: one published template is preselected;
+  // with more than one, the user must pick and nothing is exported until then.
+  const body = JSON.parse(readFileSync(join(root, 'tests/expected/template-body.json'), 'utf8'))
+  const seeded = async (names) => {
+    const seededPage = await context.newPage()
+    await seededPage.addInitScript(
+      ([templateNames, templateBody]) => {
+        window.seedHub = (fake) =>
+          templateNames.forEach((name, index) => {
+            const id = `20000000-0000-4000-8000-00000000001${index}`
+            const stored = { ...templateBody, labels: { ...templateBody.labels, title: `${name} title` } }
+            fake.state.templates.push({ id, name, body: stored, revision: 1, updatedAt: '2026-10-07T09:00:00+04:00', by: 'other' })
+            fake.state.versions.push({ templateId: id, version: 1, name, body: stored, publishedAt: '2026-10-07T09:05:00+04:00', by: 'other' })
+          })
+      },
+      [names, body],
+    )
+    await seededPage.goto(`${HUB}/payroll-hub/`)
+    const frame = seededPage.frameLocator('#app')
+    await frame.getByText('Dashboard connected').waitFor()
+    await seededPage.evaluate((data) => window.send('delivery-seed-01', data), payload(fixture, '2026-09'))
+    await frame.getByRole('dialog', { name: 'Import payroll data' }).getByRole('button', { name: 'Import 7 employees' }).click()
+    await frame.getByRole('img', { name: /Payslip of DOE JANE/ }).waitFor()
+    return { seededPage, frame }
+  }
+  const one = await seeded(['Monthly payslip'])
+  await one.frame.getByTestId('template-chip').filter({ hasText: 'Monthly payslip, version 1 (published)' }).waitFor()
+  check((await one.frame.getByTestId('payslip-page').textContent()).includes('Monthly payslip title'), 'One published template: it is not the one used.')
+  await one.seededPage.close()
+
+  const two = await seeded(['Monthly payslip', 'Weekly payslip'])
+  await two.frame.getByText('This company has more than one published template. Choose the one to use on the Template page.').waitFor()
+  check((await two.frame.getByTestId('template-chip').textContent()) === 'Table (built-in)', 'Two published templates: one was picked without asking.')
+  check(await two.frame.getByRole('button', { name: 'Download PDFs (zip)' }).isDisabled(), 'Two published templates: the export is open before a choice.')
+  await two.frame.getByRole('button', { name: 'Change the template' }).click()
+  await two.frame.getByTestId('template-choose').waitFor()
+  await two.frame.getByRole('button', { name: 'Use version 1 of Weekly payslip' }).click()
+  await two.frame.getByTestId('template-in-use').filter({ hasText: 'Weekly payslip, version 1 (published)' }).waitFor()
+  check((await two.frame.getByTestId('template-choose').count()) === 0, 'After choosing, the app still asks to choose.')
+  await two.seededPage.close()
+  console.log('  which template: standalone edits not saved, one published preselected, two published must be chosen')
 
   check(outside.length === 0, `Requests to other addresses: ${[...new Set(outside)].join(', ')}`)
   check(pageErrors.length === 0, `Page errors: ${pageErrors.join(' | ')}`)

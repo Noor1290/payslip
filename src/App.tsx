@@ -9,7 +9,7 @@ import type { ImportedPayroll } from './lib/payrollFile'
 import type { AcceptedChecks } from './lib/payslip'
 import { loadRates, ratesForCrossCheck, type RatesState } from './lib/ratesStore'
 import { isMonth } from './lib/statutoryRates'
-import { DEFAULT_TABLE_MAPPING, TABLE_TEMPLATE, type TemplateMapping } from './lib/template'
+import { useTemplates } from './lib/useTemplates'
 import { PayslipsScreen } from './screens/PayslipsScreen'
 import { RatesScreen } from './screens/RatesScreen'
 import { TemplateScreen } from './screens/TemplateScreen'
@@ -37,7 +37,6 @@ export default function App() {
   const [data, setData] = useState<ImportedPayroll | null>(null)
   const [period, setPeriod] = useState('')
   const [issueDate, setIssueDate] = useState(todayIso)
-  const [mapping, setMapping] = useState<TemplateMapping>(DEFAULT_TABLE_MAPPING)
   const [accepted, setAccepted] = useState<Record<number, AcceptedChecks>>({})
   const [treatAsZero, setTreatAsZero] = useState<Map<number, Set<string>>>(() => new Map())
 
@@ -94,6 +93,26 @@ export default function App() {
     }
   }, [insideDashboard, connected, brn, ratesReload])
 
+  const readOnly = brn !== null && readOnlyBrns.has(brn)
+  const markReadOnly = useCallback(() => {
+    if (brn !== null) setReadOnlyBrns((previous) => new Set([...previous, brn]))
+  }, [brn])
+  // "Reload" asks the dashboard afresh, so a role that changed there is found by the next save.
+  const forgetReadOnly = useCallback(() => {
+    setReadOnlyBrns((previous) => new Set([...previous].filter((known) => known !== brn)))
+  }, [brn])
+  // Templates: the built-in one when opened on its own; inside the dashboard, the company's own.
+  const templates = useTemplates({ embedded: insideDashboard, connected, brn, port: bridgePort, readOnly, onForbidden: markReadOnly })
+  const { template, mapping } = templates.active
+
+  // Unsaved template changes live in this tab's memory only: say so before the tab is closed.
+  useEffect(() => {
+    if (!templates.unsaved) return
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [templates.unsaved])
+
   const getFromDashboard = async () => {
     setRequesting(true)
     setDashboardError(null)
@@ -109,11 +128,11 @@ export default function App() {
       data && isMonth(period)
         ? preparePayslips(
             data,
-            { template: TABLE_TEMPLATE, mapping, rateVersions: crossCheckRates.versions, whyNoRates: crossCheckRates.whyNone, period, treatAsZero },
+            { template, mapping, rateVersions: crossCheckRates.versions, whyNoRates: crossCheckRates.whyNone, period, treatAsZero },
             issueDate,
           )
         : [],
-    [data, period, mapping, crossCheckRates, treatAsZero, issueDate],
+    [data, period, template, mapping, crossCheckRates, treatAsZero, issueDate],
   )
 
   const loadData = (next: ImportedPayroll | null) => {
@@ -175,6 +194,7 @@ export default function App() {
             >
               <Icon aria-hidden="true" />
               {label}
+              {id === 'template' && templates.unsaved && <span className="badge tone-warn">Unsaved</span>}
             </button>
           ))}
         </nav>
@@ -277,23 +297,42 @@ export default function App() {
             onIssueDate={setIssueDate}
             prepared={prepared}
             mapping={mapping}
+            templateChip={templates.active.chip}
+            templateKind={templates.active.kind}
+            exportBlock={templates.active.exportBlock}
+            onOpenTemplate={() => setScreen('template')}
             accepted={accepted}
             onAccepted={setAccepted}
             treatAsZero={treatAsZero}
             onTreatAsZero={setTreatAsZero}
           />
         )}
-        {screen === 'template' && <TemplateScreen data={data} mapping={mapping} onMapping={setMapping} />}
+        {screen === 'template' && (
+          <TemplateScreen
+            data={data}
+            embedded={insideDashboard}
+            templates={{
+              ...templates,
+              reload: () => {
+                forgetReadOnly()
+                templates.reload()
+              },
+            }}
+          />
+        )}
         {screen === 'rates' && (
           <RatesScreen
             state={rates}
             port={bridgePort}
             period={period}
             brn={brn}
-            readOnly={brn !== null && readOnlyBrns.has(brn)}
-            onReload={() => setRatesReload((count) => count + 1)}
+            readOnly={readOnly}
+            onReload={() => {
+              forgetReadOnly()
+              setRatesReload((count) => count + 1)
+            }}
             onVersions={(versions) => setRates((previous) => (previous.status === 'loaded' ? { ...previous, versions } : previous))}
-            onForbidden={() => brn !== null && setReadOnlyBrns((previous) => new Set([...previous, brn]))}
+            onForbidden={markReadOnly}
           />
         )}
       </main>
