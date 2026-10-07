@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_STATUTORY_RATES } from '../src/data/defaultStatutoryRates'
 import { preparePayslips, type PreparedPayslip } from '../src/lib/build'
 import { failure, jsonBytes, type HubPort } from '../src/lib/hubWire'
-import { buildIssue, monthProblems, type IssueInput } from '../src/lib/issueBuild'
+import { buildIssue, issueStatuses, monthProblems, type IssueInput } from '../src/lib/issueBuild'
 import { decodeLines } from '../src/lib/issuedLines'
 import {
   checkIssue,
@@ -24,6 +24,7 @@ import type { AcceptedChecks } from '../src/lib/payslip'
 import { checkKey, ROUNDING_REASON, withReason, zeroKey, type Reasons } from '../src/lib/reasons'
 import { ratesFor } from '../src/lib/statutoryRates'
 import { BUILT_IN_BODY, templateOf } from '../src/lib/templateBody'
+import { runSummary } from '../src/lib/useIssuing'
 import type { TemplateChoice } from '../src/lib/templateUse'
 import { layoutPage } from '../src/writers/pageGeometry'
 import { writePayslipPdf } from '../src/writers/pdfWriter'
@@ -423,5 +424,33 @@ describe('reopening a month shows each payslip exactly as issued', () => {
     expect(decodeLines.length).toBe(1)
     expect(read.document).toEqual(prepared[0].document)
     expect(month.payslips[0].rates).toMatchObject({ nsf_ceiling: 29710, revision: 1 })
+  })
+})
+
+describe('where each employee stands, and how a run is summed up', () => {
+  it('not issued, issued and identical, or changed since the revision that was issued', async () => {
+    const { port } = dashboard()
+    const { accepted, reasons } = roundingAccepted()
+    expect(issueStatuses(data, prepared, null, accepted, reasons).size).toBe(0)
+    await issueBatch(port, pendingFor(built({ selected: [0, 1] })))
+    const month = await loadMonth(port, BRN, PERIOD)
+    if (!month.ok) throw new Error('not loaded')
+    const statuses = issueStatuses(data, prepared, month.payslips, accepted, reasons)
+    expect(statuses.get(0)).toMatchObject({ kind: 'issued', revision: 1, same: true })
+    expect(statuses.get(2)).toEqual({ kind: 'not-issued' })
+
+    // The same employee with another date on the payslip is no longer the payslip that was issued.
+    const later = preparePayslips(data, { template, mapping, rateVersions: DEFAULT_STATUTORY_RATES, period: PERIOD }, '2026-09-30')
+    expect(issueStatuses(data, later, month.payslips, accepted, reasons).get(0)).toMatchObject({ kind: 'issued', revision: 1, same: false })
+  })
+
+  it('a run that stops says who is issued and who is not, batch by batch', () => {
+    const payslips = built()
+    const batches = [pendingFor(payslips.slice(0, 3)), pendingFor(payslips.slice(3, 5)), pendingFor(payslips.slice(5))]
+    const stopped = runSummary({ period: PERIOD, batches, at: 1, status: 'stopped', outcome: null })
+    expect(stopped.issued).toEqual(payslips.slice(0, 3).map((p) => p.name))
+    expect(stopped.notIssued).toEqual(payslips.slice(3).map((p) => p.name))
+    const done = runSummary({ period: PERIOD, batches, at: 3, status: 'done', outcome: null })
+    expect([done.issued.length, done.notIssued.length]).toEqual([7, 0])
   })
 })

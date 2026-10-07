@@ -317,6 +317,36 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     )
   }
 
+  /**
+   * "Publish the built-in template as this company's template": so a company can issue without
+   * building a template first. It is the normal flow, one step after the other: a new draft
+   * (expected_revision 0), then publish exactly that draft. If a step does not go through, the
+   * draft stays in the editor with the usual message, to be finished by hand.
+   */
+  const publishBuiltIn = async () => {
+    if (brn === null || cannotSave !== null || busy !== null) return
+    const taken = new Set(items.map((item) => item.name.trim().toLowerCase()))
+    let name = 'Table'
+    for (let n = 2; taken.has(name.toLowerCase()); n++) name = `Table ${n}`
+    const draft: PendingDraftSave = { brn, templateId: null, name, body: BUILT_IN_BODY, expectedRevision: 0 }
+    setNotice(null)
+    setEditor({ brn, templateId: null, name, body: BUILT_IN_BODY, saved: null, publishedVersion: null, conflict: null })
+    setBusy('saving')
+    const saved = await saveDraft(port, draft)
+    await afterDraft(saved, draft)
+    if (saved.end !== 'saved' || !saved.saved) return setBusy(null)
+
+    const { templateId, draftRevision } = saved.saved
+    const publication: PendingPublish = { brn, templateId, expectedRevision: draftRevision, publishedBefore: null, name, body: BUILT_IN_BODY }
+    setBusy('publishing')
+    const published = await publishDraft(port, publication)
+    setBusy(null)
+    await afterPublish(published, publication)
+    if (published.end === 'saved' && published.version !== null && (await choosePublished(templateId, published.version))) {
+      setNotice({ kind: 'ok', text: `The built-in template is now this company's template "${name}", version ${published.version}, and is used for the payslips.` })
+    }
+  }
+
   const publish = () => {
     if (!editor?.saved || editor.templateId === null || brn === null || cannotSave !== null || dirty || busy !== null) return
     void run(
@@ -359,6 +389,7 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     choiceNeeded,
     pickPublished,
     pickBuiltIn,
+    publishBuiltIn,
     editor,
     dirty,
     unsaved,

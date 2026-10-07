@@ -283,11 +283,26 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
                 {(used.kind === 'built-in' || used.kind === 'built-in-edited') && !t.choiceNeeded && <span className="badge tone-accent">In use</span>}
               </p>
               <p className="m-0 text-sm text-muted">One A4 page: earnings on the left, deductions on the right, as in the reference.</p>
-              {embedded && (t.choice.kind !== 'built-in' || t.choiceNeeded) && (
-                <button type="button" className="btn btn-sm mt-2" onClick={t.pickBuiltIn} disabled={working}>
-                  Use the built-in template
-                </button>
+              {embedded && (
+                <p className="m-0 mt-1 text-sm text-muted">Payslips made with it can be downloaded, but not issued: issuing needs a published template of the company.</p>
               )}
+              <span className="mt-2 flex flex-wrap gap-2">
+                {embedded && (t.choice.kind !== 'built-in' || t.choiceNeeded) && (
+                  <button type="button" className="btn btn-sm" onClick={t.pickBuiltIn} disabled={working}>
+                    Use the built-in template
+                  </button>
+                )}
+                {embedded && (
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    disabled={working || t.cannotSave !== null || list.status !== 'loaded'}
+                    onClick={() => guarded("Publish the built-in template as this company's template?", () => void t.publishBuiltIn())}
+                  >
+                    Publish the built-in template as this company's template
+                  </button>
+                )}
+              </span>
             </div>
           </div>
           <div className="card flex items-start gap-3 p-4 opacity-70" aria-disabled="true">

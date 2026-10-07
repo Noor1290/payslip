@@ -10,18 +10,23 @@ import {
   TriangleAlert,
   Upload,
 } from 'lucide-react'
-import { useEffect, useId, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import sampleText from '../../samples/ABC Co Ltd-pdf-fill-2026-09.json?raw'
 import { Dialog } from '../components/Dialog'
+import { IssuePanel } from '../components/IssuePanel'
 import { PayslipPreview } from '../components/PayslipPreview'
 import { ReasonDialog } from '../components/ReasonDialog'
 import type { PreparedPayslip } from '../lib/build'
 import { formatPeriod } from '../lib/dates'
 import { buildPdfZip, buildWorkbook, download, exportBaseName } from '../lib/exports'
+import { buildIssue, issueStatuses } from '../lib/issueBuild'
+import { decodeLines } from '../lib/issuedLines'
 import { formatCents } from '../lib/money'
 import { importPayrollText, type ImportError, type ImportedPayroll } from '../lib/payrollFile'
 import { isReady, pendingChecks, type AcceptedChecks, type ReconcileCheck } from '../lib/payslip'
-import { isMonth } from '../lib/statutoryRates'
+import { isMonth, type RatesVersion } from '../lib/statutoryRates'
+import type { TemplateChoice } from '../lib/templateUse'
+import type { Issuing } from '../lib/useIssuing'
 import { checkKey, ROUNDING_REASON, withReason, zeroKey, type Reasons } from '../lib/reasons'
 import type { TemplateMapping } from '../lib/template'
 
@@ -42,6 +47,8 @@ interface Props {
   /** Why this template cannot be exported (a draft, or a choice still to make). Null when it can. */
   exportBlock: string | null
   onOpenTemplate: () => void
+  /** Issuing through the dashboard. Null when the app is opened on its own. */
+  issue: IssueSetup | null
   accepted: Record<number, AcceptedChecks>
   onAccepted: Dispatch<SetStateAction<Record<number, AcceptedChecks>>>
   /** Why each difference was accepted. Stored with the payslip when it is issued. */
@@ -49,6 +56,15 @@ interface Props {
   onReasons: Dispatch<SetStateAction<Reasons>>
   treatAsZero: Map<number, Set<string>>
   onTreatAsZero: Dispatch<SetStateAction<Map<number, Set<string>>>>
+}
+
+/** What issuing needs besides what is on this page. */
+export interface IssueSetup {
+  issuing: Issuing
+  readOnly: boolean
+  choice: TemplateChoice
+  /** The rates the cross-check used for this month, or null when it did not run. */
+  rates: RatesVersion | null
 }
 
 type Status = 'ready' | 'review' | 'fix'
@@ -102,6 +118,33 @@ export function PayslipsScreen(props: Props) {
     setCurrent(0)
     setExportError(null)
   }, [data])
+
+  const { issue } = props
+  const monthState = issue && isMonth(period) ? issue.issuing.months[period] : undefined
+  const issuedMonth = monthState?.status === 'loaded' ? monthState.payslips : null
+  /** Where each employee stands for the month, once the month has been loaded from the dashboard. */
+  const issueStatus = useMemo(
+    () => (data ? issueStatuses(data, prepared, issuedMonth, accepted, props.reasons) : new Map()),
+    [data, prepared, issuedMonth, accepted, props.reasons],
+  )
+  const issueBuild = useMemo(
+    () =>
+      data && issue
+        ? buildIssue({
+            data,
+            period,
+            prepared,
+            selected: [...selected].sort((a, b) => a - b),
+            accepted,
+            reasons: props.reasons,
+            choice: issue.choice,
+            previewingDraft: props.templateKind === 'draft',
+            rates: issue.rates,
+            month: issuedMonth ?? [],
+          })
+        : null,
+    [data, issue, period, prepared, selected, accepted, props.reasons, props.templateKind, issuedMonth],
+  )
 
   const accept = (next: ImportedPayroll) => {
     setImportErrors(null)
@@ -233,6 +276,21 @@ export function PayslipsScreen(props: Props) {
         ? `${notReady} selected ${notReady === 1 ? 'payslip is' : 'payslips are'} not ready. Fix or accept them, or untick them.`
         : null
 
+  const notIssuedSelected = selectedItems.filter((p) => {
+    const status = issueStatus.get(p.computation.rowIndex)
+    return !(status?.kind === 'issued' && status.same)
+  }).length
+  const issuedBadge = (rowIndex: number) => {
+    const status = issueStatus.get(rowIndex)
+    if (!status) return <span className="text-xs text-subtle">Not checked</span>
+    if (status.kind === 'not-issued') return <span className="badge tone-warn">Not issued</span>
+    return status.same ? (
+      <span className="badge tone-accent">Issued, revision {status.revision}</span>
+    ) : (
+      <span className="badge tone-warn">Changed since revision {status.revision}</span>
+    )
+  }
+
   const roundingItems = prepared.flatMap((p) =>
     p.computation.errors.length > 0
       ? []
@@ -293,7 +351,12 @@ export function PayslipsScreen(props: Props) {
     setBusy(kind)
     setExportError(null)
     try {
-      const docs = selectedItems.map((p) => p.document!)
+      // A payslip that is exactly the one issued is made from what was stored when it was issued.
+      const docs = selectedItems.map((p) => {
+        const status = issueStatus.get(p.computation.rowIndex)
+        const stored = status?.kind === 'issued' && status.same ? decodeLines(status.issued.lines) : null
+        return stored?.ok ? stored.document : p.document!
+      })
       const base = exportBaseName(data.company.name, period)
       if (kind === 'pdf') download(await buildPdfZip(docs, period), `${base}.zip`, 'application/zip')
       else {
@@ -428,6 +491,7 @@ export function PayslipsScreen(props: Props) {
                         Net pay
                       </th>
                       <th scope="col">Status</th>
+                      {issue && <th scope="col">Issued</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -464,6 +528,7 @@ export function PayslipsScreen(props: Props) {
                           <td>
                             <StatusBadge status={statuses[index]} />
                           </td>
+                          {issue && <td>{issuedBadge(c.rowIndex)}</td>}
                         </tr>
                       )
                     })}
@@ -495,6 +560,13 @@ export function PayslipsScreen(props: Props) {
                     Accept {roundingItems.length} rounding {roundingItems.length === 1 ? 'difference' : 'differences'}
                   </button>
                 )}
+                {issue && notIssuedSelected > 0 && (
+                  <p className="m-0 flex w-full items-center gap-2 text-sm" data-testid="not-issued-note">
+                    <span className="badge tone-warn">Not issued</span>
+                    {notIssuedSelected} of the selected {notIssuedSelected === 1 ? 'payslip is' : 'payslips are'} not issued, or changed since.
+                    A download of them is not an issued payslip. Nothing is printed on the payslip itself.
+                  </p>
+                )}
                 <p className="m-0 w-full text-sm text-muted" role="status">
                   {blockReason ??
                     `${selectedItems.length} ${selectedItems.length === 1 ? 'payslip' : 'payslips'} for ${formatPeriod(period)} ready to download.`}
@@ -506,6 +578,20 @@ export function PayslipsScreen(props: Props) {
                 )}
               </div>
             </section>
+
+            {issue && issueBuild && (
+              <IssuePanel
+                period={period}
+                brn={data.company.brn}
+                month={monthState}
+                issuing={issue.issuing}
+                readOnly={issue.readOnly}
+                build={issueBuild}
+                templateLabel={props.templateChip}
+                ratesLabel={issue.rates ? `Version of ${formatPeriod(issue.rates.effectiveFrom)}, revision ${issue.rates.revision}` : 'Not cross-checked'}
+                onLoad={() => void issue.issuing.load(period)}
+              />
+            )}
 
             {item && (
               <ChecksCard

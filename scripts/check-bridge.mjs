@@ -285,7 +285,6 @@ try {
   await confirmRates.getByRole('button', { name: 'Save to the dashboard' }).click()
   await app.getByTestId('rates-outcome').filter({ hasText: 'Someone saved a newer version first' }).waitFor()
   const stale = await app.getByTestId('rates-stale').textContent()
-  await shot('rates-stale')
   check(stale.includes('revision 4, Another admin') && stale.includes('31,000') && stale.includes('29,800'), 'Rates: a stale save does not show what changed.')
   check(await page.evaluate(() => window.hub.state.rates.length === 4 && window.hub.state.rates[3].nsf_ceiling === 31000), 'Rates: a stale save overwrote the newer version.')
   check((await app.getByLabel('NSF salary ceiling, Rs').inputValue()) === '29800', 'Rates: a stale save lost what was typed.')
@@ -371,7 +370,6 @@ try {
   await nav('Payslips')
   await app.getByTestId('draft-banner').filter({ hasText: 'Draft, not published' }).waitFor()
   check((await chip.textContent()) === 'Monthly payslip, draft revision 1 (not published)', 'The chip does not say a draft is previewed.')
-  await shot('payslips-draft')
   check((await app.getByTestId('payslip-page').textContent()).includes('Pay advice'), 'The preview does not show the draft.')
   check((await app.getByTestId('payslip-page').textContent()).includes('Year-end bonus'), 'The preview does not show the added line.')
   check(await pdfButton.isDisabled(), 'A draft can be exported as PDF.')
@@ -478,6 +476,154 @@ try {
   console.log('  templates: create, draft, preview (no export), publish, use, stale, unavailable (stored and not stored), no-change, forbidden, refused body')
   await nav('Payslips')
 
+  // 8d. Issue the month, open it again, re-issue. The data open is October 2026, seven employees,
+  // with the published template "Monthly payslip, version 1" in use.
+  const issuePanel = app.getByTestId('issue-panel')
+  const issueButton = issuePanel.getByRole('button', { name: /^Issue \d* ?payslips?$/ })
+  const issueDialog = app.getByRole('dialog', { name: /^Issue \d+ payslips? for October 2026\?$/ })
+  const issueSends = () => savesOf('payslip-issue')
+  const monthLoads = () => page.evaluate(() => window.hub.state.log.filter((m) => m.type === 'request-data' && m.payload.dataType === 'payslip-issue').length)
+  const issuedInHub = () => page.evaluate(() => window.hub.state.issued.length)
+  const nameOf = (index) => `${fixture[index].Surname} ${fixture[index]['Other names']}`
+  const selectOnly = async (index) => {
+    const all = app.getByLabel('Select all employees')
+    // A page that was just opened selects everyone a moment after it appears.
+    await page.waitForTimeout(200)
+    if (!(await all.isChecked())) await all.check()
+    await all.uncheck()
+    await app.getByLabel(new RegExp(`^Include ${nameOf(index)}$`, 'i')).check()
+  }
+  const confirmIssue = async () => {
+    await issueButton.click()
+    await issueDialog.waitFor()
+    await issueDialog.getByRole('button', { name: 'Issue', exact: true }).click()
+    await issueDialog.waitFor({ state: 'detached' })
+  }
+  const checkIssued = () => issuePanel.getByRole('button', { name: /Check (again )?what is issued/ }).click()
+
+  check((await app.getByTestId('cannot-issue').textContent()).includes('Check what is issued first'), 'A month can be issued before it was loaded.')
+  check(await issueButton.isDisabled(), 'Issue is enabled before the month was loaded.')
+  // The dashboard asks its user before it sends issued payslips: a "no" is said plainly.
+  await hub(() => (window.hub.state.prompt = 'deny'))
+  await checkIssued()
+  await app.getByTestId('month-load-failure').filter({ hasText: 'The request was declined in the dashboard' }).waitFor()
+  await hub(() => (window.hub.state.prompt = 'allow'))
+  await issuePanel.getByRole('button', { name: 'Ask again' }).click()
+  await app.getByTestId('issued-count').filter({ hasText: '0 issued in the dashboard' }).waitFor()
+  check((await employeeRows.filter({ hasText: 'Not issued' }).count()) === 7, 'Employees are not marked "Not issued".')
+  check((await app.getByTestId('not-issued-note').textContent()).includes('7 of the selected payslips are not issued'), 'Downloads are not labelled "Not issued".')
+  check(!(await app.getByTestId('payslip-page').textContent()).includes('Not issued'), '"Not issued" is printed on the payslip itself.')
+  const previewBefore = await app.getByTestId('payslip-page').textContent()
+
+  // Locked: refused at once, nothing stored, nothing reloaded; the very same message goes again.
+  await hub(() => (window.hub.state.gateOpen = false))
+  const loadsBefore = await monthLoads()
+  await issueButton.click()
+  await issueDialog.waitFor()
+  const dialogText = await issueDialog.textContent()
+  check(dialogText.includes('For BRN C1234567') && dialogText.includes('Monthly payslip, version 1 (published)') && dialogText.includes('7 payslips, as revision 1'), `The issue confirmation does not say what is issued: ${dialogText}`)
+  await accessible('issue confirmation')
+  await issueDialog.getByRole('button', { name: 'Issue', exact: true }).click()
+  await app.getByTestId('issue-outcome').filter({ hasText: 'The dashboard is locked' }).waitFor()
+  check((await issuedInHub()) === 0 && (await monthLoads()) === loadsBefore, 'After "locked", something was stored or the month was reloaded.')
+  await hub(() => (window.hub.state.gateOpen = true))
+  await issuePanel.getByRole('button', { name: 'Issue again' }).click()
+  await app.getByTestId('issue-summary').filter({ hasText: 'Issued: 7. Not issued: 0.' }).waitFor()
+  const [lockedSend, issuedSend] = await issueSends()
+  check(JSON.stringify(lockedSend) === JSON.stringify(issuedSend), 'After "locked", the message sent again was not the same one.')
+  const sentRow = issuedSend[0]
+  check(issuedSend.length === 1 && sentRow.action === 'issue' && sentRow.brn === 'C1234567' && sentRow.period === '2026-10' && sentRow.payslips.length === 7, 'The issue is not one row for the month.')
+  check(sentRow.payslips.every((p) => Object.keys(p).join() === 'national_id,expected_revision,template_id,template_version,rates,lines,accepted_differences' && p.expected_revision === 0 && p.template_version === 1), 'A payslip in the issue does not have exactly the agreed keys.')
+  check(sentRow.payslips.filter((p) => p.accepted_differences.length === 1 && p.accepted_differences[0].reason === 'Rounding').length === 3, 'The accepted rounding differences were not sent with their reason.')
+  check(sentRow.payslips[0].rates?.effective_from === '2026-07' && sentRow.payslips[0].rates?.revision === 4, 'The rates snapshot is not the version the cross-check used.')
+  check((await employeeRows.filter({ hasText: 'Issued, revision 1' }).count()) === 7, 'Employees are not marked as issued.')
+  check((await app.getByTestId('not-issued-note').count()) === 0, 'Issued payslips are still labelled "Not issued".')
+  await accessible('payslips with the issue panel')
+  await shot('payslips-issued')
+
+  // Open the month again: exactly as issued, whatever changed since.
+  await nav('Issued payslips')
+  check((await app.getByTestId('issued-company').textContent()) === 'ABC Co Ltd, BRN C1234567', 'Issued payslips: the company is not shown.')
+  await app.getByRole('button', { name: /Open the month/ }).click()
+  await app.getByTestId('issued-shown').filter({ hasText: '7 issued, latest revision of each' }).waitFor()
+  await app.getByRole('region', { name: 'Issued payslips of the month' }).getByText('Monthly payslip, version 1').first().waitFor()
+  const reopened = await app.getByTestId('payslip-page').textContent()
+  check(reopened === previewBefore, 'The reopened payslip is not the one that was issued.')
+  const details = await app.getByTestId('issued-details').textContent()
+  check(details.includes('Version of July 2026, revision 4') && details.includes('Total Deductions') && details.includes('Reason: Rounding'), `The reopened payslip does not show its rates and accepted differences: ${details}`)
+  await accessible('issued payslips')
+  await shot('issued-month')
+  const [zip] = await Promise.all([page.waitForEvent('download'), app.getByRole('button', { name: 'Download issued PDFs (zip)' }).click()])
+  check(zip.suggestedFilename() === 'ABC Co Ltd - payslips - 2026-10 - issued.zip', `Issued PDFs: unexpected file name ${zip.suggestedFilename()}`)
+  const [xlsx] = await Promise.all([page.waitForEvent('download'), app.getByRole('button', { name: 'Download issued Excel' }).click()])
+  check(xlsx.suggestedFilename().endsWith('- issued.xlsx'), 'Issued Excel: unexpected file name.')
+  // Change what the Payslips page is built with: the issued month does not move.
+  await nav(/^Template/)
+  await app.getByRole('button', { name: 'Use the built-in template' }).click()
+  await nav('Payslips')
+  check((await app.getByTestId('payslip-page').textContent()) !== previewBefore, 'Changing the template did not change the current payslip.')
+  check((await employeeRows.filter({ hasText: 'Changed since revision 1' }).count()) === 7, 'A payslip that differs from the issued one is not marked.')
+  check((await app.getByTestId('cannot-issue').textContent()).includes('published template version'), 'The built-in template can be issued.')
+  await nav('Issued payslips')
+  check((await app.getByTestId('payslip-page').textContent()) === previewBefore, 'A reopened payslip changed when the template in use changed.')
+  await nav(/^Template/)
+  await app.getByRole('button', { name: 'Use version 2 of Monthly payslip' }).click()
+  await app.getByTestId('template-in-use').filter({ hasText: 'version 2 (published)' }).waitFor()
+  await nav('Payslips')
+
+  // Re-issue one employee: a new revision only, and the confirmation says so.
+  await selectOnly(0)
+  await issueButton.click()
+  await issueDialog.waitFor()
+  const reissue = (await app.getByTestId('reissue-list').textContent()).toLowerCase()
+  check(reissue.includes(`${nameOf(0).toLowerCase()}: this creates revision 2; revision 1 stays.`), `The re-issue confirmation does not say what happens: ${reissue}`)
+  await issueDialog.getByRole('button', { name: 'Issue', exact: true }).click()
+  await app.getByTestId('issue-summary').filter({ hasText: 'Issued: 1. Not issued: 0.' }).waitFor()
+  check((await issuedInHub()) === 8, 'A re-issue did not add exactly one revision.')
+  check(await page.evaluate((id) => window.hub.state.issued.filter((row) => row.national_id === id).map((row) => row.revision).join() === '1,2', fixture[0].ID), 'Revision 1 did not stay after the re-issue.')
+  check((await employeeRows.filter({ hasText: 'Issued, revision 2' }).count()) === 1, 'The re-issued employee is not at revision 2.')
+
+  // Stale: another admin issued one employee since the month was loaded. Nothing is stored, the
+  // employee is named from the position the dashboard gave, and who moved is listed.
+  await app.getByLabel('Select all employees').check()
+  await page.evaluate((id) => window.hub.otherAdminIssues('2026-10', id), fixture[1].ID)
+  await confirmIssue()
+  await app.getByTestId('issue-outcome').filter({ hasText: 'Someone saved a newer version first' }).waitFor()
+  const staleDetail = (await app.getByTestId('issue-detail').textContent()).toLowerCase()
+  check(staleDetail.includes(`the payslip at fault: ${nameOf(1).toLowerCase()}`) && staleDetail.includes('revision 2, by another admin'), `A stale issue does not name who moved: ${staleDetail}`)
+  check((await issuedInHub()) === 9, 'A stale issue stored something.')
+  check((await app.getByTestId('issue-summary').textContent()).includes('Issued: 0. Not issued: 7.'), 'A stale issue does not say that nobody was issued.')
+
+  // "unavailable" on an issue that WAS stored: the month is loaded again, found, and not sent twice.
+  await selectOnly(2)
+  await hub(() => (window.hub.state.nextSave = { mode: 'unavailable' }))
+  const sendsBefore = (await issueSends()).length
+  await confirmIssue()
+  await app.getByTestId('issue-summary').filter({ hasText: 'Issued: 1. Not issued: 0.' }).waitFor()
+  check((await issueSends()).length === sendsBefore + 1 && (await issuedInHub()) === 10, 'An unconfirmed issue was sent again.')
+
+  // "unavailable" on an issue that was NOT stored: nobody moved, so "Issue again" is offered.
+  await selectOnly(3)
+  await hub(() => (window.hub.state.nextSave = { mode: 'unavailable-unsaved' }))
+  await confirmIssue()
+  await app.getByTestId('issue-outcome').filter({ hasText: 'nothing was issued' }).waitFor()
+  check((await issuedInHub()) === 10, 'An issue that was not stored shows as issued.')
+  await issuePanel.getByRole('button', { name: 'Issue again' }).click()
+  await app.getByTestId('issue-summary').filter({ hasText: 'Issued: 1. Not issued: 0.' }).waitFor()
+  check((await issuedInHub()) === 11, '"Issue again" did not issue.')
+
+  // An employee the dashboard does not have: refused, named from the position.
+  await app.getByLabel('Select all employees').check()
+  await page.evaluate((id) => (window.hub.state.employees = [...new Set(window.hub.state.issued.map((row) => row.national_id))].filter((known) => known !== id)), fixture[4].ID)
+  await confirmIssue()
+  await app.getByTestId('issue-outcome').filter({ hasText: 'The dashboard no longer has this' }).waitFor()
+  const missing = (await app.getByTestId('issue-detail').textContent()).toLowerCase()
+  check(missing.includes(`the payslip at fault: ${nameOf(4).toLowerCase()}`), `A refused issue does not name the employee: ${missing}`)
+  check((await app.getByTestId('issue-outcome').textContent()).includes('not a current employee'), 'The reason from the dashboard is not shown.')
+  check((await issuedInHub()) === 11, 'A refused issue stored something.')
+  await hub(() => (window.hub.state.employees = null))
+  console.log('  issuing: declined load, locked then the same message, issue, reopen identical, downloads, re-issue, stale, unavailable (stored and not stored), unknown employee')
+
   // 9. Every message came from this app at the hub's origin, and nothing was stored.
   const messages = await page.evaluate(() => window.log)
   check(messages.every((m) => m.from === 'payslip' && m.to === 'dashboard' && m.version === 1), 'A message did not come from "payslip" to "dashboard".')
@@ -500,6 +646,7 @@ try {
   await alone.getByRole('button', { name: 'Statutory rates', exact: true }).click()
   await alone.getByTestId('unsaved-defaults').waitFor()
   check((await alone.getByRole('button', { name: /Add rates/ }).count()) === 0, 'Standalone: rates can be added.')
+  check((await alone.getByRole('button', { name: 'Issued payslips' }).count()) === 0, 'Standalone: an "Issued payslips" page is offered.')
   check((await alone.getByTestId('rates-cannot-save').textContent()).includes('cannot save rates'), 'Standalone: no explanation that rates cannot be saved.')
   check((await alone.getByTestId('max-nsf').textContent()).includes('297.10'), 'Standalone: the default rates are not shown.')
   // The built-in template can be changed in memory, labelled "Not saved", and nothing can be saved.
@@ -517,23 +664,26 @@ try {
   check((await alone.getByTestId('payslip-page').textContent()).includes('Pay advice'), 'Standalone: the in-memory change is not used.')
   check((await alone.getByTestId('draft-banner').count()) === 0, 'Standalone: the built-in template is treated as a draft.')
   check(!(await alone.getByRole('region', { name: 'Employees' }).textContent()).includes('draft'), 'Standalone: the export is blocked as a draft.')
+  check((await alone.getByTestId('issue-panel').count()) === 0 && (await alone.getByText('Not issued').count()) === 0, 'Standalone: issuing is offered.')
 
   // 11. Which template a payslip uses when the app opens: one published template is preselected;
   // with more than one, the user must pick and nothing is exported until then.
   const body = JSON.parse(readFileSync(join(root, 'tests/expected/template-body.json'), 'utf8'))
-  const seeded = async (names) => {
+  const seeded = async (names, role = 'admin') => {
     const seededPage = await context.newPage()
     await seededPage.addInitScript(
-      ([templateNames, templateBody]) => {
-        window.seedHub = (fake) =>
+      ([templateNames, templateBody, seededRole]) => {
+        window.seedHub = (fake) => {
+          fake.state.role = seededRole
           templateNames.forEach((name, index) => {
             const id = `20000000-0000-4000-8000-00000000001${index}`
             const stored = { ...templateBody, labels: { ...templateBody.labels, title: `${name} title` } }
             fake.state.templates.push({ id, name, body: stored, revision: 1, updatedAt: '2026-10-07T09:00:00+04:00', by: 'other' })
             fake.state.versions.push({ templateId: id, version: 1, name, body: stored, publishedAt: '2026-10-07T09:05:00+04:00', by: 'other' })
           })
+        }
       },
-      [names, body],
+      [names, body, role],
     )
     await seededPage.goto(`${HUB}/payroll-hub/`)
     const frame = seededPage.frameLocator('#app')
@@ -559,6 +709,45 @@ try {
   check((await two.frame.getByTestId('template-choose').count()) === 0, 'After choosing, the app still asks to choose.')
   await two.seededPage.close()
   console.log('  which template: standalone edits not saved, one published preselected, two published must be chosen')
+
+  // 12. A member, not an admin: read-only from the start, from the role the dashboard reports.
+  // Nothing has to be refused first, and no save is ever sent.
+  const member = await seeded(['Monthly payslip'], 'viewer')
+  const memberNav = (name) => member.frame.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name, exact: true }).click()
+  check((await member.frame.getByTestId('cannot-issue').textContent()).includes('Only an admin of this company can issue payslips'), 'A member can issue.')
+  check(await member.frame.getByRole('button', { name: /Check what is issued/ }).isDisabled(), 'A member can ask for issued payslips.')
+  await memberNav('Statutory rates')
+  await member.frame.getByTestId('rates-cannot-save').filter({ hasText: 'Only an admin of this company can add rates' }).waitFor()
+  check(await member.frame.getByRole('button', { name: 'Add rates from month...' }).isDisabled(), 'A member can add rates.')
+  await memberNav('Template')
+  await member.frame.getByRole('button', { name: 'Open the draft of Monthly payslip' }).click()
+  await member.frame.getByTestId('template-cannot-save').filter({ hasText: 'Only an admin of this company can save or publish a template' }).waitFor()
+  check(await member.frame.getByRole('button', { name: "Publish the built-in template as this company's template" }).isDisabled(), 'A member can publish the built-in template.')
+  await memberNav('Issued payslips')
+  check((await member.frame.getByTestId('cannot-open').textContent()).includes('Only an admin of this company can open issued payslips'), 'A member can open issued payslips.')
+  check(await member.seededPage.evaluate(() => window.hub.state.log.every((m) => m.type !== 'send-data' && m.payload.dataType !== 'payslip-issue')), 'A member sent a save or asked for issued payslips.')
+  await member.seededPage.close()
+
+  // 13. "Publish the built-in template as this company's template": a draft, then a publish, each
+  // with its expected_revision, and the payslips then use it, so the month can be issued.
+  const fresh = await seeded([])
+  check((await fresh.frame.getByTestId('cannot-issue').textContent()).includes('Check what is issued first'), 'The issue panel is missing for a company with no template.')
+  await fresh.frame.getByRole('button', { name: 'Change the template' }).click()
+  await fresh.frame.getByRole('button', { name: "Publish the built-in template as this company's template" }).click()
+  await fresh.frame.getByTestId('template-in-use').filter({ hasText: 'Table, version 1 (published)' }).waitFor()
+  const steps = await fresh.seededPage.evaluate(() => window.hub.state.log.filter((m) => m.type === 'send-data').map((m) => m.payload.rows[0]))
+  check(
+    steps.length === 2 && steps[0].action === 'save-draft' && steps[0].expected_revision === 0 && !('template_id' in steps[0]) && steps[0].name === 'Table' && steps[1].action === 'publish' && steps[1].expected_revision === 1,
+    `Publishing the built-in template did not go through the normal flow: ${JSON.stringify(steps.map((step) => ({ ...step, body: undefined })))}`,
+  )
+  check(JSON.stringify(steps[0].body) === JSON.stringify(body), 'The template published is not the built-in one.')
+  await fresh.frame.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Payslips', exact: true }).click()
+  await fresh.frame.getByTestId('template-chip').filter({ hasText: 'Table, version 1 (published)' }).waitFor()
+  await fresh.frame.getByRole('button', { name: /Check what is issued/ }).click()
+  await fresh.frame.getByTestId('issued-count').waitFor()
+  check(!(await fresh.frame.getByTestId('issue-panel').textContent()).includes('published template version'), 'After publishing the built-in template the month still cannot be issued.')
+  await fresh.seededPage.close()
+  console.log('  roles and the built-in template: a member is read-only from the start; the built-in is published through draft then publish')
 
   check(outside.length === 0, `Requests to other addresses: ${[...new Set(outside)].join(', ')}`)
   check(pageErrors.length === 0, `Page errors: ${pageErrors.join(' | ')}`)

@@ -1,4 +1,4 @@
-import { CircleAlert, Download, Inbox, LayoutTemplate, Moon, Percent, ReceiptText, Sun } from 'lucide-react'
+import { CircleAlert, Download, FileCheck2, Inbox, LayoutTemplate, Moon, Percent, ReceiptText, Sun } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ImportDialog, type IncomingPayroll } from './components/ImportDialog'
 import { preparePayslips } from './lib/build'
@@ -9,17 +9,20 @@ import type { ImportedPayroll } from './lib/payrollFile'
 import type { AcceptedChecks } from './lib/payslip'
 import type { Reasons } from './lib/reasons'
 import { loadRates, ratesForCrossCheck, type RatesState } from './lib/ratesStore'
-import { isMonth } from './lib/statutoryRates'
+import { isMonth, ratesFor } from './lib/statutoryRates'
+import { useIssuing } from './lib/useIssuing'
 import { useTemplates } from './lib/useTemplates'
+import { IssuedScreen } from './screens/IssuedScreen'
 import { PayslipsScreen } from './screens/PayslipsScreen'
 import { RatesScreen } from './screens/RatesScreen'
 import { TemplateScreen } from './screens/TemplateScreen'
 
-type Screen = 'payslips' | 'template' | 'rates'
+type Screen = 'payslips' | 'issued' | 'template' | 'rates'
 type Theme = 'dark' | 'light'
 
 const SCREENS: { id: Screen; label: string; icon: typeof ReceiptText }[] = [
   { id: 'payslips', label: 'Payslips', icon: ReceiptText },
+  { id: 'issued', label: 'Issued payslips', icon: FileCheck2 },
   { id: 'template', label: 'Template', icon: LayoutTemplate },
   { id: 'rates', label: 'Statutory rates', icon: Percent },
 ]
@@ -112,6 +115,15 @@ export default function App() {
   const templates = useTemplates({ embedded: insideDashboard, connected, brn, port: bridgePort, readOnly, onForbidden: markReadOnly, onRole: noteRole })
   const { template, mapping } = templates.active
 
+  // Issued payslips. A month is loaded for the company of the open payroll data; with none open,
+  // for the company the dashboard answered for (loads only: issuing always needs payroll data).
+  const dashboardCompany = rates.status === 'loaded' ? rates.company : templates.list.status === 'loaded' ? templates.list.company : null
+  const issuedCompany = useMemo(
+    () => (data ? { name: data.company.name, brn: data.company.brn } : dashboardCompany),
+    [data, dashboardCompany],
+  )
+  const issuing = useIssuing(bridgePort, insideDashboard ? (issuedCompany?.brn ?? null) : null)
+
   // Unsaved template changes live in this tab's memory only: say so before the tab is closed.
   useEffect(() => {
     if (!templates.unsaved) return
@@ -192,7 +204,7 @@ export default function App() {
           </div>
         </div>
         <nav aria-label="Sections" className="flex gap-1">
-          {SCREENS.map(({ id, label, icon: Icon }) => (
+          {SCREENS.filter(({ id }) => id !== 'issued' || insideDashboard).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"
@@ -309,6 +321,11 @@ export default function App() {
             templateKind={templates.active.kind}
             exportBlock={templates.active.exportBlock}
             onOpenTemplate={() => setScreen('template')}
+            issue={
+              insideDashboard
+                ? { issuing, readOnly, choice: templates.choice, rates: isMonth(period) ? ratesFor(crossCheckRates.versions, period) : null }
+                : null
+            }
             accepted={accepted}
             onAccepted={setAccepted}
             reasons={reasons}
@@ -316,6 +333,9 @@ export default function App() {
             treatAsZero={treatAsZero}
             onTreatAsZero={setTreatAsZero}
           />
+        )}
+        {screen === 'issued' && insideDashboard && (
+          <IssuedScreen issuing={issuing} port={bridgePort} company={issuedCompany} readOnly={readOnly} period={period} />
         )}
         {screen === 'template' && (
           <TemplateScreen

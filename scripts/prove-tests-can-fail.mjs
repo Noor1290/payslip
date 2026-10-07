@@ -96,6 +96,8 @@ const changes = [
   ['A month is never split, whatever its size', 'src/lib/issueStore.ts', 'if (current.length > 0 && (current.length >= ISSUE_MAX_PAYSLIPS || used + size > budget)) {', 'if (false) {'],
   ['An answer about another month is used', 'src/lib/issueStore.ts', "if (answer.period !== period) return { ok: false, failure: failure('bad-answer') }", ''],
   ['The month load is cut off after 15 seconds', 'src/lib/hubWire.ts', "const reply = options.timeoutMs === null ? await asked.catch(() => NO_ANSWER) :", 'const reply = false ? await asked.catch(() => NO_ANSWER) :'],
+  ['A payslip changed since it was issued still shows as the issued one', 'src/lib/issueBuild.ts', 'same = canonicalJson(encodeLines(document, figuresOf(computation, zeroReasons))) === canonicalJson(issued.lines)', 'same = true'],
+  ['A stopped run counts the failed batch as issued', 'src/lib/useIssuing.ts', "const doneUpTo = run.status === 'done' ? run.batches.length : run.at", "const doneUpTo = run.status === 'done' ? run.batches.length : run.at + 1"],
   ['One label changes', 'src/lib/template.ts', "totalDeductions: 'Total Deductions'", "totalDeductions: 'Total Deduction'"],
   ['Band colour changes by one step', 'src/lib/layoutModel.ts', "BAND_FILL = '66CCFF'", "BAND_FILL = '66CCFE'"],
   ['Rows are one point taller on the page', 'src/writers/pageGeometry.ts', 'const ROW_HEIGHT = 17', 'const ROW_HEIGHT = 18'],

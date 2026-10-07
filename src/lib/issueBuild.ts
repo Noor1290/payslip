@@ -3,6 +3,7 @@
 // has no error and every difference fixed or accepted with a reason.
 
 import type { PreparedPayslip } from './build'
+import { canonicalJson } from './hubWire'
 import { encodeLines, figuresOf } from './issuedLines'
 import { ratesSnapshot, type IssuedPayslip, type PayslipToIssue } from './issueStore'
 import type { ImportedPayroll } from './payrollFile'
@@ -89,4 +90,38 @@ export function buildIssue(input: IssueInput): IssueBuild {
     })
   }
   return problems.length > 0 ? { ok: false, problems } : { ok: true, payslips }
+}
+
+/** Where one employee stands for the month, compared with what the dashboard has. */
+export type IssueStatus =
+  | { kind: 'not-issued' }
+  /** `same`: the payslip on screen is exactly the one that was issued. */
+  | { kind: 'issued'; revision: number; same: boolean; issued: IssuedPayslip }
+
+/** Per row index. Empty while the month has not been loaded. */
+export function issueStatuses(
+  data: ImportedPayroll,
+  prepared: readonly PreparedPayslip[],
+  month: readonly IssuedPayslip[] | null,
+  accepted: Readonly<Record<number, AcceptedChecks>>,
+  reasons: Reasons,
+): Map<number, IssueStatus> {
+  const statuses = new Map<number, IssueStatus>()
+  if (!month) return statuses
+  for (const { computation, document } of prepared) {
+    const rowIndex = computation.rowIndex
+    const nationalId = String(data.rows[rowIndex].ID).trim()
+    const issued = month.find((found) => found.nationalId.trim() === nationalId)
+    if (!issued) {
+      statuses.set(rowIndex, { kind: 'not-issued' })
+      continue
+    }
+    let same = false
+    if (document && computation.errors.length === 0) {
+      const { zeroReasons } = acceptedDifferences(computation, accepted[rowIndex] ?? {}, reasons[rowIndex])
+      same = canonicalJson(encodeLines(document, figuresOf(computation, zeroReasons))) === canonicalJson(issued.lines)
+    }
+    statuses.set(rowIndex, { kind: 'issued', revision: issued.revision, same, issued })
+  }
+  return statuses
 }
