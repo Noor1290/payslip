@@ -1,6 +1,6 @@
 # Known issues
 
-Found while building Phases 1 to 3 (October 2026) and deliberately not changed, because each one needs the owner's decision. All evidence uses fake data (ABC Co Ltd).
+Found while building Phases 1 to 4 (October 2026) and deliberately not changed, because each one needs the owner's decision. All evidence uses fake data (ABC Co Ltd).
 
 ## 1. A long name has little room on the payslip
 
@@ -94,7 +94,7 @@ Found while building Phases 1 to 3 (October 2026) and deliberately not changed, 
 
 **Evidence.** `npm run check:bridge`: "Only an admin of this company can save", then the save buttons are off.
 
-**To decide.** Whether the hub should say the role in `meta`, so the page can be read-only from the start.
+**Phase 4.** Settled: the dashboard now sends `meta.role` with every answer about rates, templates and issued payslips, and a member sees read-only from the start. The first refused save still does the same, in case the hint is missing.
 
 ## 14. The template to use is chosen again each time the app opens
 
@@ -140,4 +140,56 @@ Found while building Phases 1 to 3 (October 2026) and deliberately not changed, 
 
 **What happens.** As for issue 9, the bridge only trusts the deployed dashboard. The rates and template flows were run in the built app against an in-memory stand-in (`scripts/lib/fake-hub.mjs`) written from `docs/INTEGRATION.md` and the handlers in the hub repo (read only). It keeps to the contract, but it is not the hub.
 
-**To decide.** Nothing. To see it for real: run migrations 0008 to 0010, deploy the hub with its Stage B code and this app, then follow the test list in the Phase 3 report.
+**To decide.** Nothing. To see it for real: run migrations 0008 to 0010, deploy the hub with its Stage B code and this app, then follow the test list in the Phase 3 report. The same holds for issued payslips (Phase 4): migration 0011 and the hub's Stage C code.
+
+## 21. A month too large for one message is issued in batches, so it is not all-or-none as a whole
+
+**What happens.** The dashboard stores one message all or none, and accepts at most 1,000 payslips and 4 MB per message. A larger month is sent in batches, one after the other. Each batch is all or none; the month as a whole is not. If a batch does not go through, the run stops there, and the panel says "Stopped at batch 2 of 3" and lists who is issued and who is not. The reload rule is applied to the batch that stopped.
+
+**Evidence.** Measured on the fake fixtures: a whole payslip as sent is 5,906 to 6,066 bytes, so about 659 fit in one message. A company under about 650 employees is always one message. With the largest template the editor allows (10.7 KB of lines) about 360 fit. Test: `tests/issue.test.ts`, "more than fits is split into batches" (1,500 payslips).
+
+**To decide.** Nothing now.
+
+## 22. A payslip over 16 KB cannot be issued
+
+**What happens.** The app measures each payslip before sending. One over the dashboard's 16,000 bytes stops the whole issue before anything is sent, naming the employee and the size. Nothing is trimmed. A normal payslip is about 6 KB; the largest template the editor allows gives about 11 KB.
+
+**To decide.** Nothing now. It would only be reached with a much larger template than the editor allows.
+
+## 23. The dashboard asks me each time the app loads a month
+
+**What happens.** "Check what is issued", "Open the month", the reload after a stale issue, and the reload after an issue that got no answer each ask in the dashboard, and need it unlocked. If I say no there, the app says so and nothing is known yet: after an unanswered issue it offers "Check again", never a resend.
+
+**To decide.** Nothing here; it is the dashboard's rule for per-employee data.
+
+## 24. An identical payslip can be issued again
+
+**What happens.** After a month is issued, "Issue" stays available. Issuing the same payslip again makes revision 2 with the same content; the confirmation says "this creates revision 2; revision 1 stays". The employee list shows "Issued, revision N" when the payslip on screen is exactly the issued one, and "Changed since revision N" when it is not.
+
+**To decide.** Whether to refuse a re-issue when nothing changed.
+
+## 25. Only the latest revision of an issued payslip can be opened
+
+**What happens.** The dashboard returns the latest revision of each payslip. Earlier revisions stay stored but cannot be opened from this app yet.
+
+**To decide.** With the history, later.
+
+## 26. A reopened payslip is drawn by the current drawing code
+
+**What happens.** The stored lines hold every row, cell and text exactly as issued, with a format number. The page geometry (margins, row height, the font files) is in the app, not in the stored lines. If a later version of the app changes the geometry, an old payslip keeps its content but is drawn with the new geometry.
+
+**Evidence.** `tests/issuedLines.test.ts` and `tests/issue.test.ts` prove identity with the current code: identical layout model, identical PDF text, positions, fonts and sizes.
+
+**To decide.** Before changing the page geometry: either raise the format number and keep the old geometry for format 1, or accept the change for old payslips.
+
+## 27. Right after issuing, the date of issue is not shown until the month is opened again
+
+**What happens.** The dashboard answers an issue with the revisions and one time for the whole message. The app marks those payslips as issued by me at once; their date appears after "Open the month again", which reads it from the dashboard.
+
+**To decide.** Nothing now.
+
+## 28. On a reopened payslip the template is named as it was when published
+
+**What happens.** The template version is loaded only for its name. If it cannot be loaded the list says "Version N (name not available)" and the payslip is shown all the same.
+
+**To decide.** Nothing now.

@@ -104,7 +104,9 @@ The dashboard refuses a payslip over 16,000 bytes (the whole payslip, with its o
 | Built-in Table template (9 rows of lines), seven employees | 5,527 to 5,606 bytes |
 | The largest template the editor allows (20 rows on each side) | 10,680 bytes |
 
-Before sending, the app measures each payslip and refuses one that is too large, naming the employee. It never trims. A month too large for one message is sent in batches (see the Phase 4 notes in `docs/KNOWN_ISSUES.md`).
+A whole payslip as sent (the lines plus the national ID, the template, the rates and the accepted differences) is 5,906 to 6,066 bytes for the seven fake employees. About 659 of them fit in one 4 MB message.
+
+Before sending, the app measures each payslip and refuses one that is too large, naming the employee. It never trims. A month too large for one message is sent in batches (`docs/KNOWN_ISSUES.md`, issues 21 and 22).
 
 ## For the month comparison (Phase 5, not built)
 
