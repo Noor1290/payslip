@@ -4,11 +4,11 @@
 interface PayrollHubPayload {
   dataType: string
   rows: Record<string, unknown>[]
-  meta?: { period?: string; label?: string; brn?: string }
+  meta?: { period?: string; label?: string; brn?: string; role?: 'admin' | 'member' }
 }
 type PayrollHubReply =
   | ({ ok: true; result?: Record<string, unknown> } & Partial<PayrollHubPayload>)
-  | { ok: false; error: string; code?: string }
+  | { ok: false; error: string; code?: string; index?: number }
 interface Window {
   PayrollHubBridge: {
     isEmbedded(): boolean
