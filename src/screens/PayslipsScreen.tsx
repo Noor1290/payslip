@@ -14,6 +14,7 @@ import { useEffect, useId, useRef, useState, type Dispatch, type SetStateAction 
 import sampleText from '../../samples/ABC Co Ltd-pdf-fill-2026-09.json?raw'
 import { Dialog } from '../components/Dialog'
 import { PayslipPreview } from '../components/PayslipPreview'
+import { ReasonDialog } from '../components/ReasonDialog'
 import type { PreparedPayslip } from '../lib/build'
 import { formatPeriod } from '../lib/dates'
 import { buildPdfZip, buildWorkbook, download, exportBaseName } from '../lib/exports'
@@ -21,6 +22,7 @@ import { formatCents } from '../lib/money'
 import { importPayrollText, type ImportError, type ImportedPayroll } from '../lib/payrollFile'
 import { isReady, pendingChecks, type AcceptedChecks, type ReconcileCheck } from '../lib/payslip'
 import { isMonth } from '../lib/statutoryRates'
+import { checkKey, ROUNDING_REASON, withReason, zeroKey, type Reasons } from '../lib/reasons'
 import type { TemplateMapping } from '../lib/template'
 
 interface Props {
@@ -42,6 +44,9 @@ interface Props {
   onOpenTemplate: () => void
   accepted: Record<number, AcceptedChecks>
   onAccepted: Dispatch<SetStateAction<Record<number, AcceptedChecks>>>
+  /** Why each difference was accepted. Stored with the payslip when it is issued. */
+  reasons: Reasons
+  onReasons: Dispatch<SetStateAction<Reasons>>
   treatAsZero: Map<number, Set<string>>
   onTreatAsZero: Dispatch<SetStateAction<Map<number, Set<string>>>>
 }
@@ -85,6 +90,8 @@ export function PayslipsScreen(props: Props) {
   const [busy, setBusy] = useState<'pdf' | 'excel' | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
   const [roundingOpen, setRoundingOpen] = useState(false)
+  /** A difference waiting for its reason before it is accepted. */
+  const [asking, setAsking] = useState<{ title: string; description: string; confirmLabel: string; apply: (reason: string) => void } | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const periodId = useId()
   const dateId = useId()
@@ -234,10 +241,22 @@ export function PayslipsScreen(props: Props) {
           .map((check) => ({ item: p, check })),
   )
 
-  const acceptCheck = (rowIndex: number, check: ReconcileCheck) => {
+  const acceptCheck = (rowIndex: number, check: ReconcileCheck, name: string) => {
     if (check.diffCents === null) return
     const diff = check.diffCents
-    onAccepted((previous) => ({ ...previous, [rowIndex]: { ...previous[rowIndex], [check.id]: diff } }))
+    const apply = (reason: string) => {
+      onAccepted((previous) => ({ ...previous, [rowIndex]: { ...previous[rowIndex], [check.id]: diff } }))
+      props.onReasons((previous) => withReason(previous, rowIndex, checkKey(check.id), reason))
+      setAsking(null)
+    }
+    // A difference of exactly 0.01 is rounding. Anything else needs its own reason.
+    if (check.kind === 'rounding') return apply(ROUNDING_REASON)
+    setAsking({
+      title: `Accept the difference on ${check.label}?`,
+      description: `${name}: the payslip shows ${amount(check.payslipCents)}, the payroll says ${amount(check.payrollCents)} (${signed(diff)}). No figure is changed.`,
+      confirmLabel: 'Accept the difference',
+      apply,
+    })
   }
   const acceptAllRounding = () => {
     onAccepted((previous) => {
@@ -247,13 +266,26 @@ export function PayslipsScreen(props: Props) {
       }
       return next
     })
+    props.onReasons((previous) =>
+      roundingItems.reduce((next, { item: p, check }) => withReason(next, p.computation.rowIndex, checkKey(check.id), ROUNDING_REASON), previous),
+    )
     setRoundingOpen(false)
   }
-  const treatLineAsZero = (rowIndex: number, lineId: string) => {
-    onTreatAsZero((previous) => {
-      const next = new Map(previous)
-      next.set(rowIndex, new Set([...(previous.get(rowIndex) ?? []), lineId]))
-      return next
+  const treatLineAsZero = (rowIndex: number, lineId: string, name: string) => {
+    const label = prepared[rowIndex]?.computation.lines.find((line) => line.id === lineId)?.label ?? 'this line'
+    setAsking({
+      title: `Treat ${label} as zero?`,
+      description: `${name}: the payroll data has no figure for ${label}. The line will show "-". No other figure is changed.`,
+      confirmLabel: 'Treat as zero',
+      apply: (reason) => {
+        onTreatAsZero((previous) => {
+          const next = new Map(previous)
+          next.set(rowIndex, new Set([...(previous.get(rowIndex) ?? []), lineId]))
+          return next
+        })
+        props.onReasons((previous) => withReason(previous, rowIndex, zeroKey(lineId), reason))
+        setAsking(null)
+      },
     })
   }
 
@@ -480,8 +512,9 @@ export function PayslipsScreen(props: Props) {
                 item={item}
                 mapping={props.mapping}
                 accepted={accepted[item.computation.rowIndex] ?? {}}
-                onAccept={(check) => acceptCheck(item.computation.rowIndex, check)}
-                onTreatAsZero={(lineId) => treatLineAsZero(item.computation.rowIndex, lineId)}
+                reasons={props.reasons[item.computation.rowIndex] ?? {}}
+                onAccept={(check) => acceptCheck(item.computation.rowIndex, check, item.computation.employeeName)}
+                onTreatAsZero={(lineId) => treatLineAsZero(item.computation.rowIndex, lineId, item.computation.employeeName)}
               />
             )}
           </div>
@@ -564,6 +597,16 @@ export function PayslipsScreen(props: Props) {
           </div>
         </Dialog>
       )}
+
+      {asking && (
+        <ReasonDialog
+          title={asking.title}
+          description={asking.description}
+          confirmLabel={asking.confirmLabel}
+          onConfirm={asking.apply}
+          onClose={() => setAsking(null)}
+        />
+      )}
     </div>
   )
 }
@@ -572,11 +615,12 @@ interface ChecksProps {
   item: PreparedPayslip
   mapping: TemplateMapping
   accepted: AcceptedChecks
+  reasons: Record<string, string>
   onAccept: (check: ReconcileCheck) => void
   onTreatAsZero: (lineId: string) => void
 }
 
-function ChecksCard({ item, mapping, accepted, onAccept, onTreatAsZero }: ChecksProps) {
+function ChecksCard({ item, mapping, accepted, reasons, onAccept, onTreatAsZero }: ChecksProps) {
   const c = item.computation
   const canTreatAsZero = (lineId: string | undefined) =>
     lineId !== undefined && lineId in mapping.lines && !mapping.lines[lineId].required
@@ -643,7 +687,7 @@ function ChecksCard({ item, mapping, accepted, onAccept, onTreatAsZero }: Checks
                             {check.kind === 'rounding' ? 'Rounding' : 'Difference'} <span className="num">{signed(check.diffCents!)}</span>
                           </span>
                           {isAccepted ? (
-                            <span className="text-xs text-muted">Accepted</span>
+                            <span className="text-xs text-muted">Accepted: {reasons[checkKey(check.id)] ?? 'no reason given'}</span>
                           ) : (
                             <button
                               type="button"
@@ -664,6 +708,16 @@ function ChecksCard({ item, mapping, accepted, onAccept, onTreatAsZero }: Checks
           </table>
         </div>
 
+        {c.lines
+          .filter((line) => line.status === 'treated-as-zero')
+          .map((line) => (
+            <div key={`z${line.id}`} className="panel tone-sky">
+              <Info aria-hidden="true" />
+              <p className="m-0 text-sm">
+                <span className="font-medium">Treated as zero.</span> {line.label}: {reasons[zeroKey(line.id)] ?? 'no reason given'}
+              </p>
+            </div>
+          ))}
         {c.warnings.map((warning, index) => (
           <div key={`w${index}`} className={`panel ${warning.code === 'to-confirm' ? 'tone-sky' : 'tone-warn'}`}>
             {warning.code === 'to-confirm' ? <Info aria-hidden="true" /> : <TriangleAlert aria-hidden="true" />}

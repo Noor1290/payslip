@@ -7,6 +7,7 @@ import { HUB_APP_ID, mergePayroll, PAYROLL_RESULT, readHubPayload, readHubReply,
 import { bridgePort, type HubRole } from './lib/hubWire'
 import type { ImportedPayroll } from './lib/payrollFile'
 import type { AcceptedChecks } from './lib/payslip'
+import type { Reasons } from './lib/reasons'
 import { loadRates, ratesForCrossCheck, type RatesState } from './lib/ratesStore'
 import { isMonth } from './lib/statutoryRates'
 import { useTemplates } from './lib/useTemplates'
@@ -38,6 +39,7 @@ export default function App() {
   const [period, setPeriod] = useState('')
   const [issueDate, setIssueDate] = useState(todayIso)
   const [accepted, setAccepted] = useState<Record<number, AcceptedChecks>>({})
+  const [reasons, setReasons] = useState<Reasons>({})
   const [treatAsZero, setTreatAsZero] = useState<Map<number, Set<string>>>(() => new Map())
 
   // Everything below only does something inside the Payroll Hub dashboard's frame. Opened on its
@@ -144,6 +146,7 @@ export default function App() {
     // Replacing or clearing the data clears everything that was decided about the old data.
     setData(next)
     setAccepted({})
+    setReasons({})
     setTreatAsZero(new Map())
     setPeriod(next?.period ?? '')
   }
@@ -308,6 +311,8 @@ export default function App() {
             onOpenTemplate={() => setScreen('template')}
             accepted={accepted}
             onAccepted={setAccepted}
+            reasons={reasons}
+            onReasons={setReasons}
             treatAsZero={treatAsZero}
             onTreatAsZero={setTreatAsZero}
           />
