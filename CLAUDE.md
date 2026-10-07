@@ -27,4 +27,4 @@ React 18, Vite, TypeScript strict, Tailwind v4, Zod, lucide-react, Geist and Gei
 - Keep this file lean. Detail belongs in docs/BRIEF.md.
 
 ## Status
-- [ ] Phase 0 plan  - [ ] Phase 1  - [ ] Phase 2  - [ ] Phase 3  - [ ] Phase 4  - [ ] Phase 5  - [ ] Phase 6
+- [x] Phase 0 plan  - [x] Phase 1  - [x] Phase 2  - [x] Phase 3  - [ ] Phase 4  - [ ] Phase 5  - [ ] Phase 6

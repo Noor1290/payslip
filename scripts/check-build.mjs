@@ -108,9 +108,9 @@ try {
   if (missing !== 1) problems.push('The missing Employee CSG was not shown as an error for that employee.')
   if ((await page.getByTestId('payslip-page').count()) !== 0) problems.push('A payslip with an error was still drawn.')
 
-  await page.getByRole('button', { name: 'Template' }).click()
+  await page.getByRole('button', { name: 'Template', exact: true }).click()
   await page.getByRole('heading', { name: 'Where each line comes from' }).waitFor()
-  await page.getByRole('button', { name: 'Statutory rates' }).click()
+  await page.getByRole('button', { name: 'Statutory rates', exact: true }).click()
   await page.getByRole('heading', { name: 'Worked example' }).waitFor()
 
   const storage = await page.evaluate(async () => ({
