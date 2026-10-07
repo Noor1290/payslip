@@ -11,6 +11,8 @@ export interface BuildSettings {
   template: PayslipTemplate
   mapping: TemplateMapping
   rateVersions: readonly RatesVersion[]
+  /** What to say when no version is in force (the dashboard's rates are not loaded, or none saved). */
+  whyNoRates?: string | null
   period: string
   /** Row index -> line ids whose missing figure was accepted as zero. */
   treatAsZero?: ReadonlyMap<number, ReadonlySet<string>>
@@ -27,6 +29,7 @@ export function computeAll(data: ImportedPayroll, settings: BuildSettings): Pays
       template: settings.template,
       mapping: settings.mapping,
       rates,
+      whyNoRates: settings.whyNoRates,
       treatAsZero: settings.treatAsZero?.get(rowIndex) ?? NONE,
     }),
   )

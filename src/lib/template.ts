@@ -157,3 +157,20 @@ export function mappableKeys(
   const blocked = new Set(mapping.neverMap)
   return keys.filter((key) => !blocked.has(key) && rows.some((row) => typeof row[key] === 'number'))
 }
+
+// ---------- fixed in code, never part of a stored template ----------
+// A stored template (Phase 3) holds labels, lines and which payroll column fills each line.
+// The rules below are not in it, so no stored template can change them.
+
+/** Columns that must never fill a payslip line: employer-side columns and "PAYE (calculated)". */
+export const NEVER_MAP: readonly string[] = DEFAULT_TABLE_MAPPING.neverMap
+
+/** Lines every template must keep, with their fixed rules. They sit under Deductions. */
+export const FIXED_LINES: Readonly<Record<string, { name: string; aliases?: string[]; required?: boolean }>> = {
+  csg: { name: 'Employee CSG', aliases: DEFAULT_TABLE_MAPPING.lines.csg.aliases, required: true },
+  nsf: { name: 'Employee NSF', aliases: DEFAULT_TABLE_MAPPING.lines.nsf.aliases, required: true },
+  paye: { name: 'PAYE' },
+}
+
+/** Ids used by the three totals and the checks: a line cannot take one. */
+export const RESERVED_LINE_IDS: readonly string[] = ['totalEarnings', 'totalDeductions', 'netPay', 'dateOfEmployment']

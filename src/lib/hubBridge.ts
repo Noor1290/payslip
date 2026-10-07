@@ -5,6 +5,7 @@
 
 import { z } from 'zod'
 import { formatPeriod } from './dates'
+import { normaliseBrn } from './hubWire'
 import { importPayrollRows, type ImportError, type ImportedPayroll } from './payrollFile'
 
 export const HUB_APP_ID = 'payslip'
@@ -15,7 +16,7 @@ const periodSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/)
 const payloadSchema = z.object({
   dataType: z.string(),
   rows: z.array(z.record(z.string(), z.unknown())).min(1).max(10_000),
-  meta: z.object({ period: periodSchema.optional(), label: z.string().max(120).optional() }).optional(),
+  meta: z.object({ period: periodSchema.optional(), label: z.string().max(120).optional(), brn: z.string().max(50).optional() }).optional(),
 })
 
 const refusalSchema = z.object({ ok: z.literal(false), error: z.string(), code: z.string().optional() })
@@ -36,6 +37,11 @@ export function readHubPayload(payload: unknown): ImportedPayroll {
   if (parsed.data.dataType !== PAYROLL_RESULT) throw new Error('This app can only use payroll results.')
   const result = importPayrollRows(parsed.data.rows, { period: parsed.data.meta?.period })
   if (!result.ok) throw new Error(summarise(result.errors))
+  // When the dashboard says which company the data is about, the rows must agree with it.
+  const brn = parsed.data.meta?.brn
+  if (brn !== undefined && normaliseBrn(brn) !== normaliseBrn(result.data.company.brn)) {
+    throw new Error('The dashboard says this data is for another company than the one in its rows.')
+  }
   return result.data
 }
 

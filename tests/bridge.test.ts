@@ -194,6 +194,19 @@ describe('"Get from dashboard"', () => {
   })
 })
 
+describe('the company the dashboard names for payroll results', () => {
+  const payload = (brn?: string) => ({ dataType: 'payroll-result', rows: fixtureRows(), meta: { period: '2026-09', ...(brn ? { brn } : {}) } })
+
+  it('accepts data whose meta.brn is the BRN in its rows, or that names none', () => {
+    expect(readHubPayload(payload()).company.brn).toBe('C1234567')
+    expect(readHubPayload(payload(' c1234567 ')).rows).toHaveLength(7)
+  })
+
+  it('refuses data whose meta.brn is another company than its rows', () => {
+    expect(() => readHubPayload(payload('C7654321'))).toThrow('for another company than the one in its rows')
+  })
+})
+
 describe('adding new data to the data already open', () => {
   const existing = loadFixture()
   const incoming = (change: (rows: Record<string, unknown>[]) => Record<string, unknown>[], period = '2026-09') =>

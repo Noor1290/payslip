@@ -63,6 +63,8 @@ export interface ComputeInput {
   mapping: TemplateMapping
   /** Rates in force for the pay month, or null when there are none. */
   rates: RatesVersion | null
+  /** Why there are no rates, when the reason is not simply "none in force for this month". */
+  whyNoRates?: string | null
   /** Line ids whose missing figure the user accepted as zero. */
   treatAsZero: ReadonlySet<string>
 }
@@ -180,7 +182,7 @@ export function computePayslip(input: ComputeInput): PayslipComputation {
     return { id, label: CHECK_LABEL[id], payrollKey, payslipCents, payrollCents: payroll.cents, diffCents, kind }
   })
 
-  warnings.push(...crossCheck(row, lines, mapping, rates))
+  warnings.push(...crossCheck(row, lines, mapping, rates, input.whyNoRates ?? null))
 
   let dateOfEmployment: string | null = null
   if (hasValue(row, mapping.dateOfEmployment)) {
@@ -213,9 +215,16 @@ function crossCheck(
   lines: ComputedLine[],
   mapping: TemplateMapping,
   rates: RatesVersion | null,
+  whyNoRates: string | null,
 ): Issue[] {
   if (!rates) {
-    return [{ code: 'no-rates', message: 'No statutory rates are in force for this month, so CSG and NSF were not cross-checked.' }]
+    // Never a guess: with no rates the figures are simply not cross-checked, and the reason is given.
+    return [
+      {
+        code: 'no-rates',
+        message: whyNoRates ?? 'No statutory rates are in force for this month, so CSG and NSF were not cross-checked.',
+      },
+    ]
   }
   const issues: Issue[] = []
   const { csgBase, nsfBase, aged60 } = mapping.crossCheck

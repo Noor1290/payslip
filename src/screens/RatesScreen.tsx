@@ -8,7 +8,7 @@ import {
   crossCheckNsf,
   isMonth,
   maxNsf,
-  nextRevision,
+  highestRevision,
   ratesFor,
   validateRates,
   type RatesInput,
@@ -80,9 +80,8 @@ export function RatesScreen({ versions, onVersions, period }: Props) {
       ...versions,
       {
         ...draft,
-        revision: nextRevision(versions, draft.effectiveFrom),
+        revision: highestRevision(versions, draft.effectiveFrom) + 1,
         createdAt: new Date().toISOString(),
-        createdBy: 'This session (not saved)',
       },
     ])
     setConfirming(false)
@@ -304,7 +303,7 @@ export function RatesScreen({ versions, onVersions, period }: Props) {
                   <td className="right num">{percent(version.csgEmployeeRateHigh)}</td>
                   <td className="right num">{money(version.csgThreshold)}</td>
                   <td className="text-muted">
-                    {version.createdBy ?? ''}
+                    
                     {version.createdAt ? `, ${version.createdAt.slice(0, 10)}` : ''}
                   </td>
                 </tr>
@@ -381,7 +380,7 @@ export function RatesScreen({ versions, onVersions, period }: Props) {
       {confirming && draft && (
         <Dialog
           title="Use these rates?"
-          description={`From ${formatPeriod(draft.effectiveFrom)}, as revision ${nextRevision(versions, draft.effectiveFrom)}. Earlier months keep their own rates.`}
+          description={`From ${formatPeriod(draft.effectiveFrom)}, as revision ${highestRevision(versions, draft.effectiveFrom) + 1}. Earlier months keep their own rates.`}
           icon={<Percent />}
           tone="warn"
           width={600}

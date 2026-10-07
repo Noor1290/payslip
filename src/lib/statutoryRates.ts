@@ -21,11 +21,18 @@ export interface RatesVersion extends RatesValues {
   effectiveFrom: string
   /** A correction for the same month is a new row with the next revision, never an edit. */
   revision: number
+  /** Where the values come from ("Finance Act 2026"), or null. */
+  sourceNote?: string | null
   createdAt?: string
-  createdBy?: string
+  /** True when the person signed in to the dashboard added it. The hub never sends who else did. */
+  createdByYou?: boolean
 }
 
-export type RatesInput = RatesValues & { effectiveFrom: string }
+export type RatesInput = RatesValues & { effectiveFrom: string; sourceNote?: string | null }
+
+export const SOURCE_NOTE_MAX = 300
+/** The dashboard's own limit on an amount. */
+const AMOUNT_MAX = 9_999_999_999.99
 
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/
 
@@ -49,10 +56,42 @@ export function ratesFor(versions: readonly RatesVersion[], period: string): Rat
   return best
 }
 
-/** The revision number a new version for this month would get. */
-export function nextRevision(versions: readonly RatesVersion[], effectiveFrom: string): number {
-  const same = versions.filter((v) => v.effectiveFrom === effectiveFrom).map((v) => v.revision)
-  return same.length === 0 ? 1 : Math.max(...same) + 1
+/** The highest revision seen for a month, 0 when the month has none: the save's expected_revision. */
+export function highestRevision(versions: readonly RatesVersion[], effectiveFrom: string): number {
+  return versions.reduce((best, v) => (v.effectiveFrom === effectiveFrom && v.revision > best ? v.revision : best), 0)
+}
+
+/** How many decimals a number is written with ("1.25" has 2). Nothing is rounded to make it fit. */
+export function decimalsOf(value: number): number {
+  const text = String(Math.abs(value))
+  if (text.includes('e')) return text.includes('e-') ? Number.POSITIVE_INFINITY : 0
+  return (text.split('.')[1] ?? '').length
+}
+
+/** A typed figure as a number, or null when it is not a plain decimal number ("1,5", "1e2", ""). */
+export function parseDecimalText(text: string): number | null {
+  const trimmed = text.trim()
+  return /^\d+(\.\d+)?$/.test(trimmed) ? Number(trimmed) : null
+}
+
+/** The six values, for comparing two versions. */
+export const RATE_VALUE_KEYS = [
+  'nsfEmployeeRate',
+  'nsfCeiling',
+  'nsfExemptAt60',
+  'csgEmployeeRateLow',
+  'csgEmployeeRateHigh',
+  'csgThreshold',
+] as const satisfies readonly (keyof RatesValues)[]
+
+/** A note as the dashboard stores it: trimmed, and null when empty. */
+export function storedNote(note: string | null | undefined): string | null {
+  return (note ?? '').trim() || null
+}
+
+/** True when two versions hold the same six values and the same note. */
+export function sameRates(a: RatesInput, b: RatesInput): boolean {
+  return RATE_VALUE_KEYS.every((key) => a[key] === b[key]) && storedNote(a.sourceNote) === storedNote(b.sourceNote)
 }
 
 /** Field name -> message, empty when the input is valid. */
@@ -63,6 +102,7 @@ export function validateRates(input: RatesInput): Partial<Record<keyof RatesInpu
   const rate = (field: 'nsfEmployeeRate' | 'csgEmployeeRateLow' | 'csgEmployeeRateHigh') => {
     const value = input[field]
     if (!Number.isFinite(value) || value < 0 || value > 100) errors[field] = 'Enter a rate between 0 and 100 %.'
+    else if (decimalsOf(value) > 4) errors[field] = 'A rate can have at most 4 decimals. It is not rounded for you.'
   }
   rate('nsfEmployeeRate')
   rate('csgEmployeeRateLow')
@@ -71,9 +111,14 @@ export function validateRates(input: RatesInput): Partial<Record<keyof RatesInpu
   const amount = (field: 'nsfCeiling' | 'csgThreshold') => {
     const value = input[field]
     if (!Number.isFinite(value) || value < 0) errors[field] = 'Enter an amount of 0 or more.'
+    else if (value > AMOUNT_MAX) errors[field] = 'This amount is too large.'
+    else if (decimalsOf(value) > 2) errors[field] = 'An amount can have at most 2 decimals. It is not rounded for you.'
   }
   amount('nsfCeiling')
   amount('csgThreshold')
+  if ((input.sourceNote ?? '').trim().length > SOURCE_NOTE_MAX) {
+    errors.sourceNote = `Keep the note to ${SOURCE_NOTE_MAX} characters or fewer.`
+  }
   return errors
 }
 

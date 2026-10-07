@@ -1,0 +1,378 @@
+[
+  {
+    "type": "request-data",
+    "payload": {
+      "dataType": "statutory-rates",
+      "params": {
+        "brn": "C1234567"
+      }
+    }
+  },
+  {
+    "type": "send-data",
+    "payload": {
+      "dataType": "statutory-rates",
+      "rows": [
+        {
+          "brn": "C1234567",
+          "effective_from": "2026-07",
+          "expected_revision": 0,
+          "nsf_employee_rate": 1,
+          "nsf_ceiling": 29710,
+          "nsf_exempt_at_60": true,
+          "csg_employee_rate_low": 1.5,
+          "csg_employee_rate_high": 3,
+          "csg_threshold": 50000,
+          "source_note": "Sample figures, not the real ones"
+        }
+      ]
+    }
+  },
+  {
+    "type": "request-data",
+    "payload": {
+      "dataType": "statutory-rates",
+      "params": {
+        "brn": "C1234567"
+      }
+    }
+  },
+  {
+    "type": "request-data",
+    "payload": {
+      "dataType": "payslip-template",
+      "params": {
+        "action": "list",
+        "brn": "C1234567"
+      }
+    }
+  },
+  {
+    "type": "send-data",
+    "payload": {
+      "dataType": "payslip-template",
+      "rows": [
+        {
+          "action": "save-draft",
+          "brn": "C1234567",
+          "name": "Monthly payslip",
+          "body": {
+            "schema": 1,
+            "kind": "table",
+            "labels": {
+              "title": "Payslip",
+              "brnPrefix": "BRN : ",
+              "payPeriodPrefix": "Pay period: ",
+              "employeeInfo": "Employee Info",
+              "name": "Name :",
+              "dateOfEmployment": "Date of Employment :",
+              "nic": "NIC :",
+              "earnings": "Earnings",
+              "deductions": "Deductions",
+              "currency": "Rs",
+              "totalEarnings": "Total Earnings",
+              "totalDeductions": "Total Deductions",
+              "netPay": "Net Pay :",
+              "signatureEmployee": "Signature Employee :",
+              "signatureEmployer": "Signature Employer :",
+              "date": "Date :"
+            },
+            "earnings": [
+              {
+                "id": "basic",
+                "label": "Basic Salary"
+              },
+              {
+                "id": "increment",
+                "label": "Govt Increment"
+              },
+              {
+                "id": "allowances",
+                "label": "Allowances"
+              },
+              {
+                "id": "transport",
+                "label": "Transport Allowance"
+              },
+              {
+                "id": "presenceBonus",
+                "label": "Presence Bonus"
+              },
+              {
+                "id": "productivityBonus",
+                "label": "Productivity Bonus"
+              },
+              {
+                "id": "advance",
+                "label": "Advance"
+              }
+            ],
+            "deductionGroups": [
+              {
+                "label": "Contributions",
+                "gapAfterLabel": true,
+                "lines": [
+                  {
+                    "id": "csg",
+                    "label": "CSG"
+                  },
+                  {
+                    "id": "nsf",
+                    "label": "NSF"
+                  },
+                  {
+                    "id": "paye",
+                    "label": "PAYE"
+                  }
+                ]
+              },
+              {
+                "label": "Others Deductions :",
+                "lines": [
+                  {
+                    "id": "absences",
+                    "label": "Absences :"
+                  },
+                  {
+                    "id": "lateness",
+                    "label": "Lateness"
+                  }
+                ]
+              }
+            ],
+            "mapping": {
+              "lines": {
+                "basic": {
+                  "key": "Basic Salary"
+                },
+                "increment": {
+                  "key": "Govt Increment"
+                },
+                "allowances": {
+                  "key": "Allowances"
+                },
+                "transport": {
+                  "key": "Travelling",
+                  "toConfirm": true
+                },
+                "presenceBonus": {
+                  "key": null
+                },
+                "productivityBonus": {
+                  "key": null
+                },
+                "advance": {
+                  "key": null
+                },
+                "csg": {
+                  "key": "Employee CSG"
+                },
+                "nsf": {
+                  "key": "Employee NSF"
+                },
+                "paye": {
+                  "key": "PAYE"
+                },
+                "absences": {
+                  "key": null
+                },
+                "lateness": {
+                  "key": null
+                }
+              },
+              "crossCheck": {
+                "csgBase": "New Basic Salary",
+                "nsfBase": "Gross Pay",
+                "nsfBaseToConfirm": true
+              }
+            }
+          },
+          "expected_revision": 0
+        }
+      ]
+    }
+  },
+  {
+    "type": "request-data",
+    "payload": {
+      "dataType": "payslip-template",
+      "params": {
+        "action": "load",
+        "template_id": "20000000-0000-4000-8000-000000000001",
+        "brn": "C1234567"
+      }
+    }
+  },
+  {
+    "type": "send-data",
+    "payload": {
+      "dataType": "payslip-template",
+      "rows": [
+        {
+          "action": "save-draft",
+          "brn": "C1234567",
+          "template_id": "20000000-0000-4000-8000-000000000001",
+          "name": "Monthly payslip",
+          "body": {
+            "schema": 1,
+            "kind": "table",
+            "labels": {
+              "title": "Pay advice",
+              "brnPrefix": "BRN : ",
+              "payPeriodPrefix": "Pay period: ",
+              "employeeInfo": "Employee Info",
+              "name": "Name :",
+              "dateOfEmployment": "Date of Employment :",
+              "nic": "NIC :",
+              "earnings": "Earnings",
+              "deductions": "Deductions",
+              "currency": "Rs",
+              "totalEarnings": "Total Earnings",
+              "totalDeductions": "Total Deductions",
+              "netPay": "Net Pay :",
+              "signatureEmployee": "Signature Employee :",
+              "signatureEmployer": "Signature Employer :",
+              "date": "Date :"
+            },
+            "earnings": [
+              {
+                "id": "basic",
+                "label": "Basic Salary"
+              },
+              {
+                "id": "increment",
+                "label": "Govt Increment"
+              },
+              {
+                "id": "allowances",
+                "label": "Allowances"
+              },
+              {
+                "id": "transport",
+                "label": "Transport Allowance"
+              },
+              {
+                "id": "presenceBonus",
+                "label": "Presence Bonus"
+              },
+              {
+                "id": "productivityBonus",
+                "label": "Productivity Bonus"
+              },
+              {
+                "id": "advance",
+                "label": "Advance"
+              }
+            ],
+            "deductionGroups": [
+              {
+                "label": "Contributions",
+                "gapAfterLabel": true,
+                "lines": [
+                  {
+                    "id": "csg",
+                    "label": "CSG"
+                  },
+                  {
+                    "id": "nsf",
+                    "label": "NSF"
+                  },
+                  {
+                    "id": "paye",
+                    "label": "PAYE"
+                  }
+                ]
+              },
+              {
+                "label": "Others Deductions :",
+                "lines": [
+                  {
+                    "id": "absences",
+                    "label": "Absences :"
+                  },
+                  {
+                    "id": "lateness",
+                    "label": "Lateness"
+                  }
+                ]
+              }
+            ],
+            "mapping": {
+              "lines": {
+                "basic": {
+                  "key": "Basic Salary"
+                },
+                "increment": {
+                  "key": "Govt Increment"
+                },
+                "allowances": {
+                  "key": "Allowances"
+                },
+                "transport": {
+                  "key": "Travelling",
+                  "toConfirm": true
+                },
+                "presenceBonus": {
+                  "key": null
+                },
+                "productivityBonus": {
+                  "key": null
+                },
+                "advance": {
+                  "key": null
+                },
+                "csg": {
+                  "key": "Employee CSG"
+                },
+                "nsf": {
+                  "key": "Employee NSF"
+                },
+                "paye": {
+                  "key": "PAYE"
+                },
+                "absences": {
+                  "key": null
+                },
+                "lateness": {
+                  "key": null
+                }
+              },
+              "crossCheck": {
+                "csgBase": "New Basic Salary",
+                "nsfBase": "Gross Pay",
+                "nsfBaseToConfirm": true
+              }
+            }
+          },
+          "expected_revision": 1
+        }
+      ]
+    }
+  },
+  {
+    "type": "send-data",
+    "payload": {
+      "dataType": "payslip-template",
+      "rows": [
+        {
+          "action": "publish",
+          "brn": "C1234567",
+          "template_id": "20000000-0000-4000-8000-000000000001",
+          "expected_revision": 2
+        }
+      ]
+    }
+  },
+  {
+    "type": "request-data",
+    "payload": {
+      "dataType": "payslip-template",
+      "params": {
+        "action": "load",
+        "template_id": "20000000-0000-4000-8000-000000000001",
+        "version": 1,
+        "brn": "C1234567"
+      }
+    }
+  }
+]
