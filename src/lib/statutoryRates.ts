@@ -149,3 +149,51 @@ export function crossCheckCsg(base: number, rates: RatesValues): number {
 export function maxNsf(rates: RatesValues): number {
   return payrollRound2(rates.nsfCeiling * (rates.nsfEmployeeRate / 100))
 }
+
+/** The "Add rates" form as typed. Figures stay text until they are checked: nothing is rounded. */
+export interface RatesFormText {
+  effectiveFrom: string
+  nsfEmployeeRate: string
+  nsfCeiling: string
+  nsfExemptAt60: boolean
+  csgEmployeeRateLow: string
+  csgEmployeeRateHigh: string
+  csgThreshold: string
+  sourceNote: string
+}
+
+export type RatesFormErrors = Partial<Record<keyof RatesFormText, string>>
+
+const NUMBER_FIELDS = ['nsfEmployeeRate', 'nsfCeiling', 'csgEmployeeRateLow', 'csgEmployeeRateHigh', 'csgThreshold'] as const
+
+export function ratesFormOf(values: RatesValues, effectiveFrom: string): RatesFormText {
+  return {
+    effectiveFrom,
+    nsfEmployeeRate: String(values.nsfEmployeeRate),
+    nsfCeiling: String(values.nsfCeiling),
+    nsfExemptAt60: values.nsfExemptAt60,
+    csgEmployeeRateLow: String(values.csgEmployeeRateLow),
+    csgEmployeeRateHigh: String(values.csgEmployeeRateHigh),
+    csgThreshold: String(values.csgThreshold),
+    sourceNote: '',
+  }
+}
+
+/** Reads the form as typed. Either the values to save, or a message per field. */
+export function readRatesForm(form: RatesFormText): { ok: true; input: RatesInput } | { ok: false; errors: RatesFormErrors } {
+  const errors: RatesFormErrors = {}
+  const numbers = {} as Record<(typeof NUMBER_FIELDS)[number], number>
+  for (const field of NUMBER_FIELDS) {
+    const value = parseDecimalText(form[field])
+    if (value === null) errors[field] = 'Enter a number with a decimal point, for example 1.5.'
+    numbers[field] = value ?? 0
+  }
+  const input: RatesInput = {
+    effectiveFrom: form.effectiveFrom,
+    ...numbers,
+    nsfExemptAt60: form.nsfExemptAt60,
+    sourceNote: storedNote(form.sourceNote),
+  }
+  const found = { ...validateRates(input), ...errors }
+  return Object.keys(found).length > 0 ? { ok: false, errors: found } : { ok: true, input }
+}

@@ -5,6 +5,7 @@ import {
   crossCheckNsf,
   maxNsf,
   ratesFor,
+  readRatesForm,
   validateRates,
   type RatesVersion,
 } from '../src/lib/statutoryRates'
@@ -114,5 +115,52 @@ describe('validateRates', () => {
     expect(validateRates({ ...input, csgThreshold: -0.01 }).csgThreshold).toBeTruthy()
     expect(validateRates({ ...input, effectiveFrom: '2026-13' }).effectiveFrom).toBeTruthy()
     expect(validateRates({ ...input, csgEmployeeRateHigh: Number.NaN }).csgEmployeeRateHigh).toBeTruthy()
+  })
+})
+
+describe('the "Add rates" form, read as typed', () => {
+  const form = {
+    effectiveFrom: '2026-07',
+    nsfEmployeeRate: '1',
+    nsfCeiling: '29710',
+    nsfExemptAt60: true,
+    csgEmployeeRateLow: '1.5',
+    csgEmployeeRateHigh: '3',
+    csgThreshold: '50000',
+    sourceNote: '  Sample figures  ',
+  }
+
+  it('gives the values exactly as typed, with the note trimmed', () => {
+    const read = readRatesForm({ ...form, csgEmployeeRateLow: '1.2345', nsfCeiling: '29710.55' })
+    expect(read).toEqual({
+      ok: true,
+      input: {
+        effectiveFrom: '2026-07',
+        nsfEmployeeRate: 1,
+        nsfCeiling: 29710.55,
+        nsfExemptAt60: true,
+        csgEmployeeRateLow: 1.2345,
+        csgEmployeeRateHigh: 3,
+        csgThreshold: 50000,
+        sourceNote: 'Sample figures',
+      },
+    })
+    expect(readRatesForm({ ...form, sourceNote: '   ' })).toMatchObject({ ok: true, input: { sourceNote: null } })
+  })
+
+  it('refuses a rate with more than 4 decimals and an amount with more than 2: never rounded', () => {
+    expect(readRatesForm({ ...form, csgEmployeeRateLow: '1.23456' })).toMatchObject({ ok: false, errors: { csgEmployeeRateLow: expect.stringContaining('at most 4 decimals') } })
+    expect(readRatesForm({ ...form, nsfCeiling: '29710.555' })).toMatchObject({ ok: false, errors: { nsfCeiling: expect.stringContaining('at most 2 decimals') } })
+    expect(readRatesForm({ ...form, csgThreshold: '50000.001' }).ok).toBe(false)
+  })
+
+  it('refuses what is not a plain number, a rate out of range, a missing month and a note that is too long', () => {
+    for (const typed of ['', '1,5', '1e2', '-1', 'abc', '1.']) {
+      expect(readRatesForm({ ...form, nsfEmployeeRate: typed }).ok).toBe(false)
+    }
+    expect(readRatesForm({ ...form, csgEmployeeRateHigh: '100.01' }).ok).toBe(false)
+    expect(readRatesForm({ ...form, effectiveFrom: '' })).toMatchObject({ ok: false, errors: { effectiveFrom: expect.any(String) } })
+    expect(readRatesForm({ ...form, sourceNote: 'x'.repeat(301) })).toMatchObject({ ok: false, errors: { sourceNote: expect.any(String) } })
+    expect(readRatesForm({ ...form, sourceNote: 'x'.repeat(300) }).ok).toBe(true)
   })
 })

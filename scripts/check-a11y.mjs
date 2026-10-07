@@ -204,14 +204,14 @@ try {
 
     await page.getByRole('button', { name: 'Statutory rates' }).click()
     await page.getByRole('heading', { name: 'Worked example' }).waitFor()
-    await page.getByRole('button', { name: 'Add rates from a month' }).click()
     await checkScreen(page, theme, 'rates')
     await checkFocusRing(page, theme, 'rates', 24)
-    await checkDialog(page, theme, 'Review the change', 'Use these rates?')
 
     // The theme switch works in both directions and is a real, named button.
     await page.getByRole('button', { name: theme === 'dark' ? 'Light theme' : 'Dark theme' }).click()
-    await page.waitForTimeout(400) // let the 150ms colour transitions finish
+    // Let the 150ms colour transitions finish, however busy the machine is.
+    await page.waitForTimeout(400)
+    await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== 'running' || animation.effect?.getTiming().iterations === Infinity))
     await checkScreen(page, `${theme} switched`, 'rates')
     await context.close()
   }

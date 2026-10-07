@@ -1,13 +1,14 @@
 import { CircleAlert, Download, Inbox, LayoutTemplate, Moon, Percent, ReceiptText, Sun } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ImportDialog, type IncomingPayroll } from './components/ImportDialog'
-import { DEFAULT_STATUTORY_RATES } from './data/defaultStatutoryRates'
 import { preparePayslips } from './lib/build'
 import { formatPeriod, todayIso } from './lib/dates'
 import { HUB_APP_ID, mergePayroll, PAYROLL_RESULT, readHubPayload, readHubReply, type MergeResult } from './lib/hubBridge'
+import { bridgePort } from './lib/hubWire'
 import type { ImportedPayroll } from './lib/payrollFile'
 import type { AcceptedChecks } from './lib/payslip'
-import { isMonth, type RatesVersion } from './lib/statutoryRates'
+import { loadRates, ratesForCrossCheck, type RatesState } from './lib/ratesStore'
+import { isMonth } from './lib/statutoryRates'
 import { DEFAULT_TABLE_MAPPING, TABLE_TEMPLATE, type TemplateMapping } from './lib/template'
 import { PayslipsScreen } from './screens/PayslipsScreen'
 import { RatesScreen } from './screens/RatesScreen'
@@ -37,7 +38,6 @@ export default function App() {
   const [period, setPeriod] = useState('')
   const [issueDate, setIssueDate] = useState(todayIso)
   const [mapping, setMapping] = useState<TemplateMapping>(DEFAULT_TABLE_MAPPING)
-  const [rateVersions, setRateVersions] = useState<RatesVersion[]>(() => [...DEFAULT_STATUTORY_RATES])
   const [accepted, setAccepted] = useState<Record<number, AcceptedChecks>>({})
   const [treatAsZero, setTreatAsZero] = useState<Map<number, Set<string>>>(() => new Map())
 
@@ -45,6 +45,14 @@ export default function App() {
   // own, the bridge stays silent, nothing is ever waiting and no dashboard control is shown.
   const insideDashboard = window.PayrollHubBridge.isEmbedded()
   const [connected, setConnected] = useState(false)
+  // Statutory rates: the bundled defaults when opened on its own, otherwise ONLY what the
+  // dashboard returns for the company. Settings, not payroll figures; still memory only.
+  const [rates, setRates] = useState<RatesState>(() => (insideDashboard ? { status: 'waiting' } : { status: 'standalone' }))
+  const [ratesReload, setRatesReload] = useState(0)
+  // Companies (by BRN) for which the dashboard said this user is not an admin: shown read-only.
+  const [readOnlyBrns, setReadOnlyBrns] = useState<ReadonlySet<string>>(() => new Set())
+  // The company every save is for: the one in the payroll data that is open.
+  const brn = data?.company.brn ?? null
   // Data that was read and checked but not imported yet: from the dashboard, or a second file.
   // Kept in this state and nowhere else, so a reload or Discard is the end of it.
   const [incoming, setIncoming] = useState<IncomingPayroll | null>(null)
@@ -72,6 +80,20 @@ export default function App() {
     return window.PayrollHubBridge.onStatus(setConnected)
   }, [receiveFromDashboard])
 
+  useEffect(() => {
+    if (!insideDashboard || !connected) return
+    let current = true
+    setRates({ status: 'loading' })
+    void loadRates(bridgePort, brn).then((result) => {
+      // An answer for a company that is no longer the one open is dropped.
+      if (!current) return
+      setRates(result.ok ? { status: 'loaded', versions: result.versions, company: result.company } : { status: 'failed', failure: result.failure })
+    })
+    return () => {
+      current = false
+    }
+  }, [insideDashboard, connected, brn, ratesReload])
+
   const getFromDashboard = async () => {
     setRequesting(true)
     setDashboardError(null)
@@ -81,12 +103,17 @@ export default function App() {
     else setDashboardError(result.error)
   }
 
+  const crossCheckRates = useMemo(() => ratesForCrossCheck(rates, period), [rates, period])
   const prepared = useMemo(
     () =>
       data && isMonth(period)
-        ? preparePayslips(data, { template: TABLE_TEMPLATE, mapping, rateVersions, period, treatAsZero }, issueDate)
+        ? preparePayslips(
+            data,
+            { template: TABLE_TEMPLATE, mapping, rateVersions: crossCheckRates.versions, whyNoRates: crossCheckRates.whyNone, period, treatAsZero },
+            issueDate,
+          )
         : [],
-    [data, period, mapping, rateVersions, treatAsZero, issueDate],
+    [data, period, mapping, crossCheckRates, treatAsZero, issueDate],
   )
 
   const loadData = (next: ImportedPayroll | null) => {
@@ -257,7 +284,18 @@ export default function App() {
           />
         )}
         {screen === 'template' && <TemplateScreen data={data} mapping={mapping} onMapping={setMapping} />}
-        {screen === 'rates' && <RatesScreen versions={rateVersions} onVersions={setRateVersions} period={period} />}
+        {screen === 'rates' && (
+          <RatesScreen
+            state={rates}
+            port={bridgePort}
+            period={period}
+            brn={brn}
+            readOnly={brn !== null && readOnlyBrns.has(brn)}
+            onReload={() => setRatesReload((count) => count + 1)}
+            onVersions={(versions) => setRates((previous) => (previous.status === 'loaded' ? { ...previous, versions } : previous))}
+            onForbidden={() => brn !== null && setReadOnlyBrns((previous) => new Set([...previous, brn]))}
+          />
+        )}
       </main>
 
       {dialogOpen && incoming && (
