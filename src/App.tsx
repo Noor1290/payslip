@@ -4,7 +4,7 @@ import { ImportDialog, type IncomingPayroll } from './components/ImportDialog'
 import { preparePayslips } from './lib/build'
 import { formatPeriod, todayIso } from './lib/dates'
 import { HUB_APP_ID, mergePayroll, PAYROLL_RESULT, readHubPayload, readHubReply, type MergeResult } from './lib/hubBridge'
-import { bridgePort } from './lib/hubWire'
+import { bridgePort, type HubRole } from './lib/hubWire'
 import type { ImportedPayroll } from './lib/payrollFile'
 import type { AcceptedChecks } from './lib/payslip'
 import { loadRates, ratesForCrossCheck, type RatesState } from './lib/ratesStore'
@@ -86,14 +86,19 @@ export default function App() {
     void loadRates(bridgePort, brn).then((result) => {
       // An answer for a company that is no longer the one open is dropped.
       if (!current) return
-      setRates(result.ok ? { status: 'loaded', versions: result.versions, company: result.company } : { status: 'failed', failure: result.failure })
+      if (result.ok) setRole((previous) => result.role ?? previous)
+      setRates(result.ok ? { status: 'loaded', versions: result.versions, company: result.company, role: result.role } : { status: 'failed', failure: result.failure })
     })
     return () => {
       current = false
     }
   }, [insideDashboard, connected, brn, ratesReload])
 
-  const readOnly = brn !== null && readOnlyBrns.has(brn)
+  // The dashboard says the role with every answer: a member sees read-only from the start. The
+  // first refused save still turns the company read-only, in case the hint was missing or wrong.
+  const [role, setRole] = useState<HubRole | null>(null)
+  const noteRole = useCallback((found: HubRole | null) => setRole((previous) => found ?? previous), [])
+  const readOnly = role === 'member' || (brn !== null && readOnlyBrns.has(brn))
   const markReadOnly = useCallback(() => {
     if (brn !== null) setReadOnlyBrns((previous) => new Set([...previous, brn]))
   }, [brn])
@@ -102,7 +107,7 @@ export default function App() {
     setReadOnlyBrns((previous) => new Set([...previous].filter((known) => known !== brn)))
   }, [brn])
   // Templates: the built-in one when opened on its own; inside the dashboard, the company's own.
-  const templates = useTemplates({ embedded: insideDashboard, connected, brn, port: bridgePort, readOnly, onForbidden: markReadOnly })
+  const templates = useTemplates({ embedded: insideDashboard, connected, brn, port: bridgePort, readOnly, onForbidden: markReadOnly, onRole: noteRole })
   const { template, mapping } = templates.active
 
   // Unsaved template changes live in this tab's memory only: say so before the tab is closed.

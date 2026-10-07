@@ -3,7 +3,7 @@
 // between the app's pages but never a reload. No payroll figure is involved.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { failure, normaliseBrn, type Failure, type HubCompany, type HubPort, type SaveEnd } from './hubWire'
+import { failure, normaliseBrn, type Failure, type HubCompany, type HubPort, type HubRole, type SaveEnd } from './hubWire'
 import { bodyProblems, BUILT_IN_BODY, nameProblem, readBody, sameBody, type TemplateBody } from './templateBody'
 import {
   checkDraftSave,
@@ -23,7 +23,7 @@ import { activeTemplate, preselection, type ActiveTemplate, type TemplateChoice 
 
 export type TemplatesList =
   | { status: 'standalone' | 'waiting' | 'loading' }
-  | { status: 'loaded'; items: TemplateSummary[]; company: HubCompany }
+  | { status: 'loaded'; items: TemplateSummary[]; company: HubCompany; role: HubRole | null }
   | { status: 'failed'; failure: Failure }
 
 export interface EditorState {
@@ -68,9 +68,11 @@ interface Options {
   /** True once the dashboard has said this user is not an admin of the company. */
   readOnly: boolean
   onForbidden: () => void
+  /** The role the dashboard reported with an answer. */
+  onRole: (role: HubRole | null) => void
 }
 
-export function useTemplates({ embedded, connected, brn, port, readOnly, onForbidden }: Options) {
+export function useTemplates({ embedded, connected, brn, port, readOnly, onForbidden, onRole }: Options) {
   const [list, setList] = useState<TemplatesList>(() => ({ status: embedded ? 'waiting' : 'standalone' }))
   const [reloads, setReloads] = useState(0)
   const [choice, setChoice] = useState<TemplateChoice>({ kind: 'built-in' })
@@ -112,7 +114,8 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     void listTemplates(port, brn).then(async (result) => {
       if (!current) return
       if (!result.ok) return setList({ status: 'failed', failure: result.failure })
-      setList({ status: 'loaded', items: result.value, company: result.company })
+      setList({ status: 'loaded', items: result.value, company: result.company, role: result.role })
+      onRole(result.role)
 
       const company = normaliseBrn(result.company.brn)
       if (chosenFor.current === company) return
@@ -131,7 +134,7 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     return () => {
       current = false
     }
-  }, [embedded, connected, brn, port, reloads, choosePublished])
+  }, [embedded, connected, brn, port, reloads, choosePublished, onRole])
 
   const reload = useCallback(() => setReloads((count) => count + 1), [])
   const items = list.status === 'loaded' ? list.items : []

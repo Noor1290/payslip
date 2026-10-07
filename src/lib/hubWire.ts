@@ -8,6 +8,7 @@ import { z } from 'zod'
 
 export const STATUTORY_RATES = 'statutory-rates'
 export const PAYSLIP_TEMPLATE = 'payslip-template'
+export const PAYSLIP_ISSUE = 'payslip-issue'
 
 /** How long the app waits for an answer to a request before it says the dashboard did not answer. */
 export const REQUEST_TIMEOUT_MS = 15_000
@@ -36,8 +37,16 @@ export const REFUSAL_CODES = [
 ] as const
 export type RefusalCode = (typeof REFUSAL_CODES)[number]
 
+/**
+ * Codes of the data types behind the password gate (issued payslips). None of them means
+ * "maybe stored": after "locked" on a save NOTHING was stored, so the reload rule does not apply.
+ */
+export const GATE_CODES = ['locked', 'denied', 'timeout'] as const
+export type GateCode = (typeof GATE_CODES)[number]
+
 export type FailureKind =
   | RefusalCode
+  | GateCode
   /** Nothing usable came back in time, or the refusal had no code this app knows. */
   | 'no-answer'
   /** The answer was not in the agreed format. */
@@ -55,6 +64,11 @@ export interface Failure {
   detail: string
   /** The dashboard's own sentence, when it sent one. It names fields, never values. */
   hubError: string | null
+  /**
+   * For a refused month of payslips: the position, from 0, of the payslip at fault in the list
+   * that was sent. The dashboard never names the employee; the app does, from this position.
+   */
+  index: number | null
 }
 
 /** BRNs are compared the way the dashboard compares them. */
@@ -95,6 +109,18 @@ const TEXT: Record<FailureKind, { title: string; detail: string }> = {
     title: 'The dashboard could not do this',
     detail: 'Check that you are signed in to the dashboard with a company selected, and that it is online.',
   },
+  locked: {
+    title: 'The dashboard is locked',
+    detail: 'Nothing was stored. Confirm your password in the dashboard to unlock it, then do this again.',
+  },
+  denied: {
+    title: 'The request was declined in the dashboard',
+    detail: 'Nothing was sent to this app. Ask again when you are ready, and allow it in the dashboard.',
+  },
+  timeout: {
+    title: 'Nobody answered the question in the dashboard',
+    detail: 'The dashboard asks before it sends issued payslips. Ask again, then allow it there.',
+  },
   'no-answer': {
     title: 'The dashboard did not answer',
     detail: 'Check that the dashboard is open and signed in, then check again.',
@@ -113,23 +139,24 @@ const TEXT: Record<FailureKind, { title: string; detail: string }> = {
   },
 }
 
-export function failure(kind: FailureKind, hubError: string | null = null): Failure {
-  return { kind, title: TEXT[kind].title, detail: TEXT[kind].detail, hubError }
+export function failure(kind: FailureKind, hubError: string | null = null, index: number | null = null): Failure {
+  return { kind, title: TEXT[kind].title, detail: TEXT[kind].detail, hubError, index }
 }
 
 const refusalSchema = z.object({
   ok: z.literal(false),
   error: z.string().max(400).optional(),
   code: z.string().max(40).optional(),
+  index: z.number().int().min(0).max(100_000).optional(),
 })
 
-const isRefusalCode = (code: string | undefined): code is RefusalCode =>
-  code !== undefined && (REFUSAL_CODES as readonly string[]).includes(code)
+const isRefusalCode = (code: string | undefined): code is RefusalCode | GateCode =>
+  code !== undefined && ([...REFUSAL_CODES, ...GATE_CODES] as readonly string[]).includes(code)
 
 /** A refusal with no code (the bridge's own time-out, "not registered") counts as no answer. */
 function failureOfRefusal(refusal: z.infer<typeof refusalSchema>): Failure {
   const hubError = refusal.error?.trim() || null
-  return failure(isRefusalCode(refusal.code) ? refusal.code : 'no-answer', hubError)
+  return failure(isRefusalCode(refusal.code) ? refusal.code : 'no-answer', hubError, refusal.index ?? null)
 }
 
 const NO_ANSWER = Symbol('no answer')
@@ -156,13 +183,32 @@ export interface HubCompany {
   brn: string
 }
 
-export type Answer<T> = { ok: true; rows: T[]; company: HubCompany } | { ok: false; failure: Failure }
+/** The signed-in user's role in the company the answer is about. A hint: the database decides. */
+export type HubRole = 'admin' | 'member'
+
+export type Answer<T> =
+  | { ok: true; rows: T[]; company: HubCompany; role: HubRole | null; period: string | null }
+  | { ok: false; failure: Failure }
+
+export interface AskOptions {
+  /** How long the app itself waits. Null: as long as the bridge does (the dashboard asks its user first). */
+  timeoutMs?: number | null
+  /** The most rows this kind of answer may have. */
+  maxRows?: number
+}
 
 const answerSchema = z.object({
   ok: z.literal(true),
   dataType: z.string(),
-  rows: z.array(z.unknown()).max(1_000),
-  meta: z.object({ label: z.string().max(120).optional(), brn: z.string().max(50).optional() }).optional(),
+  rows: z.array(z.unknown()).max(5_000),
+  meta: z
+    .object({
+      label: z.string().max(120).optional(),
+      brn: z.string().max(50).optional(),
+      role: z.enum(['admin', 'member']).optional(),
+      period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),
+    })
+    .optional(),
 })
 
 /**
@@ -176,9 +222,11 @@ export async function ask<T>(
   params: Record<string, unknown>,
   expectedBrn: string | null,
   rowSchema: z.ZodType<T>,
+  options: AskOptions = {},
 ): Promise<Answer<T>> {
   const payload = { dataType, params: expectedBrn === null ? params : { ...params, brn: expectedBrn } }
-  const reply = await withTimeout(port.send('request-data', payload), port.requestTimeoutMs ?? REQUEST_TIMEOUT_MS)
+  const asked = port.send('request-data', payload)
+  const reply = options.timeoutMs === null ? await asked.catch(() => NO_ANSWER) : await withTimeout(asked, options.timeoutMs ?? port.requestTimeoutMs ?? REQUEST_TIMEOUT_MS)
   if (reply === NO_ANSWER) return { ok: false, failure: failure('no-answer') }
 
   const refusal = refusalSchema.safeParse(reply)
@@ -186,6 +234,7 @@ export async function ask<T>(
 
   const answer = answerSchema.safeParse(reply)
   if (!answer.success || answer.data.dataType !== dataType) return { ok: false, failure: failure('bad-answer') }
+  if (answer.data.rows.length > (options.maxRows ?? 1_000)) return { ok: false, failure: failure('bad-answer') }
 
   const brn = answer.data.meta?.brn?.trim()
   if (!brn) return { ok: false, failure: failure('no-company-brn') }
@@ -195,7 +244,13 @@ export async function ask<T>(
 
   const rows = z.array(rowSchema).safeParse(answer.data.rows)
   if (!rows.success) return { ok: false, failure: failure('bad-answer') }
-  return { ok: true, rows: rows.data, company: { name: answer.data.meta?.label?.trim() ?? '', brn } }
+  return {
+    ok: true,
+    rows: rows.data,
+    company: { name: answer.data.meta?.label?.trim() ?? '', brn },
+    role: answer.data.meta?.role ?? null,
+    period: answer.data.meta?.period ?? null,
+  }
 }
 
 export type Saved<R> =

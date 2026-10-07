@@ -1,4 +1,5 @@
-// A stand-in for the Payroll Hub dashboard's side of "statutory-rates" and "payslip-template",
+// A stand-in for the Payroll Hub dashboard's side of "statutory-rates", "payslip-template" and
+// "payslip-issue",
 // kept in memory, for the tests and for scripts/check-bridge.mjs. It follows the wire contract in
 // docs/INTEGRATION.md: strict fields, one row per save, expected_revision, the refusal codes.
 // Everything in it is invented (ABC Co Ltd).
@@ -17,6 +18,14 @@ export function createFakeHub() {
     templates: [],
     /** Published versions: { templateId, version, name, body, publishedAt, by }. */
     versions: [],
+    /** The password gate. Issued payslips need it open. */
+    gateOpen: true,
+    /** What the dashboard user answers when asked to send issued payslips: allow, deny, timeout. */
+    prompt: 'allow',
+    /** National IDs of the current employees, or null when everyone is known. */
+    employees: null,
+    /** Issued payslips: wire fields plus `period` and `by`. Never changed, never removed. */
+    issued: [],
     /** Every message handled, in order: { type, payload }. */
     log: [],
     /**
@@ -42,6 +51,9 @@ export function createFakeHub() {
     'not-found': 'The dashboard has no such item.',
     'too-large': 'It is too large to store.',
     unavailable: 'The dashboard could not confirm the save in time.',
+    locked: 'The dashboard is locked, so nothing was issued. Confirm your password there, then issue again.',
+    denied: 'The request was declined.',
+    timeout: 'Nobody answered in time.',
   }
   const refuse = (code, error) => ({ ok: false, code, error: error ?? SENTENCES[code] })
   const field = (name) => refuse('invalid', `"${name}" is missing or not valid.`)
@@ -75,7 +87,7 @@ export function createFakeHub() {
     if (brn !== undefined && (!state.company.brn || norm(state.company.brn) !== norm(brn))) return refuse('wrong-company')
     return null
   }
-  const meta = () => ({ label: state.company.name, ...(state.company.brn ? { brn: state.company.brn } : {}) })
+  const meta = () => ({ label: state.company.name, ...(state.company.brn ? { brn: state.company.brn } : {}), role: state.role === 'admin' ? 'admin' : 'member' })
   const brnProblem = (brn, required) =>
     brn === undefined ? required : typeof brn !== 'string' || brn.trim() === '' || brn.length > 50
 
@@ -266,12 +278,127 @@ export function createFakeHub() {
     }
   }
 
+  // ---------- payslip-issue ----------
+
+  const PAYSLIP_KEYS = ['national_id', 'expected_revision', 'template_id', 'template_version', 'rates', 'lines', 'accepted_differences']
+  const SNAPSHOT_KEYS = ['effective_from', 'revision', 'nsf_exempt_at_60', ...RATE_KEYS, ...AMOUNT_KEYS]
+  const at = (refusal, index) => ({ ...refusal, index })
+  const adminContext = (brn) => context(brn) ?? (state.role !== 'admin' ? refuse('forbidden', 'Only an admin of this company can read or issue payslips.') : null)
+  const latestIssued = (period, nationalId) =>
+    state.issued.filter((row) => row.period === period && row.national_id === nationalId).reduce((best, row) => (!best || row.revision > best.revision ? row : best), null)
+
+  const answerIssued = (params) => {
+    if (!isObject(params) || params.action !== 'load') return field('action')
+    if (unknownKey(params, ['action', 'brn', 'period'])) return refuse('invalid', 'Unexpected field in the data.')
+    if (brnProblem(params.brn, true)) return field('brn')
+    if (typeof params.period !== 'string' || !MONTH.test(params.period)) return field('period')
+    const refusal = adminContext(params.brn)
+    if (refusal) return refusal
+    // The dashboard asks its user first, and the password gate must be open.
+    if (state.prompt === 'deny') return refuse('denied')
+    if (state.prompt === 'timeout') return refuse('timeout')
+    if (!state.gateOpen) return refuse('locked', 'The dashboard is locked. Confirm your password there to unlock it, then ask again.')
+    const ids = [...new Set(state.issued.filter((row) => row.period === params.period).map((row) => row.national_id))].sort()
+    const rows = ids.map((id) => {
+      const { by, period: _period, ...row } = latestIssued(params.period, id)
+      return { ...copy(row), issued_by_you: by === 'you' }
+    })
+    return { ok: true, dataType: 'payslip-issue', rows, meta: { ...meta(), period: params.period } }
+  }
+
+  /** What is wrong with one payslip's shape, or null. */
+  const payslipShape = (payslip) => {
+    if (!isObject(payslip)) return 'payslip'
+    const extra = unknownKey(payslip, PAYSLIP_KEYS)
+    if (extra) return extra
+    if (typeof payslip.national_id !== 'string' || payslip.national_id.trim() === '' || payslip.national_id.length > 50) return 'national_id'
+    if (!Number.isInteger(payslip.expected_revision) || payslip.expected_revision < 0 || payslip.expected_revision > 50) return 'expected_revision'
+    if (typeof payslip.template_id !== 'string' || !UUID.test(payslip.template_id)) return 'template_id'
+    if (!Number.isInteger(payslip.template_version) || payslip.template_version < 1) return 'template_version'
+    if (payslip.rates !== null) {
+      const rates = payslip.rates
+      if (!isObject(rates) || unknownKey(rates, SNAPSHOT_KEYS) || SNAPSHOT_KEYS.some((key) => !(key in rates))) return 'rates'
+      if (typeof rates.effective_from !== 'string' || !MONTH.test(rates.effective_from) || !Number.isInteger(rates.revision) || rates.revision < 1) return 'rates'
+      if (typeof rates.nsf_exempt_at_60 !== 'boolean' || [...RATE_KEYS, ...AMOUNT_KEYS].some((key) => typeof rates[key] !== 'number')) return 'rates'
+    }
+    if (!Array.isArray(payslip.lines) || payslip.lines.length < 1 || payslip.lines.length > 200 || !payslip.lines.every(isObject)) return 'lines'
+    const differences = payslip.accepted_differences
+    if (!Array.isArray(differences) || differences.length > 50) return 'accepted_differences'
+    for (const difference of differences) {
+      if (!isObject(difference) || unknownKey(difference, ['what', 'payroll', 'payslip', 'reason']) || typeof difference.payroll !== 'number' || typeof difference.payslip !== 'number') return 'accepted_differences'
+      if (typeof difference.what !== 'string' || difference.what.trim().length < 1 || difference.what.trim().length > 80) return 'accepted_differences'
+      if (typeof difference.reason !== 'string' || difference.reason.trim().length < 1 || difference.reason.trim().length > 300) return 'accepted_differences'
+    }
+    return null
+  }
+
+  const checkIssue = (rows) => {
+    const row = rows[0]
+    if (isObject(row) && Array.isArray(row.payslips) && row.payslips.length > 1000) {
+      return refuse('too-large', 'At most 1000 payslips can be issued in one save. Nothing was issued.')
+    }
+    if (bytes(rows) > 4_000_000) return refuse('too-large', 'The data is larger than the dashboard accepts.')
+    if (!isObject(row) || row.action !== 'issue') return field('action')
+    if (unknownKey(row, ['action', 'brn', 'period', 'payslips'])) return refuse('invalid', 'Unexpected field in the data.')
+    if (brnProblem(row.brn, true)) return field('brn')
+    if (typeof row.period !== 'string' || !MONTH.test(row.period)) return field('period')
+    if (!Array.isArray(row.payslips) || row.payslips.length < 1) return field('payslips')
+    for (const [index, payslip] of row.payslips.entries()) {
+      const wrong = payslipShape(payslip)
+      if (wrong) return at(field(`payslips.${index}.${wrong}`), index)
+    }
+    const refusal = adminContext(row.brn)
+    if (refusal) return refusal
+    if (!state.gateOpen) return refuse('locked')
+
+    const seen = new Set()
+    for (const [index, payslip] of row.payslips.entries()) {
+      const id = payslip.national_id.trim()
+      if (bytes(payslip) > 16_000) return at(refuse('too-large', 'A payslip is larger than the dashboard accepts (16 KB). Nothing was issued.'), index)
+      if (hasFile(payslip)) return at(refuse('invalid', 'A payslip cannot contain images or other embedded files. Nothing was issued.'), index)
+      if (seen.has(id)) return at(refuse('invalid', 'The same employee appears twice in the month. Nothing was issued.'), index)
+      seen.add(id)
+    }
+    for (const [index, payslip] of row.payslips.entries()) {
+      const id = payslip.national_id.trim()
+      if (state.employees && !state.employees.includes(id)) {
+        return at(refuse('not-found', `Payslip ${index + 1} is for someone who is not a current employee of this company. Nothing was issued.`), index)
+      }
+      if (!state.versions.some((version) => version.templateId === payslip.template_id && version.version === payslip.template_version)) {
+        return at(refuse('not-found', `Payslip ${index + 1} names a template version this company does not have. Nothing was issued.`), index)
+      }
+      const latest = latestIssued(row.period, id)?.revision ?? 0
+      if (latest !== payslip.expected_revision) {
+        return at(refuse('stale', `Payslip ${index + 1} was issued by someone else since the month was loaded. Nothing was issued.`), index)
+      }
+      if (latest >= 50) return at(refuse('too-large', `Payslip ${index + 1} already has 50 revisions for that month. Nothing was issued.`), index)
+    }
+    return {
+      store: () => {
+        const issuedAt = stamp()
+        const stored = row.payslips.map((payslip) => {
+          const { expected_revision: expected, ...rest } = copy(payslip)
+          return { ...rest, national_id: payslip.national_id.trim(), revision: expected + 1, issued_at: issuedAt, period: row.period, by: 'you' }
+        })
+        state.issued.push(...stored)
+        return { period: row.period, issued: stored.length, issued_at: issuedAt, payslips: stored.map((p) => ({ national_id: p.national_id, revision: p.revision })) }
+      },
+    }
+  }
+
+  /** Another admin issues the next revision for one employee, as if from another browser. */
+  function otherAdminIssues(period, nationalId, change = {}) {
+    const latest = latestIssued(period, nationalId)
+    const base = latest ?? { national_id: nationalId, period, template_id: state.versions[0]?.templateId, template_version: 1, rates: null, lines: [{ kind: 'note', text: 'issued elsewhere' }], accepted_differences: [] }
+    state.issued.push({ ...copy(base), ...change, revision: (latest?.revision ?? 0) + 1, issued_at: stamp(), by: 'other' })
+  }
+
   // ---------- one message in, one answer out (or none: `undefined` is a lost answer) ----------
 
   function handle(type, payload) {
     state.log.push({ type, payload: copy(payload) })
     const dataType = payload?.dataType
-    if (dataType !== 'statutory-rates' && dataType !== 'payslip-template') {
+    if (dataType !== 'statutory-rates' && dataType !== 'payslip-template' && dataType !== 'payslip-issue') {
       return { ok: false, error: 'This app is not registered for that kind of data.' }
     }
     if (type === 'request-data') {
@@ -279,13 +406,15 @@ export function createFakeHub() {
       state.nextRequest = null
       if (next?.mode === 'lost') return undefined
       if (next?.mode === 'refuse') return refuse(next.code)
+      if (dataType === 'payslip-issue') return answerIssued(payload.params ?? {})
       return dataType === 'statutory-rates' ? answerRates(payload.params) : answerTemplates(payload.params ?? {})
     }
     if (!Array.isArray(payload.rows) || payload.rows.length !== 1) return refuse('invalid', 'Send exactly one row: one command per message.')
     const next = state.nextSave
     state.nextSave = null
     if (next?.mode === 'refuse') return refuse(next.code)
-    const checked = dataType === 'statutory-rates' ? checkRatesSave(payload.rows[0]) : checkTemplateSave(payload.rows[0])
+    const checked =
+      dataType === 'payslip-issue' ? checkIssue(payload.rows) : dataType === 'statutory-rates' ? checkRatesSave(payload.rows[0]) : checkTemplateSave(payload.rows[0])
     if (checked.ok === false) return checked
     if (next?.mode === 'lost-unsaved') return undefined
     if (next?.mode === 'unavailable-unsaved') return refuse('unavailable')
@@ -306,5 +435,5 @@ export function createFakeHub() {
     Object.assign(found, change, { revision: found.revision + 1, updatedAt: stamp(), by: 'other' })
   }
 
-  return { state, handle, otherAdminSavesRates, otherAdminSavesDraft }
+  return { state, handle, otherAdminSavesRates, otherAdminSavesDraft, otherAdminIssues }
 }
