@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { PDFArray, PDFName, PDFNumber } from 'pdf-lib'
@@ -8,7 +9,7 @@ import { FONT_METRICS, layoutPage, measureText } from '../src/writers/pageGeomet
 import { writePayslipPdf } from '../src/writers/pdfWriter'
 import { cffTableOf, readCffStrict } from './cff'
 import { fixtureDocuments } from './fixtureDocuments'
-import { readFont, root } from './helpers'
+import { expectRecorded, readFont, root } from './helpers'
 import { fontProblems, readPdfFonts, runWidth, type PdfFonts } from './pdfFonts'
 import { readPdf } from './readPdf'
 
@@ -21,7 +22,8 @@ describe('The font embedded in the PDF', () => {
   const docs = fixtureDocuments()
   const fonts = { regular: readFont('regular'), bold: readFont('bold') }
   const bundled = [fonts.regular, fonts.bold]
-  const samples = [docs[0], docs[6]]
+  // Every fixture: each payslip gets its own subset of each font, so each is checked.
+  const samples = docs
   let written: Uint8Array[]
   let read: PdfFonts[]
 
@@ -40,14 +42,29 @@ describe('The font embedded in the PDF', () => {
     }
   })
 
-  it('embeds the two bundled fonts, in a form a strict viewer loads', () => {
-    for (const pdf of read) {
-      expect(pdf.fonts.map((font) => font.name)).toEqual([FONT_METRICS.bold.postscriptName, FONT_METRICS.regular.postscriptName])
-      for (const font of pdf.fonts) {
-        expect(font.program, `${font.name} is embedded`).not.toBeNull()
-        expect(() => readCffStrict(font.program!), `${font.name} is a valid font program`).not.toThrow()
-      }
-    }
+  it('uses the two bundled fonts and no other, on every fixture', () => {
+    for (const pdf of read) expect(pdf.fonts.map((font) => font.name)).toEqual([FONT_METRICS.bold.postscriptName, FONT_METRICS.regular.postscriptName])
+  })
+
+  // One test per fixture and font, so a failure says exactly which font program is refused.
+  const cases = docs.flatMap((doc, index) => (['regular', 'bold'] as const).map((weight) => [doc.employeeName, weight, index] as const))
+  it.each(cases)('%s, %s: the embedded font program has a header a strict viewer accepts, and reads strictly', (_name, weight, index) => {
+    const font = read[index].fonts.find((found) => found.name === FONT_METRICS[weight].postscriptName)
+    expect(font?.program, 'the font program is embedded').toBeInstanceOf(Uint8Array)
+    expect(cffHeaderProblem(font!.program!)).toBeNull()
+    expect(() => readCffStrict(font!.program!)).not.toThrow()
+  })
+
+  it('embeds exactly the recorded font programs: any change in what the font library writes shows here', () => {
+    const programs = samples.map((doc, index) => [
+      doc.employeeName,
+      read[index].fonts.map((font) => ({
+        name: font.name,
+        bytes: font.program?.length ?? null,
+        sha256: font.program ? createHash('sha256').update(font.program).digest('hex') : null,
+      })),
+    ])
+    expectRecorded('pdf-font-programs', Object.fromEntries(programs))
   })
 
   it('draws every glyph with the bundled font and at that font\'s own advance', () => {

@@ -1,0 +1,86 @@
+{
+  "DOE JANE": [
+    {
+      "name": "TeXGyrePagella-Bold",
+      "bytes": 7145,
+      "sha256": "39d425340a7cb27ad6f43777f5fdd030be5c4f72e39950738e5f714494dac8fd"
+    },
+    {
+      "name": "TeXGyrePagella-Regular",
+      "bytes": 8880,
+      "sha256": "3430f18106ee81e2426822946215109f1afac375441cd47182f1434be86fc34c"
+    }
+  ],
+  "PALMYRE JEAN MARC": [
+    {
+      "name": "TeXGyrePagella-Bold",
+      "bytes": 7145,
+      "sha256": "39d425340a7cb27ad6f43777f5fdd030be5c4f72e39950738e5f714494dac8fd"
+    },
+    {
+      "name": "TeXGyrePagella-Regular",
+      "bytes": 8880,
+      "sha256": "c1f18f56a730423f08e5011de1da3cbc212086c504a901041d838fab7dfab25f"
+    }
+  ],
+  "SAMPLE ALEX": [
+    {
+      "name": "TeXGyrePagella-Bold",
+      "bytes": 7145,
+      "sha256": "39d425340a7cb27ad6f43777f5fdd030be5c4f72e39950738e5f714494dac8fd"
+    },
+    {
+      "name": "TeXGyrePagella-Regular",
+      "bytes": 8787,
+      "sha256": "ca92cca98bee0f6c5376af2c4f17dc137b0916d181b1bdb9e83a2fc94d9489b7"
+    }
+  ],
+  "TESTER SAM": [
+    {
+      "name": "TeXGyrePagella-Bold",
+      "bytes": 7145,
+      "sha256": "39d425340a7cb27ad6f43777f5fdd030be5c4f72e39950738e5f714494dac8fd"
+    },
+    {
+      "name": "TeXGyrePagella-Regular",
+      "bytes": 8787,
+      "sha256": "0239c51af7d13b889bd6846dd1fbb54af838fa160d947d7e81ee7db31885a141"
+    }
+  ],
+  "EXEMPLE PRIYA": [
+    {
+      "name": "TeXGyrePagella-Bold",
+      "bytes": 7145,
+      "sha256": "39d425340a7cb27ad6f43777f5fdd030be5c4f72e39950738e5f714494dac8fd"
+    },
+    {
+      "name": "TeXGyrePagella-Regular",
+      "bytes": 8787,
+      "sha256": "9b1f47365b98f2c48053bc17ba64b54f9643118797e3e5b9b4860040a2b03345"
+    }
+  ],
+  "FICTIF MARIE": [
+    {
+      "name": "TeXGyrePagella-Bold",
+      "bytes": 7145,
+      "sha256": "39d425340a7cb27ad6f43777f5fdd030be5c4f72e39950738e5f714494dac8fd"
+    },
+    {
+      "name": "TeXGyrePagella-Regular",
+      "bytes": 8496,
+      "sha256": "553fc43b43ef9da7d53eb1bccd9a3ee2f0e5e99dbbc46834364f080b06e1c04f"
+    }
+  ],
+  "TEMPO LEA": [
+    {
+      "name": "TeXGyrePagella-Bold",
+      "bytes": 7145,
+      "sha256": "39d425340a7cb27ad6f43777f5fdd030be5c4f72e39950738e5f714494dac8fd"
+    },
+    {
+      "name": "TeXGyrePagella-Regular",
+      "bytes": 8787,
+      "sha256": "451bed8b936555493a251cd7a61f7f8dd9dd92defbc8ab524553ca76cf266f31"
+    }
+  ]
+}

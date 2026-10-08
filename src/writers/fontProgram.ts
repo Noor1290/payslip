@@ -20,7 +20,8 @@ export function cffHeaderProblem(program: Uint8Array): string | null {
 /** The same font program with a valid offset size in its header. Throws if the header is wrong in any other way. */
 export function withValidCffHeader(program: Uint8Array): Uint8Array {
   const fixed = program.slice()
-  // 4 is what the bundled font files carry and what later versions of the library write.
+  // 4 is what the bundled font files carry, and what fontkit, the project this library was forked
+  // from, writes today. No parser uses the value; strict ones only check that it is 1 to 4.
   if (fixed.length >= 4 && (fixed[OFFSET_SIZE_AT] < 1 || fixed[OFFSET_SIZE_AT] > 4)) fixed[OFFSET_SIZE_AT] = 4
   const problem = cffHeaderProblem(fixed)
   if (problem) throw new Error(`The payslip font cannot be embedded in the PDF: ${problem}.`)
