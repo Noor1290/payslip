@@ -113,7 +113,7 @@ Calculation policy (fixed, do not ask):
 
 **Excel file.** Same layout, fonts, colours, merged cells, borders and number format as the reference. Employee values are plain numbers. Total Earnings, Total Deductions and Net Pay may be live formulas so the sheet works in Excel (decision D9). The sheet is set to one page, portrait.
 
-**PDF.** Built from the layout model with an embedded font (decision D8). Paper size per decision D7.
+**PDF.** Built from the layout model with an embedded font (decision D8). Paper size per decision D7. The embedded font is a subset of the bundled font file, the one the preview loads; its header is corrected after embedding (known issue 29).
 
 **Employee data from the hub.** Date of Employment is not in the payroll data. Decision D5.
 
@@ -137,7 +137,7 @@ Calculation policy (fixed, do not ask):
 
 ## 7. Tests (fake data only)
 
-- Recordings on the untouched logic: the layout model for a fixed set of employees; the Excel file read back (cell values, merged ranges, number formats, fonts, fills, borders); the PDF read back with pdf.js (text, page, position rounded to 0.5pt, font and size, not raw bytes). Prove each fails on a deliberate one-value change, then revert.
+- Recordings on the untouched logic: the layout model for a fixed set of employees; the Excel file read back (cell values, merged ranges, number formats, fonts, fills, borders); the PDF read back with pdf.js (text, page, position rounded to 0.5pt, font and size, not raw bytes), plus its fonts read from the PDF itself with a strict reader (embedded, valid header, the bundled glyphs, each advance equal to the font's own width). Prove each fails on a deliberate one-value change, then revert.
 - Reconciliation tests with hand-calculated examples: lines add up, a mismatch is reported, a missing key is reported, text in a money field is reported, a zero shows as "-".
 - Bridge tests: valid rows reach the import, invalid rows are refused with a message, a duplicate message id is not imported twice, nothing is written to browser storage.
 - Scripts: encoding check, contrast and focus checks for both themes, reduced motion, names on every control, keyboard behaviour of dialogs and menus, production build with 0 outside requests.

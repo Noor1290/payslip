@@ -2,12 +2,16 @@
 //   1. no file in dist/ loads anything from an outside server (static scan);
 //   2. using the real app (import, both screens, PDF zip, Excel) makes 0 requests to any other
 //      origin and writes nothing to browser storage;
-//   3. the downloaded files are what they claim to be.
+//   3. the downloaded files are what they claim to be;
+//   4. the payslip font: the preview and the PDFs use the bundled font files, the preview draws
+//      each text as wide as the shared geometry measured it, and every PDF embeds a font
+//      program whose header a strict viewer accepts.
 // Run after `npm run build`: node scripts/check-build.mjs
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { unzipSync } from 'fflate'
+import { decodePDFRawStream, PDFArray, PDFDict, PDFDocument, PDFName, PDFStream } from 'pdf-lib'
 import { chromium } from 'playwright'
 import { startPreview } from './lib/preview-server.mjs'
 
@@ -45,7 +49,21 @@ for (const file of files.filter((f) => /\.(html|css)$/.test(f))) {
 }
 console.log(`Static scan: ${files.length} files in dist/.`)
 
-// 2 and 3. Drive the built app and watch every request.
+/** Name and header (4 bytes) of the font program of each font on the first page of a PDF. */
+async function pdfFontHeaders(bytes) {
+  const pdf = await PDFDocument.load(bytes, { updateMetadata: false })
+  const fonts = new Map()
+  for (const [, ref] of pdf.getPage(0).node.Resources().lookup(PDFName.of('Font'), PDFDict).entries()) {
+    const font = pdf.context.lookup(ref, PDFDict)
+    const name = font.lookup(PDFName.of('BaseFont'), PDFName).decodeText().replace(/-\d+$/, '')
+    const descriptor = font.lookup(PDFName.of('DescendantFonts'), PDFArray).lookup(0, PDFDict).lookup(PDFName.of('FontDescriptor'), PDFDict)
+    const program = descriptor.lookupMaybe(PDFName.of('FontFile3'), PDFStream)
+    fonts.set(name, program ? decodePDFRawStream(program).decode().slice(0, 4) : null)
+  }
+  return fonts
+}
+
+// 2, 3 and 4. Drive the built app and watch every request.
 const server = await startPreview()
 const browser = await chromium.launch()
 try {
@@ -57,6 +75,10 @@ try {
     requests++
     const url = request.url()
     if (!url.startsWith(server.origin) && !url.startsWith('data:') && !url.startsWith('blob:')) outside.push(url)
+  })
+  const fontResponses = []
+  page.on('response', (response) => {
+    if (/texgyrepagella-[^/]*\.otf$/.test(new URL(response.url()).pathname)) fontResponses.push(response)
   })
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(String(error)))
@@ -78,7 +100,56 @@ try {
   if (zipDownload.suggestedFilename() !== 'ABC Co Ltd - payslips - 2026-09.zip') problems.push('Unexpected zip file name.')
   if (entries.length !== 7 || !entries.includes('DOE JANE - 2026-09.pdf')) problems.push(`Unexpected zip content: ${entries.join(', ')}`)
   for (const [name, bytes] of Object.entries(unzipSync(new Uint8Array(zipBytes)))) {
-    if (Buffer.from(bytes.slice(0, 5)).toString('latin1') !== '%PDF-') problems.push(`${name} is not a PDF.`)
+    if (Buffer.from(bytes.slice(0, 5)).toString('latin1') !== '%PDF-') {
+      problems.push(`${name} is not a PDF.`)
+      continue
+    }
+    const headers = await pdfFontHeaders(bytes)
+    if ([...headers.keys()].sort().join(', ') !== 'TeXGyrePagella-Bold, TeXGyrePagella-Regular') problems.push(`${name} uses the fonts ${[...headers.keys()].join(', ')}.`)
+    for (const [font, header] of headers) {
+      // What a strict viewer checks before it uses the font: version 1, a header of 4 bytes or more, offset size 1 to 4.
+      if (!header || header[0] !== 1 || header[2] < 4 || header[3] < 1 || header[3] > 4) {
+        problems.push(`${name}: the embedded ${font} has a header a strict viewer refuses (${header ? header.join(' ') : 'not embedded'}).`)
+      }
+    }
+  }
+
+  // The preview: drawn with the bundled font, each text as wide as the shared geometry measured it.
+  const metrics = JSON.parse(readFileSync(join(root, 'src/assets/fonts/metrics.json'), 'utf8'))
+  const drawn = await page.getByTestId('payslip-page').evaluate(async (svg) => {
+    await document.fonts.ready
+    return {
+      faces: [...document.fonts].filter((face) => face.family.replace(/["']/g, '') === 'Payslip Pagella').map((face) => `${face.weight} ${face.status}`).sort(),
+      family: getComputedStyle(svg.querySelector('text')).fontFamily,
+      texts: [...svg.querySelectorAll('text')].map((text) => ({
+        text: text.textContent,
+        size: Number(text.getAttribute('font-size')),
+        font: text.getAttribute('font-weight') === '700' ? 'bold' : 'regular',
+        length: text.getComputedTextLength(),
+      })),
+    }
+  })
+  if (drawn.faces.join(', ') !== '400 loaded, 700 loaded') problems.push(`The payslip font is not loaded in the preview: ${drawn.faces.join(', ')}`)
+  if (!/^["']?Payslip Pagella/.test(drawn.family)) problems.push(`The preview text asks for the font ${drawn.family}.`)
+  let widest = 0
+  for (const text of drawn.texts) {
+    const units = [...text.text].reduce((sum, char) => sum + metrics[text.font].widths[char.codePointAt(0)], 0)
+    const difference = Math.abs(text.length - (units * text.size) / metrics[text.font].unitsPerEm)
+    widest = Math.max(widest, difference)
+    // The browser rounds glyph advances to its own grid: up to about 0.1 pt on the longest label.
+    // Another font would differ by whole points... unless it has the same widths, hence the checks above.
+    if (!(difference < 0.25)) problems.push(`The preview draws "${text.text}" ${text.length.toFixed(2)} wide, not as the payslip font measures it.`)
+  }
+  note(`preview: ${drawn.texts.length} texts in ${drawn.family.split(',')[0]}, largest width difference ${widest.toFixed(3)} pt`)
+
+  // The preview and the PDF export load the same two files, and they are the bundled ones.
+  const served = new Map()
+  for (const response of fontResponses) served.set(response.url(), await response.body())
+  const bundledFonts = ['regular', 'bold'].map((weight) => readFileSync(join(root, 'src/assets/fonts', `texgyrepagella-${weight}.otf`)))
+  note(`font files loaded by the preview and the PDF export: ${[...served.keys()].map((url) => url.split('/').pop()).join(', ')}`)
+  if (served.size !== 2) problems.push(`Expected the preview and the PDF export to share 2 font files, saw ${served.size}.`)
+  for (const [url, body] of served) {
+    if (!bundledFonts.some((font) => font.equals(body))) problems.push(`${url} is not one of the bundled payslip fonts.`)
   }
 
   const [xlsxDownload] = await Promise.all([

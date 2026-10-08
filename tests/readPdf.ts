@@ -1,7 +1,8 @@
 import { decodePDFRawStream, PDFArray, PDFDict, PDFDocument, PDFName, PDFRawStream } from 'pdf-lib'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
+import { fontRecord, readPdfFonts } from './pdfFonts'
 
-// Reads a generated PDF back: the text, where it is, and in which font and size. Shared by the
+// Reads a generated PDF back: its fonts, the text, where it is, and in which font and size. Shared by the
 // PDF recordings and by the test that a reopened payslip prints exactly as it was issued.
 
 export interface PdfText {
@@ -16,6 +17,8 @@ export interface PdfRecord {
   pages: number
   width: number
   height: number
+  /** The fonts of the page: name, whether the font program is embedded, and its header. */
+  fonts: ReturnType<typeof fontRecord>[]
   texts: PdfText[]
   metadata: Record<string, unknown>
 }
@@ -73,6 +76,7 @@ export async function readPdf(bytes: Uint8Array): Promise<PdfRecord> {
     pages: pdf.numPages,
     width,
     height,
+    fonts: (await readPdfFonts(bytes)).fonts.map(fontRecord),
     texts,
     metadata: { Title: meta.Title, Author: meta.Author ?? null, Producer: meta.Producer, Creator: meta.Creator },
   }

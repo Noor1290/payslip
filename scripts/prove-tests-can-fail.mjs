@@ -103,7 +103,8 @@ const changes = [
   ['Rows are one point taller on the page', 'src/writers/pageGeometry.ts', 'const ROW_HEIGHT = 17', 'const ROW_HEIGHT = 18'],
   ['PDF text is drawn one point to the right', 'src/writers/pdfWriter.ts', 'x: text.x,', 'x: text.x + 1,'],
   ['PDF text size changes', 'src/writers/pdfWriter.ts', 'size: text.size,', 'size: text.size + 1,'],
-  ['Excel divider is no longer thick', 'src/writers/excelWriter.ts', "border.right = { style: 'thick', color: BLACK }", "border.right = { style: 'medium', color: BLACK }"],
+  ['The embedded font keeps the header viewers refuse', 'src/writers/pdfWriter.ts', '  for (const font of Object.values(embedded)) repairFontProgram(pdf, font)\n', ''],
+  ['A font header with offset size 5 passes as valid', 'src/writers/fontProgram.ts', 'if (offsetSize < 1 || offsetSize > 4) return', 'if (offsetSize < 1 || offsetSize > 5) return'],  ['Excel divider is no longer thick', 'src/writers/excelWriter.ts', "border.right = { style: 'thick', color: BLACK }", "border.right = { style: 'medium', color: BLACK }"],
   ['Excel totals become plain values', 'src/writers/excelWriter.ts', 'target.value = { formula, result: centsToNumber(cents) }', 'target.value = centsToNumber(cents)'],
   ['Excel page is no longer A4', 'src/writers/excelWriter.ts', 'paperSize: 9,', 'paperSize: 1,'],
 ]

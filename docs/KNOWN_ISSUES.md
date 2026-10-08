@@ -1,6 +1,6 @@
 # Known issues
 
-Found while building Phases 1 to 4 (October 2026) and deliberately not changed, because each one needs the owner's decision. All evidence uses fake data (ABC Co Ltd).
+Found while building Phases 1 to 4 and fixing the PDF font (October 2026) and deliberately not changed, because each one needs the owner's decision. All evidence uses fake data (ABC Co Ltd).
 
 ## 1. A long name has little room on the payslip
 
@@ -191,5 +191,29 @@ Found while building Phases 1 to 4 (October 2026) and deliberately not changed, 
 ## 28. On a reopened payslip the template is named as it was when published
 
 **What happens.** The template version is loaded only for its name. If it cannot be loaded the list says "Version N (name not available)" and the payslip is shown all the same.
+
+**To decide.** Nothing now.
+
+## 29. The PDF library writes a font header that viewers refuse; the app corrects one byte
+
+**What happens.** When `@pdf-lib/fontkit` 1.1.1 makes the subset of a font to embed, it writes an unrelated number where the header of the font program holds its offset size (valid is 1 to 4; it wrote 14 for both payslip fonts). pdf.js accepts that. Chrome, Edge and xpdf refuse the font and draw a substitute sans-serif at the advances of the payslip font, which showed as gaps inside words ("A BC Co Ltd", "PA YE"). After pdf-lib has embedded the fonts, the app now sets that one byte to 4 (what the bundled font files carry, and what later versions of the library write) and refuses to write a PDF whose font header is wrong in any other way (`src/writers/fontProgram.ts`). Nothing else in the PDF changed: same drawing instructions, same width and character tables.
+
+**Evidence.** On DOE JANE (fake data): xpdf reported "Embedded font file may be invalid" twice before and nothing after; Chromium showed the sans-serif before and TeX Gyre Pagella after. `tests/pdfFont.test.ts` reads the fonts from the PDF with a strict reader (`tests/cff.ts`) and fails on the old header; the PDF recordings now keep each font and its header; `npm run check:build` checks the PDFs downloaded from the built app.
+
+**To decide.** Nothing now. Not seen in Adobe Acrobat (not installed here): worth one look. If the library is ever replaced or updated, the tests say whether the correction is still needed.
+
+## 30. The preview draws long labels up to 0.1 point narrower than the PDF
+
+**What happens.** The preview and the PDF use the same two font files and the same positions. The browser rounds each glyph advance to its own grid, so a text can end slightly earlier on screen than in the PDF. Left-aligned labels start at the same place; right-aligned amounts are short, so they move by less.
+
+**Evidence.** In the built app, the largest difference is 0.085 pt, on "Date of Employment :" (97.07 pt on screen, 97.16 pt measured). With the CSS `text-rendering: geometricPrecision` on the payslip text it drops to 0.014 pt. `npm run check:build` measures it and accepts up to 0.25 pt.
+
+**To decide.** Whether to add that CSS line to the preview.
+
+## 31. Small things in how the PDF names its fonts
+
+**What happens.** Three things pdf-lib does, all harmless while the font loads. The font is marked "symbolic" and not "serif", so a viewer that ever had to substitute it would pick a sans-serif. Every text on the page gets its own font resource name (53 names for 2 fonts on one payslip). The font names end in a number ("TeXGyrePagella-Bold-4482") in place of the usual six-letter prefix of a subset.
+
+**Evidence.** Read from the PDF of DOE JANE (fake data): font descriptor Flags 4; 53 entries in the page font list pointing at 2 font objects.
 
 **To decide.** Nothing now.
