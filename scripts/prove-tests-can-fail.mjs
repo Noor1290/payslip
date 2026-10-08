@@ -119,6 +119,8 @@ const changes = [
   ['Month review: a template change is not announced', 'src/lib/monthCompare.ts', 'if (otherTemplates.length > 0) {', 'if (false) {'],
   ['Month review: a rates change is not announced', 'src/lib/monthCompare.ts', 'if (otherRates.length > 0) {', 'if (false) {'],
   ['Month review: a name change makes a row Changed', 'src/lib/monthCompare.ts', 'const changed = lines.some((line) => line.changed) || totals.some((total) => total.changed)', 'const changed = lines.some((line) => line.changed) || totals.some((total) => total.changed) || last.employeeName !== now.employeeName'],
+  ['Month review: a failed load of last month counts as an empty month', 'src/lib/monthReview.ts', "if (issued.status === 'failed') return { status: 'failed', what: 'issued', failure: issued.failure }", "if (issued.status === 'failed') return { status: 'nothing' }"],
+  ['Month review: an empty last month is compared as if everyone were new', 'src/lib/monthReview.ts', "  if (issued.payslips.length === 0) return { status: 'nothing' }\n", ''],
   ['One label changes', 'src/lib/template.ts', "totalDeductions: 'Total Deductions'", "totalDeductions: 'Total Deduction'"],
   ['Band colour changes by one step', 'src/lib/layoutModel.ts', "BAND_FILL = '66CCFF'", "BAND_FILL = '66CCFE'"],
   ['Rows are one point taller on the page', 'src/writers/pageGeometry.ts', 'const ROW_HEIGHT = 17', 'const ROW_HEIGHT = 18'],
