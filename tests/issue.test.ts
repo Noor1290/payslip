@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_STATUTORY_RATES } from '../src/data/defaultStatutoryRates'
 import { preparePayslips, type PreparedPayslip } from '../src/lib/build'
 import { failure, jsonBytes, type HubPort } from '../src/lib/hubWire'
-import { buildIssue, issueStatuses, monthProblems, type IssueInput } from '../src/lib/issueBuild'
+import { buildIssue, identicalAsk, identicalQuestion, issueStatuses, monthProblems, type IssueInput } from '../src/lib/issueBuild'
 import { decodeLines } from '../src/lib/issuedLines'
 import {
   checkIssue,
@@ -424,6 +424,84 @@ describe('reopening a month shows each payslip exactly as issued', () => {
     expect(decodeLines.length).toBe(1)
     expect(read.document).toEqual(prepared[0].document)
     expect(month.payslips[0].rates).toMatchObject({ nsf_ceiling: 29710, revision: 1 })
+  })
+})
+
+describe('an identical re-issue is allowed, but asked about a second time', () => {
+  const identicalOf = (change: Partial<IssueInput> = {}) => {
+    const result = buildIssue(input(change))
+    if (!result.ok) throw new Error(result.problems.join(' '))
+    return result.identical
+  }
+  const person = (index: number, revision: number) => ({ name: prepared[index].computation.employeeName, nationalId: String(data.rows[index].ID), revision })
+  const issuedMonth = async (selected: number[] = everyone) => {
+    const { port } = dashboard()
+    await issueBatch(port, pendingFor(built({ selected })))
+    const month = await loadMonth(port, BRN, PERIOD)
+    if (!month.ok) throw new Error('not loaded')
+    return { port, month: month.payslips }
+  }
+
+  it('finds the payslips that are exactly what was last issued, and still lets them be issued', async () => {
+    expect(identicalOf()).toEqual([])
+    const { port, month } = await issuedMonth([0, 1])
+    expect(identicalOf({ selected: [0, 1, 2], month })).toEqual([person(0, 1), person(1, 1)])
+    expect(built({ selected: [0, 1, 2], month }).map((p) => p.expectedRevision)).toEqual([1, 1, 0])
+    // Only the selected ones are asked about.
+    expect(identicalOf({ selected: [1, 2], month })).toEqual([person(1, 1)])
+
+    // Issued again unchanged: revision 2, and the next time the question is about revision 2.
+    expect((await issueBatch(port, pendingFor(built({ selected: [0], month })))).end).toBe('saved')
+    const reloaded = await loadMonth(port, BRN, PERIOD)
+    if (!reloaded.ok) throw new Error('not loaded')
+    expect(identicalOf({ selected: [0, 1], month: reloaded.payslips })).toEqual([person(0, 2), person(1, 1)])
+  })
+
+  it('anything stored that differs makes it a real re-issue: the page, the template version, the rates, a reason', async () => {
+    const { month } = await issuedMonth()
+    expect(identicalOf({ month })).toHaveLength(7)
+
+    const later = preparePayslips(data, { template, mapping, rateVersions: DEFAULT_STATUTORY_RATES, period: PERIOD }, '2026-09-30')
+    expect(identicalOf({ month, prepared: later })).toEqual([])
+    expect(identicalOf({ month, choice: { ...choice, version: 2 } })).toEqual([])
+    expect(identicalOf({ month, rates: null })).toEqual([])
+
+    // Another reason for one accepted difference: that employee only.
+    const { accepted, reasons } = roundingAccepted()
+    const withDifference = prepared.find(({ computation }) => computation.checks.some((check) => check.kind === 'rounding'))!.computation
+    const check = withDifference.checks.find((found) => found.kind === 'rounding')!
+    const reworded = withReason(reasons, withDifference.rowIndex, checkKey(check.id), 'Agreed with the accountant')
+    const still = identicalOf({ month, accepted, reasons: reworded })
+    expect(still).toHaveLength(6)
+    expect(still.map((found) => found.name)).not.toContain(withDifference.employeeName)
+  })
+
+  it('a payslip issued before the drawing version was recorded still counts as identical', async () => {
+    const { month } = await issuedMonth([0])
+    const before = structuredClone(month)
+    delete (before[0].lines[0] as Record<string, unknown>).drawing
+    expect(identicalOf({ selected: [0], month: before })).toEqual([person(0, 1)])
+    const { accepted, reasons } = roundingAccepted()
+    expect(issueStatuses(data, prepared, before, accepted, reasons).get(0)).toMatchObject({ same: true })
+  })
+
+  it('asks in these words', () => {
+    expect(identicalQuestion(1)).toBe('Nothing has changed since revision 1. Issue an identical revision 2 anyway?')
+    expect(identicalAsk([person(0, 3)])).toEqual({
+      title: 'Issue an identical payslip again?',
+      question: 'Nothing has changed since revision 3. Issue an identical revision 4 anyway?',
+      lines: [`${person(0, 3).name}: the same as revision 3. This adds revision 4.`],
+    })
+    expect(identicalAsk([person(0, 2), person(1, 2)])).toMatchObject({
+      title: 'Issue 2 identical payslips again?',
+      question: 'Nothing has changed since revision 2. Issue an identical revision 3 anyway?',
+    })
+    // Not all at the same revision: the question cannot name one, so each line does.
+    expect(identicalAsk([person(0, 2), person(1, 1)])).toEqual({
+      title: 'Issue 2 identical payslips again?',
+      question: 'Nothing has changed since these payslips were last issued. Issue an identical new revision of each anyway?',
+      lines: [`${person(0, 2).name}: the same as revision 2. This adds revision 3.`, `${person(1, 1).name}: the same as revision 1. This adds revision 2.`],
+    })
   })
 })
 

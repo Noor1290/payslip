@@ -4,7 +4,7 @@
 
 import type { PreparedPayslip } from './build'
 import { canonicalJson } from './hubWire'
-import { encodeLines, figuresOf } from './issuedLines'
+import { encodeLines, figuresOf, sameLines } from './issuedLines'
 import { ratesSnapshot, type IssuedPayslip, type PayslipToIssue } from './issueStore'
 import type { ImportedPayroll } from './payrollFile'
 import { isReady, type AcceptedChecks } from './payslip'
@@ -31,7 +31,47 @@ export interface IssueInput {
   month: readonly IssuedPayslip[]
 }
 
-export type IssueBuild = { ok: true; payslips: PayslipToIssue[] } | { ok: false; problems: string[] }
+/** A selected payslip that is exactly what was last issued for that employee. */
+export interface IdenticalReissue {
+  name: string
+  nationalId: string
+  /** The revision it is identical to. */
+  revision: number
+}
+
+export type IssueBuild =
+  /** `identical`: the payslips among them that would be issued again unchanged. Allowed, but asked about a second time. */
+  | { ok: true; payslips: PayslipToIssue[]; identical: IdenticalReissue[] }
+  | { ok: false; problems: string[] }
+
+/** Whether everything that would be stored for this payslip is what the dashboard already has as its latest revision. */
+function sameAsIssued(payslip: PayslipToIssue, issued: IssuedPayslip): boolean {
+  return (
+    issued.templateId === payslip.templateId &&
+    issued.templateVersion === payslip.templateVersion &&
+    canonicalJson(issued.rates) === canonicalJson(payslip.rates) &&
+    canonicalJson(issued.acceptedDifferences) === canonicalJson(payslip.acceptedDifferences) &&
+    sameLines(issued.lines, payslip.lines)
+  )
+}
+
+/** The question asked before an identical payslip is issued again. */
+export function identicalQuestion(revision: number): string {
+  return `Nothing has changed since revision ${revision}. Issue an identical revision ${revision + 1} anyway?`
+}
+
+/** The second confirmation, in words: its title, the question, and one line per payslip. */
+export function identicalAsk(identical: readonly IdenticalReissue[]): { title: string; question: string; lines: string[] } {
+  const revisions = new Set(identical.map((found) => found.revision))
+  return {
+    title: identical.length === 1 ? 'Issue an identical payslip again?' : `Issue ${identical.length} identical payslips again?`,
+    question:
+      revisions.size === 1
+        ? identicalQuestion(identical[0].revision)
+        : 'Nothing has changed since these payslips were last issued. Issue an identical new revision of each anyway?',
+    lines: identical.map((found) => `${found.name}: the same as revision ${found.revision}. This adds revision ${found.revision + 1}.`),
+  }
+}
 
 /** Why the month cannot be issued as a whole, before looking at any employee. Empty when it can. */
 export function monthProblems(input: Pick<IssueInput, 'data' | 'period' | 'choice' | 'previewingDraft'>): string[] {
@@ -52,6 +92,7 @@ export function buildIssue(input: IssueInput): IssueBuild {
   const { choice } = input
 
   const payslips: PayslipToIssue[] = []
+  const identical: IdenticalReissue[] = []
   const seen = new Set<string>()
   for (const rowIndex of input.selected) {
     const item = input.prepared.find((found) => found.computation.rowIndex === rowIndex)
@@ -78,18 +119,21 @@ export function buildIssue(input: IssueInput): IssueBuild {
       continue
     }
     seen.add(nationalId)
-    payslips.push({
+    const issued = input.month.find((found) => found.nationalId.trim() === nationalId)
+    const payslip: PayslipToIssue = {
       name,
       nationalId,
-      expectedRevision: input.month.find((issued) => issued.nationalId.trim() === nationalId)?.revision ?? 0,
+      expectedRevision: issued?.revision ?? 0,
       templateId: choice.templateId,
       templateVersion: choice.version,
       rates: ratesSnapshot(input.rates),
       lines: encodeLines(document, figuresOf(computation, zeroReasons)),
       acceptedDifferences: differences,
-    })
+    }
+    payslips.push(payslip)
+    if (issued && sameAsIssued(payslip, issued)) identical.push({ name, nationalId, revision: issued.revision })
   }
-  return problems.length > 0 ? { ok: false, problems } : { ok: true, payslips }
+  return problems.length > 0 ? { ok: false, problems } : { ok: true, payslips, identical }
 }
 
 /** Where one employee stands for the month, compared with what the dashboard has. */
@@ -119,7 +163,7 @@ export function issueStatuses(
     let same = false
     if (document && computation.errors.length === 0) {
       const { zeroReasons } = acceptedDifferences(computation, accepted[rowIndex] ?? {}, reasons[rowIndex])
-      same = canonicalJson(encodeLines(document, figuresOf(computation, zeroReasons))) === canonicalJson(issued.lines)
+      same = sameLines(encodeLines(document, figuresOf(computation, zeroReasons)), issued.lines)
     }
     statuses.set(rowIndex, { kind: 'issued', revision: issued.revision, same, issued })
   }

@@ -1,0 +1,501 @@
+{
+  "width": 595.28,
+  "height": 841.89,
+  "rects": [
+    {
+      "x": 40,
+      "y": 56,
+      "w": 515.28,
+      "h": 17,
+      "fill": "66CCFF"
+    },
+    {
+      "x": 40,
+      "y": 158,
+      "w": 515.28,
+      "h": 17,
+      "fill": "66CCFF"
+    }
+  ],
+  "lines": [
+    {
+      "x1": 40,
+      "y1": 90,
+      "x2": 555.28,
+      "y2": 90,
+      "width": 1,
+      "color": "CCCCCC"
+    },
+    {
+      "x1": 40,
+      "y1": 107,
+      "x2": 555.28,
+      "y2": 107,
+      "width": 1,
+      "color": "CCCCCC"
+    },
+    {
+      "x1": 40,
+      "y1": 124,
+      "x2": 555.28,
+      "y2": 124,
+      "width": 1,
+      "color": "CCCCCC"
+    },
+    {
+      "x1": 40,
+      "y1": 141,
+      "x2": 555.28,
+      "y2": 141,
+      "width": 1,
+      "color": "CCCCCC"
+    },
+    {
+      "x1": 40,
+      "y1": 73,
+      "x2": 555.28,
+      "y2": 73,
+      "width": 1.25,
+      "color": "000000"
+    },
+    {
+      "x1": 40,
+      "y1": 158,
+      "x2": 555.28,
+      "y2": 158,
+      "width": 1.25,
+      "color": "000000"
+    },
+    {
+      "x1": 40,
+      "y1": 175,
+      "x2": 555.28,
+      "y2": 175,
+      "width": 1.25,
+      "color": "000000"
+    },
+    {
+      "x1": 40,
+      "y1": 226,
+      "x2": 555.28,
+      "y2": 226,
+      "width": 1.25,
+      "color": "000000"
+    },
+    {
+      "x1": 270.22,
+      "y1": 226,
+      "x2": 270.22,
+      "y2": 583,
+      "width": 2,
+      "color": "000000"
+    },
+    {
+      "x1": 40,
+      "y1": 56,
+      "x2": 555.28,
+      "y2": 56,
+      "width": 1.25,
+      "color": "000000"
+    },
+    {
+      "x1": 40,
+      "y1": 583,
+      "x2": 555.28,
+      "y2": 583,
+      "width": 1.25,
+      "color": "000000"
+    },
+    {
+      "x1": 40,
+      "y1": 56,
+      "x2": 40,
+      "y2": 583,
+      "width": 1.25,
+      "color": "000000"
+    },
+    {
+      "x1": 555.28,
+      "y1": 56,
+      "x2": 555.28,
+      "y2": 583,
+      "width": 1.25,
+      "color": "000000"
+    }
+  ],
+  "texts": [
+    {
+      "x": 279.01,
+      "y": 68.25,
+      "text": "Payslip",
+      "font": "bold",
+      "size": 11
+    },
+    {
+      "x": 267.39,
+      "y": 85.25,
+      "text": "ABC Co Ltd",
+      "font": "bold",
+      "size": 11
+    },
+    {
+      "x": 253.04,
+      "y": 102.25,
+      "text": "12 Example Street",
+      "font": "bold",
+      "size": 11
+    },
+    {
+      "x": 271.82,
+      "y": 119.25,
+      "text": "Port Louis",
+      "font": "bold",
+      "size": 11
+    },
+    {
+      "x": 258.07,
+      "y": 136.25,
+      "text": "BRN : C1234567",
+      "font": "bold",
+      "size": 11
+    },
+    {
+      "x": 410.08,
+      "y": 153.25,
+      "text": "Pay period: September 2026",
+      "font": "bold",
+      "size": 11
+    },
+    {
+      "x": 260.51,
+      "y": 170.25,
+      "text": "Employee Info",
+      "font": "bold",
+      "size": 11
+    },
+    {
+      "x": 44,
+      "y": 186.96,
+      "text": "Name :",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 151.63,
+      "y": 186.96,
+      "text": "DOE JANE",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 274.22,
+      "y": 186.96,
+      "text": "Date of Employment :",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 407.6,
+      "y": 186.96,
+      "text": "15-Mar-21",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 44,
+      "y": 203.96,
+      "text": "NIC :",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 151.63,
+      "y": 203.96,
+      "text": "X0000000000001",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 132.81,
+      "y": 238.25,
+      "text": "Earnings",
+      "font": "bold",
+      "size": 11
+    },
+    {
+      "x": 383.73,
+      "y": 238.25,
+      "text": "Deductions",
+      "font": "bold",
+      "size": 11
+    },
+    {
+      "x": 203.46,
+      "y": 254.96,
+      "text": "Rs",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 473.98,
+      "y": 254.96,
+      "text": "Rs",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 44,
+      "y": 271.96,
+      "text": "Basic Salary",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 238.72,
+      "y": 271.96,
+      "text": "18,000",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 274.22,
+      "y": 271.96,
+      "text": "Contributions",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 44,
+      "y": 288.96,
+      "text": "Govt Increment",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 251.22,
+      "y": 288.96,
+      "text": "635",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 44,
+      "y": 305.96,
+      "text": "Allowances",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 262.89,
+      "y": 305.96,
+      "text": "-",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 274.22,
+      "y": 305.96,
+      "text": "CSG",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 523.78,
+      "y": 305.96,
+      "text": "279.52",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 44,
+      "y": 322.96,
+      "text": "Transport Allowance",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 243.72,
+      "y": 322.96,
+      "text": "2,450",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 274.22,
+      "y": 322.96,
+      "text": "NSF",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 523.78,
+      "y": 322.96,
+      "text": "210.85",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 44,
+      "y": 339.96,
+      "text": "Presence Bonus",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 262.89,
+      "y": 339.96,
+      "text": "-",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 274.22,
+      "y": 339.96,
+      "text": "PAYE",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 547.95,
+      "y": 339.96,
+      "text": "-",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 44,
+      "y": 356.96,
+      "text": "Productivity Bonus",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 262.89,
+      "y": 356.96,
+      "text": "-",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 44,
+      "y": 373.96,
+      "text": "Advance",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 262.89,
+      "y": 373.96,
+      "text": "-",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 274.22,
+      "y": 373.96,
+      "text": "Others Deductions :",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 274.22,
+      "y": 390.96,
+      "text": "Absences :",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 547.95,
+      "y": 390.96,
+      "text": "-",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 274.22,
+      "y": 407.96,
+      "text": "Lateness",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 547.95,
+      "y": 407.96,
+      "text": "-",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 44,
+      "y": 441.96,
+      "text": "Total Earnings",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 238.72,
+      "y": 441.96,
+      "text": "21,085",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 274.22,
+      "y": 441.96,
+      "text": "Total Deductions",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 523.78,
+      "y": 441.96,
+      "text": "490.37",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 274.22,
+      "y": 492.96,
+      "text": "Net Pay :",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 511.28,
+      "y": 492.96,
+      "text": "20,594.63",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 44,
+      "y": 526.96,
+      "text": "Signature Employee :",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 274.22,
+      "y": 526.96,
+      "text": "Signature Employer :",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 44,
+      "y": 543.96,
+      "text": "Date :",
+      "font": "regular",
+      "size": 10
+    },
+    {
+      "x": 223.51,
+      "y": 543.96,
+      "text": "28-Sep-26",
+      "font": "regular",
+      "size": 10
+    }
+  ],
+  "unsupported": [],
+  "overflow": []
+}

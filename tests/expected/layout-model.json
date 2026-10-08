@@ -4,6 +4,7 @@
       "id": "table",
       "version": "built-in-1"
     },
+    "drawing": 1,
     "page": {
       "size": "A4",
       "orientation": "portrait"
@@ -778,6 +779,7 @@
       "id": "table",
       "version": "built-in-1"
     },
+    "drawing": 1,
     "page": {
       "size": "A4",
       "orientation": "portrait"
@@ -1552,6 +1554,7 @@
       "id": "table",
       "version": "built-in-1"
     },
+    "drawing": 1,
     "page": {
       "size": "A4",
       "orientation": "portrait"
@@ -2316,6 +2319,7 @@
       "id": "table",
       "version": "built-in-1"
     },
+    "drawing": 1,
     "page": {
       "size": "A4",
       "orientation": "portrait"
@@ -3080,6 +3084,7 @@
       "id": "table",
       "version": "built-in-1"
     },
+    "drawing": 1,
     "page": {
       "size": "A4",
       "orientation": "portrait"
@@ -3844,6 +3849,7 @@
       "id": "table",
       "version": "built-in-1"
     },
+    "drawing": 1,
     "page": {
       "size": "A4",
       "orientation": "portrait"
@@ -4608,6 +4614,7 @@
       "id": "table",
       "version": "built-in-1"
     },
+    "drawing": 1,
     "page": {
       "size": "A4",
       "orientation": "portrait"

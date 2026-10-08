@@ -2,9 +2,13 @@
 // employee, styled like the reference workbook: Book Antiqua 11 and 12, #66CCFF bands, medium
 // borders, a thick divider between the two halves, merged heading cells.
 // Every figure is a plain number from the payroll data. Only the three totals are live formulas.
+//
+// DRAWING VERSION 1. The styles and the sheet set-up in this file are frozen: payslips were issued
+// with them and must always be written the same way (tests/format1.test.ts). A change is a new
+// drawing version, added beside this one, never in place of it.
 
 import ExcelJS from 'exceljs'
-import type { DocCell, DocRow, PayslipDocument } from '../lib/layoutModel'
+import { KNOWN_DRAWINGS, unknownDrawing, type DocCell, type DocRow, type PayslipDocument } from '../lib/layoutModel'
 import { centsToNumber, isWholeRupees } from '../lib/money'
 
 // Accounting-style formats, as in the reference: a zero shows as "-".
@@ -44,6 +48,7 @@ function utcDate(iso: string): Date {
 }
 
 function addSheet(workbook: ExcelJS.Workbook, name: string, doc: PayslipDocument): void {
+  if (!KNOWN_DRAWINGS.includes(doc.drawing)) throw new Error(unknownDrawing(doc.drawing))
   const sheet = workbook.addWorksheet(name, {
     pageSetup: {
       paperSize: 9, // A4

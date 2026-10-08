@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_STATUTORY_RATES } from '../src/data/defaultStatutoryRates'
 import { computeAll, documentFor } from '../src/lib/build'
 import { canonicalJson, jsonBytes } from '../src/lib/hubWire'
-import { decodeLines, encodeLines, figuresOf, LINES_FORMAT, MAX_LINE_OBJECTS } from '../src/lib/issuedLines'
-import type { PayslipDocument } from '../src/lib/layoutModel'
+import { decodeLines, encodeLines, figuresOf, LINES_FORMAT, MAX_LINE_OBJECTS, sameLines } from '../src/lib/issuedLines'
+import { DRAWING_VERSION, type PayslipDocument } from '../src/lib/layoutModel'
 import { DEFAULT_TABLE_MAPPING, TABLE_TEMPLATE } from '../src/lib/template'
 import { BUILT_IN_BODY, MAX_BODY_ROWS, templateOf } from '../src/lib/templateBody'
 import { addLine, setLineKey } from '../src/lib/templateEdit'
@@ -54,6 +54,25 @@ describe('the lines of an issued payslip', () => {
       const [issued, again] = await Promise.all([writePayslipPdf(documents[index], fonts), writePayslipPdf(reopened, fonts)])
       expect(await readPdf(again)).toEqual(await readPdf(issued))
     }
+  })
+
+  it('record the drawing version the payslip was issued with', () => {
+    for (const lines of encoded) expect(lines[0]).toMatchObject({ kind: 'document', format: LINES_FORMAT, drawing: DRAWING_VERSION })
+    expect(decoded(stored(encoded[0])).drawing).toBe(DRAWING_VERSION)
+  })
+
+  it('issued before the drawing version was recorded: read as drawing 1, and still the same payslip', () => {
+    const before = JSON.parse(JSON.stringify(encoded[0])) as Record<string, unknown>[]
+    delete before[0].drawing
+    expect(decoded(before)).toEqual(documents[0])
+    expect(sameLines(before, encoded[0])).toBe(true)
+    expect(sameLines(stored(before), encoded[0])).toBe(true)
+    // Any other difference is a difference.
+    const other = JSON.parse(JSON.stringify(encoded[0])) as Record<string, unknown>[]
+    ;(other[5].cells as { text: string }[])[0].text += '.'
+    expect(sameLines(other, encoded[0])).toBe(false)
+    expect(sameLines(encoded[1], encoded[0])).toBe(false)
+    expect(sameLines('lines', encoded[0])).toBe(false)
   })
 
   it('carry the figures line by line, with ids, for a later month-to-month comparison', () => {
@@ -121,6 +140,12 @@ describe('stored lines are refused, never guessed at', () => {
     expect(decodeLines([{ kind: 'note', text: 'issued elsewhere' }, { kind: 'figures' }, { id: 'title' }])).toMatchObject({ ok: false, problem: expect.stringContaining('not issued by this app') })
     expect(decodeLines('lines')).toMatchObject({ ok: false })
     expect(decodeLines([])).toMatchObject({ ok: false })
+  })
+
+  it('with a drawing version this app cannot draw, or one that is not a version number', () => {
+    expect(change((lines) => (lines[0].drawing = DRAWING_VERSION + 1))).toMatchObject({ ok: false, problem: expect.stringContaining('drawing version 2') })
+    expect(change((lines) => (lines[0].drawing = '1')).ok).toBe(false)
+    expect(change((lines) => (lines[0].drawing = 0)).ok).toBe(false)
   })
 
   it('with an unknown field, a wrong type, or a missing part', () => {

@@ -1,0 +1,402 @@
+{
+  "pages": 1,
+  "width": 595.28,
+  "height": 841.89,
+  "fonts": [
+    {
+      "name": "TeXGyrePagella-Bold",
+      "kind": "Type0 / CIDFontType0",
+      "embedded": true,
+      "program": "CIDFontType0C",
+      "header": "01000404",
+      "glyphs": 41
+    },
+    {
+      "name": "TeXGyrePagella-Regular",
+      "kind": "Type0 / CIDFontType0",
+      "embedded": true,
+      "program": "CIDFontType0C",
+      "header": "01000404",
+      "glyphs": 56
+    }
+  ],
+  "texts": [
+    {
+      "text": "Payslip",
+      "x": 279,
+      "y": 68.5,
+      "font": "TeXGyrePagella-Bold",
+      "size": 11
+    },
+    {
+      "text": "ABC Co Ltd",
+      "x": 267.5,
+      "y": 85.5,
+      "font": "TeXGyrePagella-Bold",
+      "size": 11
+    },
+    {
+      "text": "12 Example Street",
+      "x": 253,
+      "y": 102.5,
+      "font": "TeXGyrePagella-Bold",
+      "size": 11
+    },
+    {
+      "text": "Port Louis",
+      "x": 272,
+      "y": 119.5,
+      "font": "TeXGyrePagella-Bold",
+      "size": 11
+    },
+    {
+      "text": "BRN : C1234567",
+      "x": 258,
+      "y": 136.5,
+      "font": "TeXGyrePagella-Bold",
+      "size": 11
+    },
+    {
+      "text": "Pay period: September 2026",
+      "x": 410,
+      "y": 153.5,
+      "font": "TeXGyrePagella-Bold",
+      "size": 11
+    },
+    {
+      "text": "Employee Info",
+      "x": 260.5,
+      "y": 170.5,
+      "font": "TeXGyrePagella-Bold",
+      "size": 11
+    },
+    {
+      "text": "Name :",
+      "x": 44,
+      "y": 187,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "DOE JANE",
+      "x": 151.5,
+      "y": 187,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Date of Employment :",
+      "x": 274,
+      "y": 187,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "15-Mar-21",
+      "x": 407.5,
+      "y": 187,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "NIC :",
+      "x": 44,
+      "y": 204,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "X0000000000001",
+      "x": 151.5,
+      "y": 204,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Earnings",
+      "x": 133,
+      "y": 238.5,
+      "font": "TeXGyrePagella-Bold",
+      "size": 11
+    },
+    {
+      "text": "Deductions",
+      "x": 383.5,
+      "y": 238.5,
+      "font": "TeXGyrePagella-Bold",
+      "size": 11
+    },
+    {
+      "text": "Rs",
+      "x": 203.5,
+      "y": 255,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Rs",
+      "x": 474,
+      "y": 255,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Basic Salary",
+      "x": 44,
+      "y": 272,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "18,000",
+      "x": 238.5,
+      "y": 272,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Contributions",
+      "x": 274,
+      "y": 272,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Govt Increment",
+      "x": 44,
+      "y": 289,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "635",
+      "x": 251,
+      "y": 289,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Allowances",
+      "x": 44,
+      "y": 306,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "-",
+      "x": 263,
+      "y": 306,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "CSG",
+      "x": 274,
+      "y": 306,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "279.52",
+      "x": 524,
+      "y": 306,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Transport Allowance",
+      "x": 44,
+      "y": 323,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "2,450",
+      "x": 243.5,
+      "y": 323,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "NSF",
+      "x": 274,
+      "y": 323,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "210.85",
+      "x": 524,
+      "y": 323,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Presence Bonus",
+      "x": 44,
+      "y": 340,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "-",
+      "x": 263,
+      "y": 340,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "PAYE",
+      "x": 274,
+      "y": 340,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "-",
+      "x": 548,
+      "y": 340,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Productivity Bonus",
+      "x": 44,
+      "y": 357,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "-",
+      "x": 263,
+      "y": 357,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Advance",
+      "x": 44,
+      "y": 374,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "-",
+      "x": 263,
+      "y": 374,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Others Deductions :",
+      "x": 274,
+      "y": 374,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Absences :",
+      "x": 274,
+      "y": 391,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "-",
+      "x": 548,
+      "y": 391,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Lateness",
+      "x": 274,
+      "y": 408,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "-",
+      "x": 548,
+      "y": 408,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Total Earnings",
+      "x": 44,
+      "y": 442,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "21,085",
+      "x": 238.5,
+      "y": 442,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Total Deductions",
+      "x": 274,
+      "y": 442,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "490.37",
+      "x": 524,
+      "y": 442,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Net Pay :",
+      "x": 274,
+      "y": 493,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "20,594.63",
+      "x": 511.5,
+      "y": 493,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Signature Employee :",
+      "x": 44,
+      "y": 527,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Signature Employer :",
+      "x": 274,
+      "y": 527,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "Date :",
+      "x": 44,
+      "y": 544,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    },
+    {
+      "text": "28-Sep-26",
+      "x": 223.5,
+      "y": 544,
+      "font": "TeXGyrePagella-Regular",
+      "size": 10
+    }
+  ],
+  "metadata": {
+    "Title": "Payslip - DOE JANE - 2026-09",
+    "Author": null,
+    "Producer": "Payslip app",
+    "Creator": "Payslip app"
+  }
+}

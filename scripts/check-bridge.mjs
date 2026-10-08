@@ -493,11 +493,22 @@ try {
     await all.uncheck()
     await app.getByLabel(new RegExp(`^Include ${nameOf(index)}$`, 'i')).check()
   }
-  const confirmIssue = async () => {
+  const identicalDialog = app.getByRole('dialog', { name: /^Issue (an|\d+) identical payslips? again\?$/ })
+  /** Confirms an issue. `identical` is the question expected about unchanged payslips, or null when none is unchanged. */
+  const confirmIssue = async (identical = null) => {
     await issueButton.click()
     await issueDialog.waitFor()
     await issueDialog.getByRole('button', { name: 'Issue', exact: true }).click()
     await issueDialog.waitFor({ state: 'detached' })
+    if (identical === null) {
+      check((await identicalDialog.count()) === 0, 'A second confirmation was asked although no selected payslip is unchanged.')
+      return
+    }
+    await identicalDialog.waitFor()
+    const asked = await identicalDialog.textContent()
+    check(asked.includes(identical), `The second confirmation does not ask "${identical}": ${asked}`)
+    await identicalDialog.getByRole('button', { name: 'Issue anyway' }).click()
+    await identicalDialog.waitFor({ state: 'detached' })
   }
   const checkIssued = () => issuePanel.getByRole('button', { name: /Check (again )?what is issued/ }).click()
 
@@ -583,15 +594,35 @@ try {
   check(await page.evaluate((id) => window.hub.state.issued.filter((row) => row.national_id === id).map((row) => row.revision).join() === '1,2', fixture[0].ID), 'Revision 1 did not stay after the re-issue.')
   check((await employeeRows.filter({ hasText: 'Issued, revision 2' }).count()) === 1, 'The re-issued employee is not at revision 2.')
 
+  // The same employee again, with nothing changed: allowed, but only after a second, explicit confirmation.
+  const sendsBeforeIdentical = (await issueSends()).length
+  await issueButton.click()
+  await issueDialog.waitFor()
+  await issueDialog.getByRole('button', { name: 'Issue', exact: true }).click()
+  await identicalDialog.waitFor()
+  check((await issueSends()).length === sendsBeforeIdentical, 'An unchanged payslip was sent on the first confirmation alone.')
+  const identicalText = (await identicalDialog.textContent()).toLowerCase()
+  check(identicalText.includes('nothing has changed since revision 2. issue an identical revision 3 anyway?'), `The second confirmation does not ask the question: ${identicalText}`)
+  check(identicalText.includes(`${nameOf(0).toLowerCase()}: the same as revision 2. this adds revision 3.`), `The second confirmation does not name the employee: ${identicalText}`)
+  check(await identicalDialog.getByRole('button', { name: 'Cancel' }).evaluate((button) => button === document.activeElement), 'The second confirmation does not start on Cancel.')
+  await accessible('identical re-issue confirmation')
+  await dialogKeyboard(identicalDialog, issueButton, 'identical re-issue confirmation')
+  check((await issueSends()).length === sendsBeforeIdentical && (await issuedInHub()) === 8, 'Leaving the second confirmation still issued the payslip.')
+  await confirmIssue('Nothing has changed since revision 2. Issue an identical revision 3 anyway?')
+  await app.getByTestId('issue-summary').filter({ hasText: 'Issued: 1. Not issued: 0.' }).waitFor()
+  check((await issuedInHub()) === 9, 'An identical re-issue, confirmed twice, did not add exactly one revision.')
+  check(await page.evaluate((id) => window.hub.state.issued.filter((row) => row.national_id === id).map((row) => row.revision).join() === '1,2,3', fixture[0].ID), 'The identical re-issue is not revision 3.')
+  check((await employeeRows.filter({ hasText: 'Issued, revision 3' }).count()) === 1, 'The employee issued again unchanged is not at revision 3.')
+
   // Stale: another admin issued one employee since the month was loaded. Nothing is stored, the
   // employee is named from the position the dashboard gave, and who moved is listed.
   await app.getByLabel('Select all employees').check()
   await page.evaluate((id) => window.hub.otherAdminIssues('2026-10', id), fixture[1].ID)
-  await confirmIssue()
+  await confirmIssue('Nothing has changed since revision 3. Issue an identical revision 4 anyway?')
   await app.getByTestId('issue-outcome').filter({ hasText: 'Someone saved a newer version first' }).waitFor()
   const staleDetail = (await app.getByTestId('issue-detail').textContent()).toLowerCase()
   check(staleDetail.includes(`the payslip at fault: ${nameOf(1).toLowerCase()}`) && staleDetail.includes('revision 2, by another admin'), `A stale issue does not name who moved: ${staleDetail}`)
-  check((await issuedInHub()) === 9, 'A stale issue stored something.')
+  check((await issuedInHub()) === 10, 'A stale issue stored something.')
   check((await app.getByTestId('issue-summary').textContent()).includes('Issued: 0. Not issued: 7.'), 'A stale issue does not say that nobody was issued.')
 
   // "unavailable" on an issue that WAS stored: the month is loaded again, found, and not sent twice.
@@ -600,29 +631,30 @@ try {
   const sendsBefore = (await issueSends()).length
   await confirmIssue()
   await app.getByTestId('issue-summary').filter({ hasText: 'Issued: 1. Not issued: 0.' }).waitFor()
-  check((await issueSends()).length === sendsBefore + 1 && (await issuedInHub()) === 10, 'An unconfirmed issue was sent again.')
+  check((await issueSends()).length === sendsBefore + 1 && (await issuedInHub()) === 11, 'An unconfirmed issue was sent again.')
 
   // "unavailable" on an issue that was NOT stored: nobody moved, so "Issue again" is offered.
   await selectOnly(3)
   await hub(() => (window.hub.state.nextSave = { mode: 'unavailable-unsaved' }))
   await confirmIssue()
   await app.getByTestId('issue-outcome').filter({ hasText: 'nothing was issued' }).waitFor()
-  check((await issuedInHub()) === 10, 'An issue that was not stored shows as issued.')
+  check((await issuedInHub()) === 11, 'An issue that was not stored shows as issued.')
   await issuePanel.getByRole('button', { name: 'Issue again' }).click()
   await app.getByTestId('issue-summary').filter({ hasText: 'Issued: 1. Not issued: 0.' }).waitFor()
-  check((await issuedInHub()) === 11, '"Issue again" did not issue.')
+  check((await issuedInHub()) === 12, '"Issue again" did not issue.')
 
   // An employee the dashboard does not have: refused, named from the position.
   await app.getByLabel('Select all employees').check()
   await page.evaluate((id) => (window.hub.state.employees = [...new Set(window.hub.state.issued.map((row) => row.national_id))].filter((known) => known !== id)), fixture[4].ID)
-  await confirmIssue()
+  // Three of the seven are unchanged, and not all at the same revision: the question names none, each line does.
+  await confirmIssue('Nothing has changed since these payslips were last issued. Issue an identical new revision of each anyway?')
   await app.getByTestId('issue-outcome').filter({ hasText: 'The dashboard no longer has this' }).waitFor()
   const missing = (await app.getByTestId('issue-detail').textContent()).toLowerCase()
   check(missing.includes(`the payslip at fault: ${nameOf(4).toLowerCase()}`), `A refused issue does not name the employee: ${missing}`)
   check((await app.getByTestId('issue-outcome').textContent()).includes('not a current employee'), 'The reason from the dashboard is not shown.')
-  check((await issuedInHub()) === 11, 'A refused issue stored something.')
+  check((await issuedInHub()) === 12, 'A refused issue stored something.')
   await hub(() => (window.hub.state.employees = null))
-  console.log('  issuing: declined load, locked then the same message, issue, reopen identical, downloads, re-issue, stale, unavailable (stored and not stored), unknown employee')
+  console.log('  issuing: declined load, locked then the same message, issue, reopen identical, downloads, re-issue, identical re-issue asked twice, stale, unavailable (stored and not stored), unknown employee')
 
   // 9. Every message came from this app at the hub's origin, and nothing was stored.
   const messages = await page.evaluate(() => window.log)

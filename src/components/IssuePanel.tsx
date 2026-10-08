@@ -1,7 +1,7 @@
 import { CircleCheck, FileCheck2, Lock, RefreshCw, Send, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { formatPeriod, formatShortDate, isIsoDate } from '../lib/dates'
-import type { IssueBuild } from '../lib/issueBuild'
+import { identicalAsk, type IssueBuild } from '../lib/issueBuild'
 import { runSummary, type Issuing, type MonthState } from '../lib/useIssuing'
 import { Dialog } from './Dialog'
 import { FailurePanel } from './FailurePanel'
@@ -27,12 +27,19 @@ const day = (stamp: string) => (isIsoDate(stamp.slice(0, 10)) ? formatShortDate(
 
 /** Issuing a month: check what is issued, confirm, send, and say exactly how it ended. */
 export function IssuePanel({ period, brn, month, issuing, readOnly, build, templateLabel, ratesLabel, onLoad }: Props) {
-  const [confirming, setConfirming] = useState(false)
+  /** 'identical' is the second confirmation, asked only when a selected payslip is unchanged since it was last issued. */
+  const [step, setStep] = useState<'closed' | 'confirm' | 'identical'>('closed')
   const { run } = issuing
   const mine = run?.period === period ? run : null
   const loaded = month?.status === 'loaded'
   const payslips = build.ok ? build.payslips : []
   const reissues = payslips.filter((payslip) => payslip.expectedRevision > 0)
+  const identical = build.ok ? build.identical : []
+  const ask = identical.length > 0 ? identicalAsk(identical) : null
+  const issueNow = () => {
+    setStep('closed')
+    issuing.start(brn, period, payslips)
+  }
   const summary = mine && (mine.status === 'done' || mine.status === 'stopped') ? runSummary(mine) : null
   const outcome = mine?.status === 'stopped' ? mine.outcome : null
 
@@ -181,7 +188,7 @@ export function IssuePanel({ period, brn, month, issuing, readOnly, build, templ
             className="btn btn-primary"
             disabled={cannotIssue !== null || issuing.busy}
             aria-describedby={cannotIssue ? 'cannot-issue' : undefined}
-            onClick={() => setConfirming(true)}
+            onClick={() => setStep('confirm')}
           >
             <FileCheck2 aria-hidden="true" />
             Issue {payslips.length > 0 ? payslips.length : ''} {payslips.length === 1 ? 'payslip' : 'payslips'}
@@ -191,27 +198,21 @@ export function IssuePanel({ period, brn, month, issuing, readOnly, build, templ
       </div>
     </section>
 
-      {confirming && build.ok && (
+      {step === 'confirm' && build.ok && (
         <Dialog
           title={`Issue ${payslips.length} ${payslips.length === 1 ? 'payslip' : 'payslips'} for ${formatPeriod(period)}?`}
           description={`For BRN ${brn}. They are stored in the dashboard exactly as shown, all or none.`}
           icon={<FileCheck2 />}
           tone="warn"
           width={600}
-          onClose={() => setConfirming(false)}
+          onClose={() => setStep('closed')}
           actions={
             <>
-              <button type="button" className="btn" onClick={() => setConfirming(false)}>
+              <button type="button" className="btn" onClick={() => setStep('closed')}>
                 Cancel
               </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  setConfirming(false)
-                  issuing.start(brn, period, payslips)
-                }}
-              >
+              {/* An unchanged payslip is not sent on this confirmation alone: it gets its own question. */}
+              <button type="button" className="btn btn-primary" onClick={() => (ask ? setStep('identical') : issueNow())}>
                 Issue
               </button>
             </>
@@ -244,6 +245,39 @@ export function IssuePanel({ period, brn, month, issuing, readOnly, build, templ
               </div>
             </div>
           )}
+        </Dialog>
+      )}
+
+      {step === 'identical' && build.ok && ask && (
+        <Dialog
+          title={ask.title}
+          description={ask.question}
+          icon={<TriangleAlert />}
+          tone="warn"
+          width={600}
+          onClose={() => setStep('closed')}
+          actions={
+            <>
+              <button type="button" className="btn" data-autofocus onClick={() => setStep('closed')}>
+                Cancel
+              </button>
+              <button type="button" className="btn btn-primary" onClick={issueNow}>
+                Issue anyway
+              </button>
+            </>
+          }
+        >
+          <ul className="m-0 max-h-40 list-disc overflow-auto pl-5 text-sm" data-testid="identical-list">
+            {ask.lines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+          <p className="m-0 mt-3 text-sm text-muted">
+            {payslips.length > identical.length
+              ? `The other ${payslips.length - identical.length} of this issue ${payslips.length - identical.length === 1 ? 'is' : 'are'} new or changed. `
+              : ''}
+            Nothing is sent if you cancel. To issue without the unchanged ones, cancel and untick them.
+          </p>
         </Dialog>
       )}
     </>

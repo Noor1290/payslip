@@ -146,7 +146,7 @@ Found while building Phases 1 to 4 and fixing the PDF font (October 2026) and de
 
 **What happens.** The dashboard stores one message all or none, and accepts at most 1,000 payslips and 4 MB per message. A larger month is sent in batches, one after the other. Each batch is all or none; the month as a whole is not. If a batch does not go through, the run stops there, and the panel says "Stopped at batch 2 of 3" and lists who is issued and who is not. The reload rule is applied to the batch that stopped.
 
-**Evidence.** Measured on the fake fixtures: a whole payslip as sent is 5,906 to 6,066 bytes, so about 659 fit in one message. A company under about 650 employees is always one message. With the largest template the editor allows (10.7 KB of lines) about 360 fit. Test: `tests/issue.test.ts`, "more than fits is split into batches" (1,500 payslips).
+**Evidence.** Measured on the fake fixtures: a whole payslip as sent is 5,918 to 6,078 bytes, so about 657 fit in one message. A company under about 650 employees is always one message. With the largest template the editor allows (10.7 KB of lines) about 360 fit. Test: `tests/issue.test.ts`, "more than fits is split into batches" (1,500 payslips).
 
 **To decide.** Nothing now.
 
@@ -162,11 +162,13 @@ Found while building Phases 1 to 4 and fixing the PDF font (October 2026) and de
 
 **To decide.** Nothing here; it is the dashboard's rule for per-employee data.
 
-## 24. An identical payslip can be issued again
+## 24. An identical payslip can be issued again, after a second confirmation (decided)
 
-**What happens.** After a month is issued, "Issue" stays available. Issuing the same payslip again makes revision 2 with the same content; the confirmation says "this creates revision 2; revision 1 stays". The employee list shows "Issued, revision N" when the payslip on screen is exactly the issued one, and "Changed since revision N" when it is not.
+**What happens.** After a month is issued, "Issue" stays available. A selected payslip that is exactly what the dashboard has as its latest revision (the same lines, template version, rates and accepted differences with their reasons) is not sent on the first confirmation alone. A second one asks: "Nothing has changed since revision N. Issue an identical revision N+1 anyway?", names each such employee, and starts on Cancel. Cancel sends nothing, for anybody in the selection. When the unchanged payslips are not all at the same revision, the question names no revision and each line does.
 
-**To decide.** Whether to refuse a re-issue when nothing changed.
+**Evidence.** `tests/issue.test.ts` ("an identical re-issue is allowed, but asked about a second time"); `npm run check:bridge` drives the two dialogs in the built app: Escape and Cancel send nothing, "Issue anyway" adds exactly one revision.
+
+**To decide.** Nothing now. The employee list still says "Issued, revision N" from the lines alone, so a payslip can show as issued and not be asked about, when only its rates or a reason changed.
 
 ## 25. Only the latest revision of an issued payslip can be opened
 
@@ -174,13 +176,13 @@ Found while building Phases 1 to 4 and fixing the PDF font (October 2026) and de
 
 **To decide.** With the history, later.
 
-## 26. A reopened payslip is drawn by the current drawing code
+## 26. An issued payslip is drawn with the drawing version it was issued with (decided)
 
-**What happens.** The stored lines hold every row, cell and text exactly as issued, with a format number. The page geometry (margins, row height, the font files) is in the app, not in the stored lines. If a later version of the app changes the geometry, an old payslip keeps its content but is drawn with the new geometry.
+**What happens.** The rule is now a hard rule in CLAUDE.md: format 1 must always render identically, and a change to the page geometry or the drawing is a new drawing version beside the old one. The stored lines record the drawing version (`drawing: 1` in the document object). The page geometry, the PDF writer and the Excel writer are marked as drawing version 1 and refuse a version they do not have; a stored payslip with such a version is listed as "cannot be shown", with the reason. A payslip issued before the key existed has no `drawing`: it is read as 1, the only version there was, and still compares as the same payslip.
 
-**Evidence.** `tests/issuedLines.test.ts` and `tests/issue.test.ts` prove identity with the current code: identical layout model, identical PDF text, positions, fonts and sizes.
+**Evidence.** `tests/format1.test.ts` holds one payslip as stored (`tests/frozen/format-1/lines.json`, DOE JANE, fake) and the page, PDF and Excel sheet it must always give. Those files are written once and are not rewritten by `UPDATE_RECORDINGS`. When they were made they were equal to the existing recordings of the same payslip.
 
-**To decide.** Before changing the page geometry: either raise the format number and keep the old geometry for format 1, or accept the change for old payslips.
+**To decide.** Nothing now. There is one drawing version, so nothing chooses between versions yet: the first change to the geometry has to add that choice (keep the present code as version 1, add version 2 beside it). The bundled font files are part of the drawing too: replacing them is a new drawing version.
 
 ## 27. Right after issuing, the date of issue is not shown until the month is opened again
 

@@ -6,11 +6,17 @@
 // Kept compact: a value that equals its default is left out.
 
 import { z } from 'zod'
-import type { DocCell, DocRow, PayslipDocument } from './layoutModel'
+import { canonicalJson } from './hubWire'
+import { KNOWN_DRAWINGS, unknownDrawing, type DocCell, type DocRow, type PayslipDocument } from './layoutModel'
 import type { PayslipComputation } from './payslip'
 
 /** Goes up when the shape changes. A payslip in a format this app does not know is never guessed at. */
 export const LINES_FORMAT = 1
+/**
+ * The drawing version of a payslip issued before that key was recorded. Only drawing version 1
+ * existed then, so this is what those payslips were issued with, not a guess.
+ */
+const DRAWING_BEFORE_IT_WAS_RECORDED = 1
 /** The dashboard accepts 1 to 200 objects. */
 export const MAX_LINE_OBJECTS = 200
 
@@ -93,6 +99,7 @@ const documentSchema = z.strictObject({
   kind: z.literal('document'),
   format: z.literal(LINES_FORMAT),
   template: z.strictObject({ id: z.string().min(1).max(60), version: z.string().min(1).max(40) }),
+  drawing: z.number().int().min(1).max(1000).optional(),
   page: z.strictObject({ size: z.literal('A4'), orientation: z.literal('portrait') }),
   fonts: z.strictObject({ excel: z.string().min(1).max(60), print: z.string().min(1).max(60) }),
   columnWidths: z.tuple([z.number().positive(), z.number().positive(), z.number().positive(), z.number().positive()]),
@@ -183,6 +190,8 @@ export function decodeLines(lines: unknown): DecodedLines {
     return { ok: false, problem: 'The stored payslip does not match its format. It is not shown, rather than guessed at.' }
   }
   const { kind: _kind, format: _format, ...page } = document.data
+  const drawing = page.drawing ?? DRAWING_BEFORE_IT_WAS_RECORDED
+  if (!KNOWN_DRAWINGS.includes(drawing)) return { ok: false, problem: unknownDrawing(drawing) }
   const found: IssuedFigures = {
     lines: figures.data.lines.map(({ status, ...line }) => ({ ...line, status: status ?? 'ok' })),
     totals: figures.data.totals,
@@ -191,8 +200,20 @@ export function decodeLines(lines: unknown): DecodedLines {
     ok: true,
     document: {
       ...page,
+      drawing,
       rows: rows.data.map((row): DocRow => ({ id: row.id, cells: (row.cells ?? []).map(decodeCell), fill: row.fill ?? null, ruleBelow: row.rule ?? null })),
     },
     figures: found,
   }
+}
+
+/** Stored lines with the drawing version written out, as this app writes them now. */
+function withDrawing(lines: unknown): unknown {
+  if (!Array.isArray(lines) || typeof lines[0] !== 'object' || lines[0] === null || 'drawing' in lines[0]) return lines
+  return [{ ...lines[0], drawing: DRAWING_BEFORE_IT_WAS_RECORDED }, ...lines.slice(1)]
+}
+
+/** Whether two lists of stored lines are the same payslip, whatever order the database gave their keys. */
+export function sameLines(a: unknown, b: unknown): boolean {
+  return canonicalJson(withDrawing(a)) === canonicalJson(withDrawing(b))
 }

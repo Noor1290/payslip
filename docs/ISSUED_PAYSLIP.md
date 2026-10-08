@@ -10,6 +10,10 @@ When a month is issued, the app sends one message to the Payroll Hub dashboard (
 
 `lines[0].format` is `1`. It goes up whenever the shape changes. A payslip whose format this app does not know is not shown: the app says so, and never guesses.
 
+## Drawing version
+
+`lines[0].drawing` is `1`. It names the rules the payslip is drawn with: the page geometry, sizes and line weights of the preview and the PDF, the styles of the Excel sheet, and the bundled font files. A change to any of them is a new drawing version, and the app keeps the old rules for the payslips issued with them, so a payslip of format 1, drawing 1 always looks the same (`tests/format1.test.ts`). A payslip whose drawing version this app does not have is not shown. A payslip issued before this key existed has none: it is read as `1`, the only version there was.
+
 ## Shape (format 1)
 
 `lines` is a list of JSON objects (the dashboard allows 1 to 200; a payslip uses 33 to 44), in this order:
@@ -21,6 +25,7 @@ When a month is issued, the app sends one message to the Payroll Hub dashboard (
      "kind": "document",
      "format": 1,
      "template": { "id": "20000000-0000-4000-8000-000000000001", "version": "v2" },
+     "drawing": 1,
      "page": { "size": "A4", "orientation": "portrait" },
      "fonts": { "excel": "Book Antiqua", "print": "TeX Gyre Pagella" },
      "columnWidths": [28.77734375, 32.77734375, 35.6640625, 40.5546875],
@@ -101,10 +106,10 @@ The dashboard refuses a payslip over 16,000 bytes (the whole payslip, with its o
 
 | Payslip | `lines` as JSON |
 |---|---|
-| Built-in Table template (9 rows of lines), seven employees | 5,527 to 5,606 bytes |
-| The largest template the editor allows (20 rows on each side) | 10,680 bytes |
+| Built-in Table template (9 rows of lines), seven employees | 5,539 to 5,618 bytes |
+| The largest template the editor allows (20 rows on each side) | 10,692 bytes |
 
-A whole payslip as sent (the lines plus the national ID, the template, the rates and the accepted differences) is 5,906 to 6,066 bytes for the seven fake employees. About 659 of them fit in one 4 MB message.
+A whole payslip as sent (the lines plus the national ID, the template, the rates and the accepted differences) is 5,918 to 6,078 bytes for the seven fake employees. About 657 of them fit in one 4 MB message.
 
 Before sending, the app measures each payslip and refuses one that is too large, naming the employee. It never trims. A month too large for one message is sent in batches (`docs/KNOWN_ISSUES.md`, issues 21 and 22).
 
