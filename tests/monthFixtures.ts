@@ -79,7 +79,11 @@ export interface Month {
 
 /** A month of payslips built by the app's own code from a payroll fixture, every rounding difference accepted. */
 export function monthOf(period: string, published: Published = V1, fixture?: string): Month {
-  const data = loadFixture(fixture)
+  return monthFrom(loadFixture(fixture), period, published)
+}
+
+/** The same, from payroll data already in hand (a fixture with one figure changed, say). */
+export function monthFrom(data: ImportedPayroll, period: string, published: Published = V1): Month {
   const { template, mapping } = templateOf(published.body, { id: published.id, name: published.name, version: `v${published.version}` })
   const prepared = preparePayslips(data, { template, mapping, rateVersions: DEFAULT_STATUTORY_RATES, period }, `${period}-28`)
   const accepted: Record<number, AcceptedChecks> = {}
