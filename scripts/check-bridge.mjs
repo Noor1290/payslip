@@ -926,6 +926,7 @@ try {
     ['ANCIEN PAUL', 'Left'],
   ]
   check((await reviewCard.getByTestId('review-row').count()) === 8, 'The month review does not have one row per employee, with the one who left.')
+  check(!(await reviewCard.evaluate((card) => card.outerHTML)).includes('X00000000000'), 'A national ID is in the month review card (its text or its attributes).')
   for (const [name, status] of expectedStatuses) check((await statusOf(name)) === status, `${name} is "${await statusOf(name)}", expected "${status}".`)
   check((await reviewCard.getByTestId('review-status').evaluateAll((badges) => badges.every((badge) => badge.querySelector('svg') && badge.textContent.trim().length > 0))) === true, 'A status is shown without its icon or without its text.')
   const counts = await reviewCard.getByTestId('review-counts').textContent()

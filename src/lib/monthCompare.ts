@@ -193,7 +193,7 @@ export interface TotalComparison {
 }
 
 export interface ReviewRow {
-  /** Unique in the list. */
+  /** Unique in the list. It is used in the page, so it never holds a national ID. */
   key: string
   nationalId: string
   /** The employee's row in this month's payroll data. Null for someone who left. */
@@ -384,9 +384,9 @@ function compareEmployee(current: CurrentPayslip, before: BaselinePayslip | unde
   return { ...base, status: changed ? 'changed' : 'unchanged', problem: null, matchedBy, lines, totals, notes: notesFor(last, now, lines), baselineRevision: before.revision }
 }
 
-function leftRow(before: BaselinePayslip): ReviewRow {
+function leftRow(before: BaselinePayslip, position: number): ReviewRow {
   return {
-    key: `left-${before.nationalId}`,
+    key: `left-${position + 1}`,
     nationalId: before.nationalId,
     rowIndex: null,
     employeeName: before.employeeName,

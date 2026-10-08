@@ -119,7 +119,7 @@ describe('one row per employee, with a status', () => {
 
   it('Left: issued last month and not in this month\'s data; named from the stored payslip', async () => {
     const row = rowOf(await review(), 'ANCIEN PAUL')
-    expect(row).toMatchObject({ status: 'left', rowIndex: null, baselineRevision: 1, key: 'left-X0000000000008' })
+    expect(row).toMatchObject({ status: 'left', rowIndex: null, baselineRevision: 1, key: 'left-1' })
     expect(row.lines.every((line) => line.current === null && line.difference === null)).toBe(true)
     expect(lineOf(row, 'Basic Salary').last).toBe(2436500)
     expect(totalOf(row, 'net')).toMatchObject({ last: 2437500, current: null })
@@ -139,6 +139,8 @@ describe('one row per employee, with a status', () => {
       ['ANCIEN PAUL', 'left'],
     ])
     expect(new Set(comparison.rows.map((row) => row.key)).size).toBe(comparison.rows.length)
+    // A key is used in the page: it never holds a national ID.
+    expect(comparison.rows.map((row) => row.key)).toEqual(['row-0', 'row-1', 'left-1', 'left-2', 'left-3', 'left-4', 'left-5'])
   })
 })
 
@@ -327,7 +329,7 @@ describe('what cannot be compared is said, never guessed', () => {
     const issued = await issuedAugust()
     const broken = issued.map((payslip) => (payslip.nationalId === 'X0000000000008' ? { ...payslip, lines: [{ kind: 'note' }, {}, {}] } : payslip))
     const comparison = await review(september(), broken)
-    const row = comparison.rows.find((found) => found.key === 'left-X0000000000008')!
+    const row = comparison.rows.find((found) => found.nationalId === 'X0000000000008')!
     expect(row).toMatchObject({ status: 'left', employeeName: 'An employee whose payslip cannot be read', lines: [] })
     expect(row.problem).toMatch(/not issued by this app/)
   })
