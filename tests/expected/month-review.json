@@ -1,0 +1,1387 @@
+{
+  "period": "2026-09",
+  "lastPeriod": "2026-08",
+  "source": "issued",
+  "rows": [
+    {
+      "key": "row-0",
+      "nationalId": "X0000000000001",
+      "rowIndex": 0,
+      "employeeName": "DOE JANE",
+      "status": "unchanged",
+      "problem": null,
+      "matchedBy": "id",
+      "lines": [
+        {
+          "side": "earnings",
+          "label": "Basic Salary",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 1800000,
+          "current": 1800000,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Govt Increment",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 63500,
+          "current": 63500,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Allowances",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Transport Allowance",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 245000,
+          "current": 245000,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Presence Bonus",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Productivity Bonus",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Advance",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "CSG",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 27952,
+          "current": 27952,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "NSF",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 21085,
+          "current": 21085,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "PAYE",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Absences :",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Lateness",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        }
+      ],
+      "totals": [
+        {
+          "id": "earnings",
+          "label": "Total Earnings",
+          "last": 2108500,
+          "current": 2108500,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "id": "deductions",
+          "label": "Total Deductions",
+          "last": 49037,
+          "current": 49037,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "id": "net",
+          "label": "Net Pay",
+          "last": 2059463,
+          "current": 2059463,
+          "difference": 0,
+          "changed": false
+        }
+      ],
+      "notes": [],
+      "baselineRevision": 1
+    },
+    {
+      "key": "row-1",
+      "nationalId": "X0000000000002",
+      "rowIndex": 1,
+      "employeeName": "PALMYRE JEAN MARC",
+      "status": "changed",
+      "problem": null,
+      "matchedBy": "id",
+      "lines": [
+        {
+          "side": "earnings",
+          "label": "Basic Salary",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 1836500,
+          "current": 1948000,
+          "difference": 111500,
+          "changed": true
+        },
+        {
+          "side": "earnings",
+          "label": "Govt Increment",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 63500,
+          "current": 63500,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Allowances",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Transport Allowance",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Presence Bonus",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Productivity Bonus",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Advance",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "CSG",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 28500,
+          "current": 30172,
+          "difference": 1672,
+          "changed": true
+        },
+        {
+          "side": "deductions",
+          "label": "NSF",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 19000,
+          "current": 20115,
+          "difference": 1115,
+          "changed": true
+        },
+        {
+          "side": "deductions",
+          "label": "PAYE",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Absences :",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Lateness",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        }
+      ],
+      "totals": [
+        {
+          "id": "earnings",
+          "label": "Total Earnings",
+          "last": 1900000,
+          "current": 2011500,
+          "difference": 111500,
+          "changed": true
+        },
+        {
+          "id": "deductions",
+          "label": "Total Deductions",
+          "last": 47500,
+          "current": 50287,
+          "difference": 2787,
+          "changed": true
+        },
+        {
+          "id": "net",
+          "label": "Net Pay",
+          "last": 1852500,
+          "current": 1961213,
+          "difference": 108713,
+          "changed": true
+        }
+      ],
+      "notes": [],
+      "baselineRevision": 1
+    },
+    {
+      "key": "row-2",
+      "nationalId": "X0000000000003",
+      "rowIndex": 2,
+      "employeeName": "SAMPLE ALEX",
+      "status": "changed",
+      "problem": null,
+      "matchedBy": "id",
+      "lines": [
+        {
+          "side": "earnings",
+          "label": "Basic Salary",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 3100000,
+          "current": 3100000,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Govt Increment",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 63500,
+          "current": 63500,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Allowances",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 150000,
+          "current": 150000,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Transport Allowance",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 120001,
+          "current": 120000,
+          "difference": -1,
+          "changed": true
+        },
+        {
+          "side": "earnings",
+          "label": "Presence Bonus",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Productivity Bonus",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Advance",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "CSG",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 47452,
+          "current": 47452,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "NSF",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 29710,
+          "current": 29710,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "PAYE",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Absences :",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Lateness",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        }
+      ],
+      "totals": [
+        {
+          "id": "earnings",
+          "label": "Total Earnings",
+          "last": 3433501,
+          "current": 3433500,
+          "difference": -1,
+          "changed": true
+        },
+        {
+          "id": "deductions",
+          "label": "Total Deductions",
+          "last": 77162,
+          "current": 77162,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "id": "net",
+          "label": "Net Pay",
+          "last": 3356339,
+          "current": 3356338,
+          "difference": -1,
+          "changed": true
+        }
+      ],
+      "notes": [],
+      "baselineRevision": 1
+    },
+    {
+      "key": "row-3",
+      "nationalId": "X0000000000004",
+      "rowIndex": 3,
+      "employeeName": "TESTER SAM",
+      "status": "unchanged",
+      "problem": null,
+      "matchedBy": "id",
+      "lines": [
+        {
+          "side": "earnings",
+          "label": "Basic Salary",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 4936500,
+          "current": 4936500,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Govt Increment",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 63500,
+          "current": 63500,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Allowances",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Transport Allowance",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Presence Bonus",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Productivity Bonus",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Advance",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "CSG",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 75000,
+          "current": 75000,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "NSF",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 29710,
+          "current": 29710,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "PAYE",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 125000,
+          "current": 125000,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Absences :",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Lateness",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        }
+      ],
+      "totals": [
+        {
+          "id": "earnings",
+          "label": "Total Earnings",
+          "last": 5000000,
+          "current": 5000000,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "id": "deductions",
+          "label": "Total Deductions",
+          "last": 229710,
+          "current": 229710,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "id": "net",
+          "label": "Net Pay",
+          "last": 4770290,
+          "current": 4770290,
+          "difference": 0,
+          "changed": false
+        }
+      ],
+      "notes": [
+        "Name: \"TESTER SAMUEL\" last month, \"TESTER SAM\" now."
+      ],
+      "baselineRevision": 1
+    },
+    {
+      "key": "row-4",
+      "nationalId": "X0000000000005",
+      "rowIndex": 4,
+      "employeeName": "EXEMPLE PRIYA",
+      "status": "new",
+      "problem": null,
+      "matchedBy": null,
+      "lines": [
+        {
+          "side": "earnings",
+          "label": "Basic Salary",
+          "lastLabel": null,
+          "match": "only-current",
+          "unmatched": null,
+          "last": null,
+          "current": 4936501,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Govt Increment",
+          "lastLabel": null,
+          "match": "only-current",
+          "unmatched": null,
+          "last": null,
+          "current": 63500,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Allowances",
+          "lastLabel": null,
+          "match": "only-current",
+          "unmatched": null,
+          "last": null,
+          "current": 0,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Transport Allowance",
+          "lastLabel": null,
+          "match": "only-current",
+          "unmatched": null,
+          "last": null,
+          "current": 0,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Presence Bonus",
+          "lastLabel": null,
+          "match": "only-current",
+          "unmatched": null,
+          "last": null,
+          "current": 0,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Productivity Bonus",
+          "lastLabel": null,
+          "match": "only-current",
+          "unmatched": null,
+          "last": null,
+          "current": 0,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Advance",
+          "lastLabel": null,
+          "match": "only-current",
+          "unmatched": null,
+          "last": null,
+          "current": 0,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "CSG",
+          "lastLabel": null,
+          "match": "only-current",
+          "unmatched": null,
+          "last": null,
+          "current": 150000,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "NSF",
+          "lastLabel": null,
+          "match": "only-current",
+          "unmatched": null,
+          "last": null,
+          "current": 29710,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "PAYE",
+          "lastLabel": null,
+          "match": "only-current",
+          "unmatched": null,
+          "last": null,
+          "current": 125000,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Absences :",
+          "lastLabel": null,
+          "match": "only-current",
+          "unmatched": null,
+          "last": null,
+          "current": 0,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Lateness",
+          "lastLabel": null,
+          "match": "only-current",
+          "unmatched": null,
+          "last": null,
+          "current": 0,
+          "difference": null,
+          "changed": false
+        }
+      ],
+      "totals": [
+        {
+          "id": "earnings",
+          "label": "Total Earnings",
+          "last": null,
+          "current": 5000001,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "id": "deductions",
+          "label": "Total Deductions",
+          "last": null,
+          "current": 304710,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "id": "net",
+          "label": "Net Pay",
+          "last": null,
+          "current": 4695291,
+          "difference": null,
+          "changed": false
+        }
+      ],
+      "notes": [],
+      "baselineRevision": null
+    },
+    {
+      "key": "row-5",
+      "nationalId": "X0000000000006",
+      "rowIndex": 5,
+      "employeeName": "FICTIF MARIE",
+      "status": "unchanged",
+      "problem": null,
+      "matchedBy": "id",
+      "lines": [
+        {
+          "side": "earnings",
+          "label": "Basic Salary",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 4500000,
+          "current": 4500000,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Govt Increment",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Allowances",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 200000,
+          "current": 200000,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Transport Allowance",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Presence Bonus",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Productivity Bonus",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Advance",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "CSG",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 67500,
+          "current": 67500,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "NSF",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "PAYE",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 80000,
+          "current": 80000,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Absences :",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Lateness",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        }
+      ],
+      "totals": [
+        {
+          "id": "earnings",
+          "label": "Total Earnings",
+          "last": 4700000,
+          "current": 4700000,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "id": "deductions",
+          "label": "Total Deductions",
+          "last": 147500,
+          "current": 147500,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "id": "net",
+          "label": "Net Pay",
+          "last": 4552500,
+          "current": 4552500,
+          "difference": 0,
+          "changed": false
+        }
+      ],
+      "notes": [
+        "Date of employment: 1-Feb-18 last month, none now."
+      ],
+      "baselineRevision": 1
+    },
+    {
+      "key": "row-6",
+      "nationalId": "X0000000000007",
+      "rowIndex": 6,
+      "employeeName": "TEMPO LEA",
+      "status": "unchanged",
+      "problem": null,
+      "matchedBy": "id",
+      "lines": [
+        {
+          "side": "earnings",
+          "label": "Basic Salary",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 987550,
+          "current": 987550,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Govt Increment",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Allowances",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Transport Allowance",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 60025,
+          "current": 60025,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Presence Bonus",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Productivity Bonus",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Advance",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "CSG",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 14813,
+          "current": 14813,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "NSF",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 10476,
+          "current": 10476,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "PAYE",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Absences :",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Lateness",
+          "lastLabel": null,
+          "match": "id",
+          "unmatched": null,
+          "last": 0,
+          "current": 0,
+          "difference": 0,
+          "changed": false
+        }
+      ],
+      "totals": [
+        {
+          "id": "earnings",
+          "label": "Total Earnings",
+          "last": 1047575,
+          "current": 1047575,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "id": "deductions",
+          "label": "Total Deductions",
+          "last": 25289,
+          "current": 25289,
+          "difference": 0,
+          "changed": false
+        },
+        {
+          "id": "net",
+          "label": "Net Pay",
+          "last": 1022286,
+          "current": 1022286,
+          "difference": 0,
+          "changed": false
+        }
+      ],
+      "notes": [],
+      "baselineRevision": 1
+    },
+    {
+      "key": "left-X0000000000008",
+      "nationalId": "X0000000000008",
+      "rowIndex": null,
+      "employeeName": "ANCIEN PAUL",
+      "status": "left",
+      "problem": null,
+      "matchedBy": null,
+      "lines": [
+        {
+          "side": "earnings",
+          "label": "Basic Salary",
+          "lastLabel": null,
+          "match": "only-last",
+          "unmatched": null,
+          "last": 2436500,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Govt Increment",
+          "lastLabel": null,
+          "match": "only-last",
+          "unmatched": null,
+          "last": 63500,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Allowances",
+          "lastLabel": null,
+          "match": "only-last",
+          "unmatched": null,
+          "last": 0,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Transport Allowance",
+          "lastLabel": null,
+          "match": "only-last",
+          "unmatched": null,
+          "last": 0,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Presence Bonus",
+          "lastLabel": null,
+          "match": "only-last",
+          "unmatched": null,
+          "last": 0,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Productivity Bonus",
+          "lastLabel": null,
+          "match": "only-last",
+          "unmatched": null,
+          "last": 0,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "earnings",
+          "label": "Advance",
+          "lastLabel": null,
+          "match": "only-last",
+          "unmatched": null,
+          "last": 0,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "CSG",
+          "lastLabel": null,
+          "match": "only-last",
+          "unmatched": null,
+          "last": 37500,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "NSF",
+          "lastLabel": null,
+          "match": "only-last",
+          "unmatched": null,
+          "last": 25000,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "PAYE",
+          "lastLabel": null,
+          "match": "only-last",
+          "unmatched": null,
+          "last": 0,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Absences :",
+          "lastLabel": null,
+          "match": "only-last",
+          "unmatched": null,
+          "last": 0,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "side": "deductions",
+          "label": "Lateness",
+          "lastLabel": null,
+          "match": "only-last",
+          "unmatched": null,
+          "last": 0,
+          "current": null,
+          "difference": null,
+          "changed": false
+        }
+      ],
+      "totals": [
+        {
+          "id": "earnings",
+          "label": "Total Earnings",
+          "last": 2500000,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "id": "deductions",
+          "label": "Total Deductions",
+          "last": 62500,
+          "current": null,
+          "difference": null,
+          "changed": false
+        },
+        {
+          "id": "net",
+          "label": "Net Pay",
+          "last": 2437500,
+          "current": null,
+          "difference": null,
+          "changed": false
+        }
+      ],
+      "notes": [],
+      "baselineRevision": 1
+    }
+  ],
+  "counts": {
+    "unchanged": 4,
+    "changed": 2,
+    "new": 1,
+    "left": 1,
+    "cannot-compare": 0
+  },
+  "banner": []
+}

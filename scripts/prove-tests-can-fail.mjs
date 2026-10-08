@@ -106,6 +106,19 @@ const changes = [
   ['A payslip with an unknown drawing version is drawn anyway', 'src/writers/pageGeometry.ts', 'if (!KNOWN_DRAWINGS.includes(doc.drawing)) throw new Error(unknownDrawing(doc.drawing))', ''],
   ['A payslip issued before the drawing version was recorded shows as changed', 'src/lib/issuedLines.ts', 'return [{ ...lines[0], drawing: DRAWING_BEFORE_IT_WAS_RECORDED }, ...lines.slice(1)]', 'return lines'],
   ['A stopped run counts the failed batch as issued', 'src/lib/useIssuing.ts', "const doneUpTo = run.status === 'done' ? run.batches.length : run.at", "const doneUpTo = run.status === 'done' ? run.batches.length : run.at + 1"],
+  ['Month review: a one-cent change counts as unchanged', 'src/lib/monthCompare.ts', '  changed: line.cents !== before.cents,', '  changed: Math.abs(line.cents - before.cents) > 1,'],
+  ['Month review: a line without a partner does not make a row Changed', 'src/lib/monthCompare.ts', "  match: 'only-current',\n  unmatched: why,\n  last: null,\n  current: line.cents,\n  difference: null,\n  changed: true,", "  match: 'only-current',\n  unmatched: why,\n  last: null,\n  current: line.cents,\n  difference: null,\n  changed: false,"],
+  ['Month review: across templates lines are matched by id', 'src/lib/monthCompare.ts', "last.template.id === now.template.id ? 'id' : 'label'", "last.template.id === now.template.id ? 'id' : 'id'"],
+  ['Month review: a label used twice is paired with the first one', 'src/lib/monthCompare.ts', 'beforeCount.get(label) === 1 && nowCount.get(label) === 1', '(beforeCount.get(label) ?? 0) >= 1 && (nowCount.get(label) ?? 0) >= 1'],
+  ['Month review: labels are compared with their capitals', 'src/lib/monthCompare.ts', "return label.trim().replace(/\\s+/g, ' ').toLowerCase()", "return label.trim().replace(/\\s+/g, ' ')"],
+  ['Month review: someone missing from this month is not listed as Left', 'src/lib/monthCompare.ts', '    ...baseline.payslips.filter((payslip) => !present.has(payslip.nationalId)).map(leftRow),\n', ''],
+  ['Month review: a new employee shows as Unchanged', 'src/lib/monthCompare.ts', "      status: 'new',", "      status: 'unchanged',"],
+  ['Month review: a stored payslip of another month is compared', 'src/lib/monthCompare.ts', 'if (decoded.document.period !== period) {', 'if (false) {'],
+  ['Month review: a stored payslip that cannot be read is compared as empty', 'src/lib/monthCompare.ts', "if (!before.side) return { ...base, ...none, status: 'cannot-compare', problem: before.problem, baselineRevision: before.revision }", "if (!before.side) return { ...base, ...none, status: 'unchanged', problem: null, baselineRevision: before.revision }"],
+  ['Month review: the month before January is month 0', 'src/lib/monthCompare.ts', 'return month === 1 ? `${year - 1}-12` :', 'return false ? `${year - 1}-12` :'],
+  ['Month review: a template change is not announced', 'src/lib/monthCompare.ts', 'if (otherTemplates.length > 0) {', 'if (false) {'],
+  ['Month review: a rates change is not announced', 'src/lib/monthCompare.ts', 'if (otherRates.length > 0) {', 'if (false) {'],
+  ['Month review: a name change makes a row Changed', 'src/lib/monthCompare.ts', 'const changed = lines.some((line) => line.changed) || totals.some((total) => total.changed)', 'const changed = lines.some((line) => line.changed) || totals.some((total) => total.changed) || last.employeeName !== now.employeeName'],
   ['One label changes', 'src/lib/template.ts', "totalDeductions: 'Total Deductions'", "totalDeductions: 'Total Deduction'"],
   ['Band colour changes by one step', 'src/lib/layoutModel.ts', "BAND_FILL = '66CCFF'", "BAND_FILL = '66CCFE'"],
   ['Rows are one point taller on the page', 'src/writers/pageGeometry.ts', 'const ROW_HEIGHT = 17', 'const ROW_HEIGHT = 18'],
@@ -144,8 +157,13 @@ if (!baseline.ok) {
   process.exit(1)
 }
 
+// An optional word narrows the run to the changes whose name or file contains it:
+//   node scripts/prove-tests-can-fail.mjs "Month review"
+const only = process.argv[2]?.toLowerCase()
+const chosen = only ? changes.filter(([name, file]) => name.toLowerCase().includes(only) || file.toLowerCase().includes(only)) : changes
+
 let missed = 0
-for (const [name, file, before, after] of changes) {
+for (const [name, file, before, after] of chosen) {
   const path = resolve(root, file)
   const original = readFileSync(path, 'utf8')
   if (original.split(before).length !== 2) {
@@ -174,7 +192,7 @@ if (!after.ok) {
   process.exit(1)
 }
 if (missed > 0) {
-  console.error(`\n${missed} of ${changes.length} changes were not caught.`)
+  console.error(`\n${missed} of ${chosen.length} changes were not caught.`)
   process.exit(1)
 }
-console.log(`\nAll ${changes.length} one-value changes made the tests fail, and every file was restored.`)
+console.log(`\nAll ${chosen.length} one-value changes made the tests fail, and every file was restored.`)
