@@ -1,6 +1,6 @@
 # Known issues
 
-Found while building Phases 1 to 4 and fixing the PDF font (October 2026) and deliberately not changed, because each one needs the owner's decision. All evidence uses fake data (ABC Co Ltd).
+Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and deliberately not changed, because each one needs the owner's decision. All evidence uses fake data (ABC Co Ltd).
 
 ## 1. A long name has little room on the payslip
 
@@ -72,7 +72,7 @@ Found while building Phases 1 to 4 and fixing the PDF font (October 2026) and de
 
 **What happens.** The button asks the dashboard for its latest payroll run. There is no way yet to ask for a particular month from inside this app; the dashboard can still send any month it chooses.
 
-**To decide.** Whether to add a month choice now, or with the month comparison in Phase 5, which needs last month's figures anyway.
+**To decide.** Whether to add a month choice. Decided for Phase 5 (8 October 2026): kept separate. The month review asks for last month's payroll by itself, as a named month, when it needs it (issue 33); the button still asks for the latest run.
 
 ## 11. "Add to" needs the same company, the same month and nobody twice
 
@@ -158,7 +158,7 @@ Found while building Phases 1 to 4 and fixing the PDF font (October 2026) and de
 
 ## 23. The dashboard asks me each time the app loads a month
 
-**What happens.** "Check what is issued", "Open the month", the reload after a stale issue, and the reload after an issue that got no answer each ask in the dashboard, and need it unlocked. If I say no there, the app says so and nothing is known yet: after an unanswered issue it offers "Check again", never a resend.
+**What happens.** "Check what is issued", "Open the month", "Compare with last month" in the month review (and its payroll fallback), the reload after a stale issue, and the reload after an issue that got no answer each ask in the dashboard, and need it unlocked. If I say no there, the app says so and nothing is known yet: after an unanswered issue it offers "Check again", never a resend.
 
 **To decide.** Nothing here; it is the dashboard's rule for per-employee data.
 
@@ -219,3 +219,67 @@ Found while building Phases 1 to 4 and fixing the PDF font (October 2026) and de
 **Evidence.** Read from the PDF of DOE JANE (fake data): font descriptor Flags 4; 53 entries in the page font list pointing at 2 font objects.
 
 **To decide.** Nothing now.
+
+## 32. Review marks are kept in this tab only (decided)
+
+**What happens.** In the month review, "reviewed", "approved" and "acknowledged" are marks in this tab's memory. They are gone when the tab is reloaded or closed, and nothing about the review is stored with the payslips that are issued: the dashboard accepts "no other key" in an issued payslip. A mark is kept with what was reviewed, so it stops counting when a figure of this month or of last month changes, when last month is issued again, when the template version changes, or when a label is reworded.
+
+**Evidence.** `tests/reviewRules.test.ts` ("a mark is dropped when a figure of this month changes, even by one cent", "a mark is dropped when last month was issued again since"). `npm run check:bridge`: after a new template version is chosen, "1 of 8 reviewed" is left of eight, and the issue message still has exactly the seven agreed keys.
+
+**To decide.** Nothing now. A record of who reviewed what needs a place in the dashboard: `docs/HUB_CHANGES.md`, item 13.
+
+## 33. "No payroll for that month" is recognised by the dashboard's sentence
+
+**What happens.** When no payslip was issued last month, the review asks the dashboard for last month's payroll run. When there is none, the dashboard refuses with a sentence and no code ("There is no saved run for 2026-08." or "That run has no employees."). The app reads those two sentences, and a `not-found` code if one ever comes, as "nothing to compare with". Any other refusal is a failure that blocks the issue and is asked again. If the dashboard rewords its sentence, a company with no payroll for last month could not issue until this is updated.
+
+**Evidence.** `tests/baseline.test.ts` ("no saved run is an answer", "a locked dashboard, and any other refusal, is a failure"). The sentences are the ones in the hub's `src/features/workspace/BridgeDialogs.tsx` (read on 8 October 2026).
+
+**To decide.** Add the code in the hub: `docs/HUB_CHANGES.md`, item 12.
+
+## 34. With no payslip issued last month, the issue waits for the payroll answer
+
+**What happens.** The brief's baseline is last month's issued payslips, "falling back to last month's payroll run". So when last month has no issued payslip, the app does not let the month be issued until the payroll figures were asked for too: the dashboard asks me twice (issued payslips, then payroll). Only "no payslip and no payroll" needs no review. In the first month of a company that is two questions and then nothing to review.
+
+**Evidence.** `tests/baseline.test.ts` ("the issue waits for the payroll answer, and only no payroll either needs no review"); `npm run check:bridge`, sections 8d and 14.
+
+**To decide.** Whether the payroll comparison should stay required, or become an offer that can be skipped when no payslip was issued last month.
+
+## 35. A comparison with payroll figures is not a comparison with a payslip
+
+**What happens.** Nothing records which template last month would have used, so last month's payroll figures are put on the template in use now, by the code that builds this month's payslips. The card says "Compared with payroll figures, not issued payslips". There is no template or rates banner in that case. A row of last month with a missing or wrong figure cannot be accepted as zero there: it shows as "Cannot be compared", with the reason, and has to be reviewed by hand. The fallback is all or nothing: with even one payslip issued last month, everyone else is "New (not issued last month)" and the payroll figures are not used.
+
+**Evidence.** `tests/baseline.test.ts` ("gives the same statuses and figures as the issued payslips of that month would", "a payroll row that cannot be put on the template is said, not compared", "only when NO payslip at all was issued last month").
+
+**To decide.** Nothing now.
+
+## 36. A month loaded or issued in this sitting is compared without asking the dashboard again
+
+**What happens.** The app keeps each month it loaded or issued, in memory, until the company changes. When that month is "last month" for the review, it is used as it is: the dashboard is not asked again. If another admin issued a correction of last month since, the review does not know until "Load ... again" is pressed. Last month's payroll rows, when the fallback loaded them, stay in memory the same way.
+
+**Evidence.** `npm run check:bridge`, section 14: after August is issued and September is imported, the review is there with no new request; "Load August 2026 again" sends exactly `{ action: "load", period: "2026-08", brn }`.
+
+**To decide.** Nothing now; whether the review should always ask again when it opens.
+
+## 37. Only the calendar month before, and only the latest revision (decided)
+
+**What happens.** "Last month" is the calendar month before the pay month. If nothing was issued for it, the app says so and does not look further back, even when the month before that has payslips. The dashboard returns the latest revision of each payslip, so that is what is compared (known issue 25).
+
+**Evidence.** `tests/monthCompare.test.ts` ("is the calendar month before the pay month, across a year end too"); `tests/monthReview.test.ts` ("compares with the LATEST revision when last month was issued again").
+
+**To decide.** Nothing now.
+
+## 38. A line that only one month has makes everyone Changed (decided)
+
+**What happens.** Only money decides a status, with one addition that was agreed: a line without exactly one partner in the other month is "not matched" and makes the row Changed, even when its amount is zero. So after a template gains or loses a line, or when two lines of a side share a label across templates, every employee is Changed and none can be bulk-approved that month.
+
+**Evidence.** `tests/monthCompare.test.ts` ("a line that last month did not have is listed as not matched, and makes the row Changed": 6 Changed, 0 Unchanged for the seven fake employees).
+
+**To decide.** Whether a not-matched line of zero on both months should leave the row Unchanged.
+
+## 39. `docs/HUB_CHANGES.md` is behind what the hub has built
+
+**What happens.** Its status paragraph and item 8 still say that Stage B is on a branch and that `payslip-issue` is "NOT STARTED". The hub's `main` has both merged (its log on 8 October 2026: "Merge pull request #4 from Noor1290/feature/payslip-issue"), and `docs/INTEGRATION.md`, which is the contract, describes `payslip-issue` as built. Only the Phase 5 section was added to the file in this phase; the older items were left as they were.
+
+**Evidence.** `docs/HUB_CHANGES.md`, "Status" and item 8; `docs/INTEGRATION.md`, section "payslip-issue".
+
+**To decide.** Whether to bring the older items up to date, or to keep the file as a history and rely on `docs/INTEGRATION.md`.

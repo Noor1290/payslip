@@ -113,6 +113,6 @@ A whole payslip as sent (the lines plus the national ID, the template, the rates
 
 Before sending, the app measures each payslip and refuses one that is too large, naming the employee. It never trims. A month too large for one message is sent in batches (`docs/KNOWN_ISSUES.md`, issues 21 and 22).
 
-## For the month comparison (Phase 5, not built)
+## For the month review (Phase 5)
 
-The `figures` object is what a comparison needs: load two months, and compare each employee's lines by `id` (the same template), or by `label` when the two months used different templates. No payroll data is needed for the older month.
+The `figures` object is what the review compares. It loads LAST month only (this month is always built from this month's payroll figures and never read from a stored payslip), and compares each employee's lines by `id` when both months used the same template, or by `label` (same side of the page, capitals and extra spaces ignored) when they did not. A line without exactly one partner is listed as not matched. The employee is matched by `national_id`, the name comes from `employeeName`, the date of employment from the date cell of the `employee-name` row, and the template and rates versions from the stored payslip's own `template_id`, `template_version` and `rates`. A stored payslip that fails the checks above is "cannot be compared", never guessed at. The code is `src/lib/monthCompare.ts`; nothing is added to `lines`, and the format stays 1.

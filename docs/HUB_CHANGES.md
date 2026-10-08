@@ -69,3 +69,11 @@ The contract the payslip app codes against is `docs/INTEGRATION.md`, payslip sec
 ## For the owner to do by hand
 
 11. Run migrations 0008, 0009 and 0010 in the Supabase SQL editor, in that order, before the Stage B code is deployed (0007 first if it has not been run yet). Each file ends with one verification row in which every column should be true. Migration 0011 comes with item 8.
+
+## Payslip Phase 5 (month review), written 8 October 2026
+
+The month review needs nothing new from the hub. It uses two requests the hub already answers: `payslip-issue` `{ action: "load", brn, period }` for last month's issued payslips, and `request-data { dataType: "payroll-result", period }` for last month's payroll run when no payslip was issued. The two items below would make it sturdier; neither is started, and the app works without them.
+
+12. **A code for "no payroll for that month".** NOT STARTED, small. Today a request for a month with no saved run is refused with a sentence and no code ("There is no saved run for 2026-08.", "That run has no employees."), like a request the bridge gave up on. The payslip app has to recognise the sentence to tell "nothing to compare with" from a failure. Wanted: `code: "not-found"` on those two refusals (the app already accepts it), the sentences kept as they are. Also useful: `meta.brn` on a `payroll-result` answer, as on the other answers, so the app can check the company before it reads a row.
+
+13. **A record of the month review (later).** NOT STARTED, to design. The app keeps "reviewed", "approved" and "acknowledged" marks in memory only, because an issued payslip accepts no other key. If an audit trail is wanted (who reviewed which employee against which revision of last month, and when), the hub needs a place for it: for example an optional, strictly checked key on each payslip of an issue, or one row per issue. Nothing in it would be a payroll figure. Until then the review leaves no trace once the tab is closed.
