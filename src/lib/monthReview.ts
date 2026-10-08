@@ -1,6 +1,8 @@
 // Where the month review stands: whether last month could be loaded to compare with, and the
 // comparison once it is. Last month's issued payslips come through the dashboard ("payslip-issue",
-// which asks its user first), so they can also be declined, locked, or simply not there.
+// which asks its user first), so they can also be declined, locked, or simply not there. When
+// there is none at all, last month's payroll figures are the fallback (src/lib/baseline.ts); when
+// there is even one, the fallback is never used.
 //
 // Everything here is in this tab's memory only.
 
@@ -10,8 +12,16 @@ import type { IssueBuild } from './issueBuild'
 import { baselineFromIssued, compareMonth, type Baseline, type CurrentPayslip, type MonthComparison, type ReviewRow } from './monthCompare'
 import type { MonthState } from './useIssuing'
 
-/** What is being asked of the dashboard: last month's issued payslips. */
-export type BaselineAsk = 'issued'
+/** What is being asked of the dashboard: last month's issued payslips, or last month's payroll figures. */
+export type BaselineAsk = 'issued' | 'payroll'
+
+/** Last month's payroll figures, asked for only when no payslip was issued last month. */
+export type PayrollBaseline =
+  | { status: 'loading' }
+  | { status: 'failed'; failure: Failure }
+  /** The dashboard has no payroll saved for last month. */
+  | { status: 'none' }
+  | { status: 'loaded'; baseline: Baseline }
 
 export type BaselineState =
   /** Nobody asked yet. The dashboard asks its user before it sends issued payslips, so the app never asks by itself. */
@@ -19,20 +29,28 @@ export type BaselineState =
   | { status: 'loading'; what: BaselineAsk }
   /** Declined, locked, timed out, refused or not understood. Nothing is known about last month. */
   | { status: 'failed'; what: BaselineAsk; failure: Failure }
-  /** Loaded, and last month has nothing to compare with. This is an answer, not a failure. */
+  /** No payslip was issued last month. Its payroll figures have not been asked for yet. */
+  | { status: 'none-issued' }
+  /** No payslip was issued last month and the dashboard has no payroll for it: nothing to compare with. An answer, not a failure. */
   | { status: 'nothing' }
   | { status: 'ready'; baseline: Baseline }
 
 /**
- * Last month as a baseline, from what the dashboard answered for that month. An empty month is
- * "nothing to compare with"; a load that failed is never read as an empty month.
+ * Last month as a baseline, from what the dashboard answered for that month. The issued payslips
+ * come first. Only when there is NONE AT ALL are last month's payroll figures used, and only when
+ * the dashboard has none of those either is there "nothing to compare with". A load that failed
+ * is never read as an empty month.
  */
-export function baselineState(lastPeriod: string, issued: MonthState | undefined): BaselineState {
+export function baselineState(lastPeriod: string, issued: MonthState | undefined, payroll?: PayrollBaseline): BaselineState {
   if (!issued) return { status: 'not-asked' }
   if (issued.status === 'loading') return { status: 'loading', what: 'issued' }
   if (issued.status === 'failed') return { status: 'failed', what: 'issued', failure: issued.failure }
-  if (issued.payslips.length === 0) return { status: 'nothing' }
-  return { status: 'ready', baseline: baselineFromIssued(lastPeriod, issued.payslips) }
+  if (issued.payslips.length > 0) return { status: 'ready', baseline: baselineFromIssued(lastPeriod, issued.payslips) }
+  if (!payroll) return { status: 'none-issued' }
+  if (payroll.status === 'loading') return { status: 'loading', what: 'payroll' }
+  if (payroll.status === 'failed') return { status: 'failed', what: 'payroll', failure: payroll.failure }
+  if (payroll.status === 'none') return { status: 'nothing' }
+  return { status: 'ready', baseline: payroll.baseline }
 }
 
 /** The review itself, once there is a baseline. Null in every other state. */
@@ -110,8 +128,9 @@ export interface ReviewGate {
 
 /**
  * Why the month cannot be issued yet, as far as the review goes. Empty when it can.
- *  - Last month must have been loaded, or found to have nothing to compare with. A load that was
- *    declined or failed blocks: it is asked again, never skipped.
+ *  - Last month must have been loaded: its issued payslips, or its payroll figures when none was
+ *    issued, or the answer that the dashboard has neither. A load that was declined or failed
+ *    blocks: it is asked again, never skipped.
  *  - Every selected payslip must be reviewed: Changed, New and not comparable ones one by one,
  *    Unchanged ones too (one click approves them all).
  *  - Everyone who left must be acknowledged.
@@ -123,6 +142,7 @@ export function reviewProblems({ state, lastPeriod, comparison, marks, selected 
   if (state.status === 'not-asked') return [`Compare with ${last} first, in the month review. Issuing waits for it.`]
   if (state.status === 'loading') return [`The comparison with ${last} is still being loaded.`]
   if (state.status === 'failed') return [`The comparison with ${last} could not be loaded, so nothing is issued yet. Ask again in the month review.`]
+  if (state.status === 'none-issued') return [`No payslip was issued for ${last}. Compare with its payroll figures in the month review first. Issuing waits for it.`]
   if (state.status === 'nothing' || !comparison) return []
 
   const chosen = new Set(selected)

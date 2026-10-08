@@ -6,7 +6,9 @@ export interface FakeHubState {
   rates: Record<string, unknown>[]
   templates: { id: string; name: string; body: Record<string, unknown>; revision: number; updatedAt: string; by: 'you' | 'other' }[]
   versions: { templateId: string; version: number; name: string; body: Record<string, unknown>; publishedAt: string; by: 'you' | 'other' }[]
-  log: { type: 'send-data' | 'request-data'; payload: { dataType: string; params?: Record<string, unknown>; rows?: Record<string, unknown>[] } }[]
+  log: { type: 'send-data' | 'request-data'; payload: { dataType: string; period?: string; params?: Record<string, unknown>; rows?: Record<string, unknown>[] } }[]
+  /** Saved payroll runs by month, as the rows of the payroll export. */
+  runs: Record<string, Record<string, unknown>[]>
   gateOpen: boolean
   prompt: 'allow' | 'deny' | 'timeout'
   employees: string[] | null

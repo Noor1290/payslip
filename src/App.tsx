@@ -159,10 +159,20 @@ export default function App() {
   // The month review: this month's payslips beside the ones issued last month. It only reads them.
   const ratesUsed = useMemo(() => (isMonth(period) ? ratesFor(crossCheckRates.versions, period) : null), [crossCheckRates, period])
   const ratesUsedSnapshot = useMemo(() => ratesSnapshot(ratesUsed), [ratesUsed])
-  const templateRef = useMemo(() => ({ id: template.id, version: template.version }), [template.id, template.version])
   const templateItems = templates.list.status === 'loaded' ? templates.list.items : null
   const templateName = useCallback((id: string) => templateItems?.find((found) => found.templateId === id)?.name ?? null, [templateItems])
-  const review = useMonthReview({ issuing, company: insideDashboard ? brn : null, period, data, prepared, template: templateRef, rates: ratesUsedSnapshot, templateName })
+  const review = useMonthReview({
+    port: bridgePort,
+    issuing,
+    company: insideDashboard ? brn : null,
+    period,
+    data,
+    prepared,
+    template,
+    mapping,
+    rates: ratesUsedSnapshot,
+    templateName,
+  })
 
   const loadData = (next: ImportedPayroll | null) => {
     // Replacing or clearing the data clears everything that was decided about the old data.

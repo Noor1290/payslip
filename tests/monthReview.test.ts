@@ -58,10 +58,10 @@ describe('last month as the baseline', () => {
     expect(comparison.rows[0]).toMatchObject({ employeeName: 'DOE JANE', status: 'unchanged', baselineRevision: 2 })
   })
 
-  it('says so when last month has no issued payslip: an answer, not a failure', async () => {
+  it('says so when last month has no issued payslip: an answer, not a failure (the payroll fallback comes next)', async () => {
     const { port } = dashboard()
     const state = await stateAfter(port)
-    expect(state).toEqual({ status: 'nothing' })
+    expect(state).toEqual({ status: 'none-issued' })
     expect(comparisonOf(state, PERIOD, current(september()))).toBeNull()
   })
 

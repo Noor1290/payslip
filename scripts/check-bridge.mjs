@@ -57,7 +57,12 @@ const DASHBOARD = `<!doctype html><meta charset="utf-8"><title>Fake dashboard (t
     const { type, id, payload } = event.data
     if (type !== 'request-data' && type !== 'send-data') return
     if (payload.dataType === 'payroll-result') {
-      if (type === 'request-data' && window.requestAnswer) post('response-data', window.requestAnswer, id)
+      // A request for a NAMED month (the month review's fallback) is answered by the fake hub;
+      // "Get from dashboard" names none and is answered by what this script prepared.
+      if (type === 'request-data' && payload.period) {
+        const run = window.hub.handle(type, payload)
+        if (run !== undefined) post('response-data', run, id)
+      } else if (type === 'request-data' && window.requestAnswer) post('response-data', window.requestAnswer, id)
       return
     }
     const answer = window.hub.handle(type, payload)
@@ -527,7 +532,10 @@ try {
   check((await app.getByTestId('cannot-issue').textContent()).includes('Compare with September 2026 first'), 'A month can be issued before it was compared with last month.')
   check(await issueButton.isDisabled(), 'Issue is enabled before the comparison with last month.')
   await app.getByTestId('month-review').getByRole('button', { name: 'Compare with September 2026' }).click()
-  await app.getByTestId('review-nothing').filter({ hasText: 'No payslip was issued for September 2026' }).waitFor()
+  await app.getByTestId('review-none-issued').filter({ hasText: 'No payslip was issued for September 2026' }).waitFor()
+  check((await app.getByTestId('cannot-issue').textContent()).includes('Compare with its payroll figures in the month review first'), 'With no payslip issued last month, the issue does not wait for the payroll figures.')
+  await app.getByTestId('month-review').getByRole('button', { name: 'Compare with the payroll figures of September 2026' }).click()
+  await app.getByTestId('review-nothing').filter({ hasText: 'Nothing to compare with for September 2026' }).waitFor()
   check((await app.getByTestId('cannot-issue').count()) === 0, 'With nothing to compare with, issuing is still blocked.')
   check((await app.getByTestId('not-issued-note').textContent()).includes('7 of the selected payslips are not issued'), 'Downloads are not labelled "Not issued".')
   check(!(await app.getByTestId('payslip-page').textContent()).includes('Not issued'), '"Not issued" is printed on the payslip itself.')
@@ -857,8 +865,35 @@ try {
   check(await rf.getByRole('button', { name: 'Download PDFs (zip)' }).isEnabled(), 'Downloads wait for the month review.')
   await rvHub(() => (window.hub.state.prompt = 'allow'))
   await reviewCard.getByRole('button', { name: 'Ask again' }).click()
-  await rf.getByTestId('review-nothing').filter({ hasText: 'No payslip was issued for July 2026' }).waitFor()
+  await rf.getByTestId('review-none-issued').filter({ hasText: 'No payslip was issued for July 2026' }).waitFor()
+  check((await cannotIssue()).includes('No payslip was issued for July 2026. Compare with its payroll figures'), `With no payslip issued for July, the issue does not wait for the payroll figures: ${await cannotIssue()}`)
+
+  // The fallback: July's payroll figures, asked for by month. Declined: asked again, never skipped.
+  const payrollAsks = () => rvHub(() => window.hub.state.log.filter((m) => m.type === 'request-data' && m.payload.dataType === 'payroll-result').map((m) => m.payload))
+  const comparePayroll = reviewCard.getByRole('button', { name: 'Compare with the payroll figures of July 2026' })
+  await rvHub(() => (window.hub.state.prompt = 'deny'))
+  await comparePayroll.click()
+  await rf.getByTestId('review-load-failure').filter({ hasText: 'The request was declined in the dashboard' }).waitFor()
+  check(await rvIssue.isDisabled(), 'Issue is enabled although the payroll figures were declined.')
+  await rvHub(() => (window.hub.state.prompt = 'allow'))
+  await reviewCard.getByRole('button', { name: 'Ask again' }).click()
+  // The dashboard has no payroll for July either: nothing to compare with, and no review is asked for.
+  await rf.getByTestId('review-nothing').filter({ hasText: 'Nothing to compare with for July 2026' }).waitFor()
   check((await cannotIssue()) === '', `With nothing to compare with, the issue is still blocked: ${await cannotIssue()}`)
+  check(JSON.stringify(await payrollAsks()) === '[{"dataType":"payroll-result","period":"2026-07"},{"dataType":"payroll-result","period":"2026-07"}]', `The fallback did not ask for exactly last month's payroll: ${JSON.stringify(await payrollAsks())}`)
+  // Now the dashboard has July's payroll (the same seven people and figures as August here).
+  await rvHub((rows) => (window.hub.state.runs['2026-07'] = rows), augustRows)
+  await reviewCard.getByRole('button', { name: 'Check July 2026 again' }).click()
+  await rf.getByTestId('review-none-issued').waitFor()
+  await comparePayroll.click()
+  const source = rf.getByTestId('review-source-payroll')
+  await source.waitFor()
+  check((await source.textContent()).includes('Compared with payroll figures, not issued payslips'), 'A comparison with payroll figures is not labelled as such.')
+  check((await reviewCard.getByTestId('review-status').allTextContents()).join() === 'Unchanged,Unchanged,Unchanged,Unchanged,Unchanged,Unchanged,Unchanged', 'The same payroll figures are not all Unchanged.')
+  check((await cannotIssue()).includes('7 unchanged payslips are not approved yet'), `A comparison with payroll figures does not ask for a review: ${await cannotIssue()}`)
+  await rvAccessible('month review, payroll figures')
+  await reviewCard.getByRole('button', { name: 'Approve 7 unchanged payslips' }).click()
+  check((await cannotIssue()) === '', `After approving the unchanged payslips the issue is still blocked: ${await cannotIssue()}`)
   await issueNow('August 2026')
   await rf.getByTestId('issue-summary').filter({ hasText: 'Issued: 7. Not issued: 0.' }).waitFor()
 
@@ -1035,7 +1070,7 @@ try {
   check(rvStorage === 0, 'Month review: something was written to browser storage.')
   check(!rvFrame().url().includes('X000') && !/[?#]/.test(rvFrame().url()), 'Month review: something was put in the URL.')
   await rv.seededPage.close()
-  console.log('  month review: nothing to compare with, declined load blocks, four statuses, changed lines, one cent, notes, paper untouched, bulk-approve for unchanged only, left acknowledged, template banner, marks dropped, issue is this month only, identical re-issue asked twice')
+  console.log('  month review: declined load blocks, payroll fallback (declined, no run, compared and labelled), four statuses, changed lines, one cent, notes, paper untouched, bulk-approve for unchanged only, left acknowledged, template banner, marks dropped, issue is this month only, identical re-issue asked twice')
 
   check(outside.length === 0, `Requests to other addresses: ${[...new Set(outside)].join(', ')}`)
   check(pageErrors.length === 0, `Page errors: ${pageErrors.join(' | ')}`)

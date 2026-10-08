@@ -72,6 +72,7 @@ function Details({ row, comparison }: { row: ReviewRow; comparison: MonthCompari
     { title: 'Deductions', lines: row.lines.filter((line) => line.side === 'deductions') },
   ]
   const head = '!static !bg-transparent'
+  const fromPayroll = comparison.source === 'payroll'
   return (
     <div className="flex flex-col gap-2 py-1">
       {row.problem && (
@@ -80,10 +81,16 @@ function Details({ row, comparison }: { row: ReviewRow; comparison: MonthCompari
           {row.problem}
         </p>
       )}
-      {row.status === 'new' && <p className="m-0 text-sm text-muted">No payslip was issued to this employee for {last}. Every figure below is this month's.</p>}
+      {row.status === 'new' && (
+        <p className="m-0 text-sm text-muted">
+          {fromPayroll ? `This employee is not in the payroll figures of ${last}.` : `No payslip was issued to this employee for ${last}.`} Every figure below is
+          this month's.
+        </p>
+      )}
       {row.status === 'left' && (
         <p className="m-0 text-sm text-muted">
-          A payslip was issued for {last}, and this employee is not in the payroll data for {now}. No payslip is made for them.
+          {fromPayroll ? `This employee is in the payroll figures of ${last}` : `A payslip was issued for ${last}`}, and is not in the payroll data for {now}. No
+          payslip is made for them.
         </p>
       )}
       {row.matchedBy === 'label' && <p className="m-0 text-sm text-muted">Another template was used for {last}, so the lines are matched by their labels.</p>}
@@ -214,7 +221,7 @@ export function MonthReview({ period, review, readOnly, current, onShow }: Props
         )}
 
         {state.status === 'loading' && (
-          <div aria-busy="true" role="status" aria-label={`Waiting for the dashboard to send the payslips of ${last}`}>
+          <div aria-busy="true" role="status" aria-label={`Waiting for the dashboard to send the ${state.what === 'payroll' ? 'payroll figures' : 'payslips'} of ${last}`}>
             <div className="skeleton mb-2 h-8 w-full" />
             <div className="skeleton mb-2 h-8 w-full" />
             <div className="skeleton h-8 w-2/3" />
@@ -225,7 +232,7 @@ export function MonthReview({ period, review, readOnly, current, onShow }: Props
         {state.status === 'failed' && (
           <>
             <FailurePanel failure={state.failure} testId="review-load-failure">
-              <button type="button" className="btn btn-sm" onClick={review.load}>
+              <button type="button" className="btn btn-sm" onClick={state.what === 'payroll' ? review.loadPayroll : review.load}>
                 <RefreshCw aria-hidden="true" />
                 Ask again
               </button>
@@ -234,14 +241,35 @@ export function MonthReview({ period, review, readOnly, current, onShow }: Props
           </>
         )}
 
+        {state.status === 'none-issued' && (
+          <div className="panel tone-sky" role="status" data-testid="review-none-issued">
+            <Info aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <p className="m-0 font-medium">No payslip was issued for {last}</p>
+              <p className="m-0 text-sm text-muted">
+                The review can compare with the payroll figures of {last} instead, if the dashboard has that month's payroll. Issuing waits for the answer.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button type="button" className="btn btn-sm" onClick={review.loadPayroll}>
+                  <ListChecks aria-hidden="true" />
+                  Compare with the payroll figures of {last}
+                </button>
+                <span className="text-xs text-subtle">The dashboard asks you first.</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {state.status === 'nothing' && (
           <div className="panel tone-sky" role="status" data-testid="review-nothing">
             <Info aria-hidden="true" />
             <div className="min-w-0 flex-1">
-              <p className="m-0 font-medium">No payslip was issued for {last}</p>
-              <p className="m-0 text-sm text-muted">There is nothing to compare with, so no review is needed. The month can be issued as it is.</p>
+              <p className="m-0 font-medium">Nothing to compare with for {last}</p>
+              <p className="m-0 text-sm text-muted">
+                No payslip was issued for {last}, and the dashboard has no payroll saved for it. No review is needed: the month can be issued as it is.
+              </p>
               <div className="mt-3">
-                <button type="button" className="btn btn-sm" onClick={review.load}>
+                <button type="button" className="btn btn-sm" onClick={review.checkAgain}>
                   <RefreshCw aria-hidden="true" />
                   Check {last} again
                 </button>
@@ -252,6 +280,18 @@ export function MonthReview({ period, review, readOnly, current, onShow }: Props
 
         {comparison && (
           <>
+            {comparison.source === 'payroll' && (
+              <div className="panel tone-warn" role="status" data-testid="review-source-payroll">
+                <TriangleAlert aria-hidden="true" />
+                <div className="min-w-0">
+                  <p className="m-0 text-sm font-medium">Compared with payroll figures, not issued payslips</p>
+                  <p className="m-0 text-sm text-muted">
+                    No payslip was issued for {last}. Its payroll figures are shown as they would appear on the template in use now. They are not what
+                    anyone was given.
+                  </p>
+                </div>
+              </div>
+            )}
             {comparison.banner.map((line) => (
               <div key={line.kind} className="panel tone-warn" role="status" data-testid={`review-banner-${line.kind}`}>
                 <TriangleAlert aria-hidden="true" />

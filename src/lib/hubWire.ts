@@ -159,6 +159,12 @@ function failureOfRefusal(refusal: z.infer<typeof refusalSchema>): Failure {
   return failure(isRefusalCode(refusal.code) ? refusal.code : 'no-answer', hubError, refusal.index ?? null)
 }
 
+/** A refusal from the dashboard (or from the bridge itself) as a failure. Null when the reply is not a refusal. */
+export function refusalOf(reply: unknown): Failure | null {
+  const refusal = refusalSchema.safeParse(reply)
+  return refusal.success ? failureOfRefusal(refusal.data) : null
+}
+
 const NO_ANSWER = Symbol('no answer')
 
 function withTimeout(promise: Promise<unknown>, ms: number): Promise<unknown> {

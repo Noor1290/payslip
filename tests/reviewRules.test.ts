@@ -108,7 +108,7 @@ describe('what the review asks for before the month is issued', () => {
   const gate = (state: BaselineState, comparison: MonthComparison | null, marks: ReviewMarks, selected = everyone) =>
     reviewProblems({ state, lastPeriod: LAST_PERIOD, comparison, marks, selected })
 
-  it('last month must be loaded first; a failed load blocks, an empty month does not', () => {
+  it('last month must be loaded first; a failed load blocks, "nothing to compare with" does not', () => {
     expect(gate({ status: 'not-asked' }, null, {})).toEqual(['Compare with August 2026 first, in the month review. Issuing waits for it.'])
     expect(gate({ status: 'loading', what: 'issued' }, null, {})).toEqual(['The comparison with August 2026 is still being loaded.'])
     expect(gate({ status: 'failed', what: 'issued', failure: failure('denied') }, null, {})).toEqual([

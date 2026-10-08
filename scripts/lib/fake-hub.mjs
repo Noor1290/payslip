@@ -1,5 +1,5 @@
 // A stand-in for the Payroll Hub dashboard's side of "statutory-rates", "payslip-template" and
-// "payslip-issue",
+// "payslip-issue", and of a request for one month's saved "payroll-result",
 // kept in memory, for the tests and for scripts/check-bridge.mjs. It follows the wire contract in
 // docs/INTEGRATION.md: strict fields, one row per save, expected_revision, the refusal codes.
 // Everything in it is invented (ABC Co Ltd).
@@ -26,6 +26,8 @@ export function createFakeHub() {
     employees: null,
     /** Issued payslips: wire fields plus `period` and `by`. Never changed, never removed. */
     issued: [],
+    /** Saved payroll runs, by month ("2026-08"): the rows of the payroll export. */
+    runs: {},
     /** Every message handled, in order: { type, payload }. */
     log: [],
     /**
@@ -393,11 +395,34 @@ export function createFakeHub() {
     state.issued.push({ ...copy(base), ...change, revision: (latest?.revision ?? 0) + 1, issued_at: stamp(), by: 'other' })
   }
 
+  // ---------- payroll-result: one saved run, asked for by month ----------
+  // As the dashboard does it: its user is asked first and the password gate must be open. The
+  // answer names the month and the company in `meta`, with no BRN (the rows carry it). A month
+  // with no run is refused with a sentence and NO code.
+  function answerPayroll(payload) {
+    const next = state.nextRequest
+    state.nextRequest = null
+    if (next?.mode === 'lost') return undefined
+    if (next?.mode === 'refuse') return refuse(next.code)
+    if (!state.signedIn || !state.company) return refuse('unavailable', 'Nobody is signed in to the dashboard, or no company is selected.')
+    if (state.prompt === 'deny') return refuse('denied')
+    if (state.prompt === 'timeout') return refuse('timeout')
+    if (!state.gateOpen) return refuse('locked', 'The dashboard is locked. Confirm your password there to unlock it, then ask again.')
+    const months = Object.keys(state.runs).sort()
+    const wanted = payload.period ?? months[months.length - 1]
+    const rows = wanted === undefined ? undefined : state.runs[wanted]
+    if (!rows) return { ok: false, error: `There is no saved run for ${payload.period ?? 'this company'}.` }
+    if (rows.length === 0) return { ok: false, error: 'That run has no employees.' }
+    return { ok: true, dataType: 'payroll-result', rows: copy(rows), meta: { period: wanted, label: state.company.name } }
+  }
+
   // ---------- one message in, one answer out (or none: `undefined` is a lost answer) ----------
 
   function handle(type, payload) {
     state.log.push({ type, payload: copy(payload) })
     const dataType = payload?.dataType
+    // The app may ask for a payroll run; it may never save one.
+    if (dataType === 'payroll-result' && type === 'request-data') return answerPayroll(payload)
     if (dataType !== 'statutory-rates' && dataType !== 'payslip-template' && dataType !== 'payslip-issue') {
       return { ok: false, error: 'This app is not registered for that kind of data.' }
     }
