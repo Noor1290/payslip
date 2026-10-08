@@ -533,3 +533,35 @@ describe('opened on its own, outside the dashboard', () => {
     expect(ratesForCrossCheck({ status: 'loaded', versions: [{ ...RATES_JULY, revision: 1 }], company }, '2026-07').whyNone).toBeNull()
   })
 })
+
+describe('what Phase 4 added to every exchange', () => {
+  it('each answer says the role: an admin, or a member who sees read-only from the start', async () => {
+    const { hub, port } = fakeHub()
+    expect(await loadRates(port, BRN)).toMatchObject({ ok: true, role: 'admin' })
+    hub.state.role = 'viewer'
+    expect(await loadRates(port, BRN)).toMatchObject({ ok: true, role: 'member' })
+    expect(await listTemplates(port, BRN)).toMatchObject({ ok: true, role: 'member' })
+  })
+
+  it('an answer without a role is still used, with the role unknown', async () => {
+    const plain: HubPort = { send: () => Promise.resolve({ ok: true, dataType: STATUTORY_RATES, rows: [], meta: { brn: BRN } }) }
+    expect(await loadRates(plain, BRN)).toMatchObject({ ok: true, role: null })
+  })
+
+  it('a refusal can carry the position of the payslip at fault, and "locked" is not a maybe', async () => {
+    const answering = (reply: unknown): HubPort => ({ send: () => Promise.resolve(reply) })
+    const stale = await sendSave(answering({ ok: false, code: 'stale', error: 'Payslip 3 was issued by someone else.', index: 2 }), 'payslip-issue', {}, z.unknown())
+    expect(stale).toMatchObject({ ok: false, uncertain: false, failure: { kind: 'stale', index: 2 } })
+    const locked = await sendSave(answering({ ok: false, code: 'locked', error: 'The dashboard is locked.' }), 'payslip-issue', {}, z.unknown())
+    expect(locked).toMatchObject({ ok: false, uncertain: false, failure: { kind: 'locked', index: null, title: 'The dashboard is locked' } })
+    for (const code of ['denied', 'timeout'] as const) {
+      expect(failure(code).title).not.toBe(failure('no-answer').title)
+    }
+  })
+
+  it('a request that waits for the dashboard user is not cut short by the 15-second rule', async () => {
+    const slow: HubPort = { requestTimeoutMs: 20, send: () => new Promise((resolve) => setTimeout(() => resolve({ ok: true, dataType: 'payslip-issue', rows: [], meta: { brn: BRN } }), 120)) }
+    expect((await ask(slow, 'payslip-issue', {}, BRN, z.unknown())).ok).toBe(false)
+    expect((await ask(slow, 'payslip-issue', {}, BRN, z.unknown(), { timeoutMs: null })).ok).toBe(true)
+  })
+})

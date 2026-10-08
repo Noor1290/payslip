@@ -48,6 +48,25 @@ export function expectRecorded(name: string, actual: unknown): void {
   expect(JSON.parse(text)).toEqual(JSON.parse(readFileSync(file, 'utf8')))
 }
 
+/**
+ * Compares `actual` with a FROZEN recording in tests/frozen. It is written once, when the file
+ * does not exist; UPDATE_RECORDINGS does not rewrite it. An issued payslip must always be drawn
+ * the same way, so a difference here is never settled by recording again (CLAUDE.md, hard rules).
+ */
+export function expectFrozen(name: string, actual: unknown): void {
+  const file = resolve(here, 'frozen', `${name}.json`)
+  const text = `${JSON.stringify(actual, null, 2)}\n`
+  if (!existsSync(file)) {
+    mkdirSync(dirname(file), { recursive: true })
+    writeFileSync(file, text)
+  }
+  expect(JSON.parse(text)).toEqual(JSON.parse(readFileSync(file, 'utf8')))
+}
+
+export function readFrozen<T>(name: string): T {
+  return JSON.parse(readFileSync(resolve(here, 'frozen', `${name}.json`), 'utf8')) as T
+}
+
 /** Reads a recording back, for the tests that prove a recording can fail. */
 export function readRecorded<T>(name: string): T {
   return JSON.parse(readFileSync(resolve(here, 'expected', `${name}.json`), 'utf8')) as T

@@ -1,6 +1,6 @@
 # Known issues
 
-Found while building Phases 1 to 3 (October 2026) and deliberately not changed, because each one needs the owner's decision. All evidence uses fake data (ABC Co Ltd).
+Found while building Phases 1 to 4 and fixing the PDF font (October 2026) and deliberately not changed, because each one needs the owner's decision. All evidence uses fake data (ABC Co Ltd).
 
 ## 1. A long name has little room on the payslip
 
@@ -94,7 +94,7 @@ Found while building Phases 1 to 3 (October 2026) and deliberately not changed, 
 
 **Evidence.** `npm run check:bridge`: "Only an admin of this company can save", then the save buttons are off.
 
-**To decide.** Whether the hub should say the role in `meta`, so the page can be read-only from the start.
+**Phase 4.** Settled: the dashboard now sends `meta.role` with every answer about rates, templates and issued payslips, and a member sees read-only from the start. The first refused save still does the same, in case the hint is missing.
 
 ## 14. The template to use is chosen again each time the app opens
 
@@ -140,4 +140,82 @@ Found while building Phases 1 to 3 (October 2026) and deliberately not changed, 
 
 **What happens.** As for issue 9, the bridge only trusts the deployed dashboard. The rates and template flows were run in the built app against an in-memory stand-in (`scripts/lib/fake-hub.mjs`) written from `docs/INTEGRATION.md` and the handlers in the hub repo (read only). It keeps to the contract, but it is not the hub.
 
-**To decide.** Nothing. To see it for real: run migrations 0008 to 0010, deploy the hub with its Stage B code and this app, then follow the test list in the Phase 3 report.
+**To decide.** Nothing. To see it for real: run migrations 0008 to 0010, deploy the hub with its Stage B code and this app, then follow the test list in the Phase 3 report. The same holds for issued payslips (Phase 4): migration 0011 and the hub's Stage C code.
+
+## 21. A month too large for one message is issued in batches, so it is not all-or-none as a whole
+
+**What happens.** The dashboard stores one message all or none, and accepts at most 1,000 payslips and 4 MB per message. A larger month is sent in batches, one after the other. Each batch is all or none; the month as a whole is not. If a batch does not go through, the run stops there, and the panel says "Stopped at batch 2 of 3" and lists who is issued and who is not. The reload rule is applied to the batch that stopped.
+
+**Evidence.** Measured on the fake fixtures: a whole payslip as sent is 5,918 to 6,078 bytes, so about 657 fit in one message. A company under about 650 employees is always one message. With the largest template the editor allows (10.7 KB of lines) about 360 fit. Test: `tests/issue.test.ts`, "more than fits is split into batches" (1,500 payslips).
+
+**To decide.** Nothing now.
+
+## 22. A payslip over 16 KB cannot be issued
+
+**What happens.** The app measures each payslip before sending. One over the dashboard's 16,000 bytes stops the whole issue before anything is sent, naming the employee and the size. Nothing is trimmed. A normal payslip is about 6 KB; the largest template the editor allows gives about 11 KB.
+
+**To decide.** Nothing now. It would only be reached with a much larger template than the editor allows.
+
+## 23. The dashboard asks me each time the app loads a month
+
+**What happens.** "Check what is issued", "Open the month", the reload after a stale issue, and the reload after an issue that got no answer each ask in the dashboard, and need it unlocked. If I say no there, the app says so and nothing is known yet: after an unanswered issue it offers "Check again", never a resend.
+
+**To decide.** Nothing here; it is the dashboard's rule for per-employee data.
+
+## 24. An identical payslip can be issued again, after a second confirmation (decided)
+
+**What happens.** After a month is issued, "Issue" stays available. A selected payslip that is exactly what the dashboard has as its latest revision (the same lines, template version, rates and accepted differences with their reasons) is not sent on the first confirmation alone. A second one asks: "Nothing has changed since revision N. Issue an identical revision N+1 anyway?", names each such employee, and starts on Cancel. Cancel sends nothing, for anybody in the selection. When the unchanged payslips are not all at the same revision, the question names no revision and each line does.
+
+**Evidence.** `tests/issue.test.ts` ("an identical re-issue is allowed, but asked about a second time"); `npm run check:bridge` drives the two dialogs in the built app: Escape and Cancel send nothing, "Issue anyway" adds exactly one revision.
+
+**To decide.** Nothing now. The employee list still says "Issued, revision N" from the lines alone, so a payslip can show as issued and not be asked about, when only its rates or a reason changed.
+
+## 25. Only the latest revision of an issued payslip can be opened
+
+**What happens.** The dashboard returns the latest revision of each payslip. Earlier revisions stay stored but cannot be opened from this app yet.
+
+**To decide.** With the history, later.
+
+## 26. An issued payslip is drawn with the drawing version it was issued with (decided)
+
+**What happens.** The rule is now a hard rule in CLAUDE.md: format 1 must always render identically, and a change to the page geometry or the drawing is a new drawing version beside the old one. The stored lines record the drawing version (`drawing: 1` in the document object). The page geometry, the PDF writer and the Excel writer are marked as drawing version 1 and refuse a version they do not have; a stored payslip with such a version is listed as "cannot be shown", with the reason. A payslip issued before the key existed has no `drawing`: it is read as 1, the only version there was, and still compares as the same payslip.
+
+**Evidence.** `tests/format1.test.ts` holds one payslip as stored (`tests/frozen/format-1/lines.json`, DOE JANE, fake) and the page, PDF and Excel sheet it must always give. Those files are written once and are not rewritten by `UPDATE_RECORDINGS`. When they were made they were equal to the existing recordings of the same payslip.
+
+**To decide.** Nothing now. There is one drawing version, so nothing chooses between versions yet: the first change to the geometry has to add that choice (keep the present code as version 1, add version 2 beside it). The bundled font files are part of the drawing too: replacing them is a new drawing version.
+
+## 27. Right after issuing, the date of issue is not shown until the month is opened again
+
+**What happens.** The dashboard answers an issue with the revisions and one time for the whole message. The app marks those payslips as issued by me at once; their date appears after "Open the month again", which reads it from the dashboard.
+
+**To decide.** Nothing now.
+
+## 28. On a reopened payslip the template is named as it was when published
+
+**What happens.** The template version is loaded only for its name. If it cannot be loaded the list says "Version N (name not available)" and the payslip is shown all the same.
+
+**To decide.** Nothing now.
+
+## 29. The PDF library writes a font header that viewers refuse; the app corrects one byte
+
+**What happens.** When `@pdf-lib/fontkit` 1.1.1 makes the subset of a font to embed, it writes an unrelated number where the header of the font program holds its offset size (valid is 1 to 4; it wrote 14 for both payslip fonts). pdf.js accepts that. Chrome, Edge and xpdf refuse the font and draw a substitute sans-serif at the advances of the payslip font, which showed as gaps inside words ("A BC Co Ltd", "PA YE"). After pdf-lib has embedded the fonts, the app now sets that one byte to 4 (what the bundled font files carry, and what fontkit, the project this library was forked from, writes today; 1.1.1 is the last release of the fork) and refuses to write a PDF whose font header is wrong in any other way (`src/writers/fontProgram.ts`). Nothing else in the PDF changed: same drawing instructions, same width and character tables.
+
+**Evidence.** On DOE JANE (fake data): xpdf reported "Embedded font file may be invalid" twice before and nothing after; Chromium showed the sans-serif before and TeX Gyre Pagella after. `tests/pdfFont.test.ts` reads the fonts from the PDF with a strict reader (`tests/cff.ts`) and fails on the old header, for both fonts on each of the seven fixtures; the PDF recordings keep each font and its header, and `tests/expected/pdf-font-programs.json` keeps the size and SHA-256 of every embedded font program, so any change in what the library writes shows; `npm run check:build` checks the PDFs downloaded from the built app.
+
+**To decide.** Nothing now. Not seen in Adobe Acrobat (not installed here): worth one look. If the library is ever replaced or updated, the tests say whether the correction is still needed. Measured alternatives (October 2026, fake data): embedding the whole font file works in Chromium but is 250 kB per payslip against 17 kB, and pdf-lib then labels the font as TrueType (xpdf warns); a TrueType conversion of the font, subset by the same library, lost most glyphs in Chromium.
+
+## 30. The preview draws long labels up to 0.1 point narrower than the PDF
+
+**What happens.** The preview and the PDF use the same two font files and the same positions. The browser rounds each glyph advance to its own grid, so a text can end slightly earlier on screen than in the PDF. Left-aligned labels start at the same place; right-aligned amounts are short, so they move by less.
+
+**Evidence.** In the built app, the largest difference is 0.085 pt, on "Date of Employment :" (97.07 pt on screen, 97.16 pt measured). With the CSS `text-rendering: geometricPrecision` on the payslip text it drops to 0.014 pt. `npm run check:build` measures it and accepts up to 0.25 pt.
+
+**To decide.** Whether to add that CSS line to the preview.
+
+## 31. Small things in how the PDF names its fonts
+
+**What happens.** Three things pdf-lib does, all harmless while the font loads. The font is marked "symbolic" and not "serif", so a viewer that ever had to substitute it would pick a sans-serif. Every text on the page gets its own font resource name (53 names for 2 fonts on one payslip). The font names end in a number ("TeXGyrePagella-Bold-4482") in place of the usual six-letter prefix of a subset.
+
+**Evidence.** Read from the PDF of DOE JANE (fake data): font descriptor Flags 4; 53 entries in the page font list pointing at 2 font objects.
+
+**To decide.** Nothing now.

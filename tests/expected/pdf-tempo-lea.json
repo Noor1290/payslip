@@ -2,6 +2,24 @@
   "pages": 1,
   "width": 595.28,
   "height": 841.89,
+  "fonts": [
+    {
+      "name": "TeXGyrePagella-Bold",
+      "kind": "Type0 / CIDFontType0",
+      "embedded": true,
+      "program": "CIDFontType0C",
+      "header": "01000404",
+      "glyphs": 41
+    },
+    {
+      "name": "TeXGyrePagella-Regular",
+      "kind": "Type0 / CIDFontType0",
+      "embedded": true,
+      "program": "CIDFontType0C",
+      "header": "01000404",
+      "glyphs": 55
+    }
+  ],
   "texts": [
     {
       "text": "Payslip",

@@ -2,7 +2,7 @@
 
 One of the apps in Payroll Hub. It turns one month of payroll results into a payslip per employee: a preview, a PDF and an Excel file, all drawn from one layout model. Everything runs in the browser and nothing is stored in it.
 
-Inside the Payroll Hub dashboard it also keeps two kinds of settings in the database of the hub, through the bridge: the statutory rates of the company (used only to cross-check the copied CSG and NSF) and its payslip templates (labels, lines and which payroll column fills each line; a draft, and published versions). Neither holds anything about an employee. Opened on its own, the app uses its built-in template and its bundled default rates, and saves nothing.
+Inside the Payroll Hub dashboard it also keeps two kinds of settings in the database of the hub, through the bridge: the statutory rates of the company (used only to cross-check the copied CSG and NSF) and its payslip templates (labels, lines and which payroll column fills each line; a draft, and published versions). Neither holds anything about an employee. A month of payslips can also be issued there: each payslip is stored exactly as shown and can be opened again later, never recalculated ([docs/ISSUED_PAYSLIP.md](docs/ISSUED_PAYSLIP.md) says what is stored). Opened on its own, the app uses its built-in template and its bundled default rates, and saves nothing.
 
 - What it must do and the decisions behind it: [docs/BRIEF.md](docs/BRIEF.md)
 - Look and feel: [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)
@@ -30,7 +30,7 @@ Then import `samples/ABC Co Ltd-pdf-fill-2026-09.json`, or press "Try with fake 
 | `npm run check:encoding` | No mojibake, no changed non-ASCII character |
 | `npm run lint` and `npm run typecheck` | Lint and TypeScript strict |
 | `npm run build` then `npm run check:build` | The built app makes 0 requests to outside servers and writes nothing to browser storage |
-| `npm run check:bridge` | Inside a (fake) dashboard frame with the real bridge file: data waits until confirmed, a repeated message is not imported twice, invalid rows are refused, Add to and Replace, nothing stored. Rates and templates against a stand-in dashboard (`scripts/lib/fake-hub.mjs`): save, stale, no-change, forbidden, another company, no answer, draft, publish, which template is used. Set `PAYSLIP_SHOTS` to a folder to keep three screenshots |
+| `npm run check:bridge` | Inside a (fake) dashboard frame with the real bridge file: data waits until confirmed, a repeated message is not imported twice, invalid rows are refused, Add to and Replace, nothing stored. Rates and templates against a stand-in dashboard (`scripts/lib/fake-hub.mjs`): save, stale, no-change, forbidden, another company, no answer, draft, publish, which template is used. Issued payslips: a declined load, locked, issue, reopen identical, re-issue, stale, an unknown employee, a member read-only from the start. Set `PAYSLIP_SHOTS` to a folder to keep three screenshots |
 | `npm run check:a11y` | Names on controls, focus ring, contrast in both themes, reduced motion, dialog keyboard behaviour |
 
 A recording in `tests/expected/` is rewritten only on purpose: `UPDATE_RECORDINGS=1 npm test`.

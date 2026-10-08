@@ -1,0 +1,607 @@
+[
+  {
+    "kind": "document",
+    "format": 1,
+    "template": {
+      "id": "table",
+      "version": "built-in-1"
+    },
+    "drawing": 1,
+    "page": {
+      "size": "A4",
+      "orientation": "portrait"
+    },
+    "fonts": {
+      "excel": "Book Antiqua",
+      "print": "TeX Gyre Pagella"
+    },
+    "columnWidths": [
+      28.77734375,
+      32.77734375,
+      35.6640625,
+      40.5546875
+    ],
+    "firstExcelRow": 4,
+    "dividerFromRowId": "headings",
+    "employeeName": "DOE JANE",
+    "period": "2026-09"
+  },
+  {
+    "kind": "figures",
+    "lines": [
+      {
+        "id": "basic",
+        "label": "Basic Salary",
+        "side": "earnings",
+        "cents": 1800000,
+        "source": "Basic Salary"
+      },
+      {
+        "id": "increment",
+        "label": "Govt Increment",
+        "side": "earnings",
+        "cents": 63500,
+        "source": "Govt Increment"
+      },
+      {
+        "id": "allowances",
+        "label": "Allowances",
+        "side": "earnings",
+        "cents": 0,
+        "source": "Allowances"
+      },
+      {
+        "id": "transport",
+        "label": "Transport Allowance",
+        "side": "earnings",
+        "cents": 245000,
+        "source": "Travelling"
+      },
+      {
+        "id": "presenceBonus",
+        "label": "Presence Bonus",
+        "side": "earnings",
+        "cents": 0,
+        "source": null,
+        "status": "unmapped"
+      },
+      {
+        "id": "productivityBonus",
+        "label": "Productivity Bonus",
+        "side": "earnings",
+        "cents": 0,
+        "source": null,
+        "status": "unmapped"
+      },
+      {
+        "id": "advance",
+        "label": "Advance",
+        "side": "earnings",
+        "cents": 0,
+        "source": null,
+        "status": "unmapped"
+      },
+      {
+        "id": "csg",
+        "label": "CSG",
+        "side": "deductions",
+        "cents": 27952,
+        "source": "Employee CSG"
+      },
+      {
+        "id": "nsf",
+        "label": "NSF",
+        "side": "deductions",
+        "cents": 21085,
+        "source": "Employee NSF"
+      },
+      {
+        "id": "paye",
+        "label": "PAYE",
+        "side": "deductions",
+        "cents": 0,
+        "source": "PAYE"
+      },
+      {
+        "id": "absences",
+        "label": "Absences :",
+        "side": "deductions",
+        "cents": 0,
+        "source": null,
+        "status": "unmapped"
+      },
+      {
+        "id": "lateness",
+        "label": "Lateness",
+        "side": "deductions",
+        "cents": 0,
+        "source": null,
+        "status": "unmapped"
+      }
+    ],
+    "totals": {
+      "earnings": 2108500,
+      "deductions": 49037,
+      "net": 2059463
+    }
+  },
+  {
+    "id": "title",
+    "fill": "66CCFF",
+    "rule": "black",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Payslip",
+        "span": 4,
+        "bold": true,
+        "size": 12,
+        "align": "center"
+      }
+    ]
+  },
+  {
+    "id": "company",
+    "rule": "grey",
+    "cells": [
+      {
+        "col": 0,
+        "text": "ABC Co Ltd",
+        "span": 4,
+        "bold": true,
+        "size": 12,
+        "align": "center"
+      }
+    ]
+  },
+  {
+    "id": "address-1",
+    "rule": "grey",
+    "cells": [
+      {
+        "col": 0,
+        "text": "12 Example Street",
+        "span": 4,
+        "bold": true,
+        "size": 12,
+        "align": "center"
+      }
+    ]
+  },
+  {
+    "id": "address-2",
+    "rule": "grey",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Port Louis",
+        "span": 4,
+        "bold": true,
+        "size": 12,
+        "align": "center"
+      }
+    ]
+  },
+  {
+    "id": "brn",
+    "rule": "grey",
+    "cells": [
+      {
+        "col": 0,
+        "text": "BRN : C1234567",
+        "span": 4,
+        "bold": true,
+        "size": 12,
+        "align": "center"
+      }
+    ]
+  },
+  {
+    "id": "period",
+    "rule": "black",
+    "cells": [
+      {
+        "col": 3,
+        "text": "Pay period: September 2026",
+        "bold": true,
+        "size": 12,
+        "align": "center"
+      }
+    ]
+  },
+  {
+    "id": "employee-band",
+    "fill": "66CCFF",
+    "rule": "black",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Employee Info",
+        "span": 4,
+        "bold": true,
+        "size": 12,
+        "align": "center"
+      }
+    ]
+  },
+  {
+    "id": "employee-name",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Name :"
+      },
+      {
+        "col": 1,
+        "text": "DOE JANE"
+      },
+      {
+        "col": 2,
+        "text": "Date of Employment :"
+      },
+      {
+        "col": 3,
+        "text": "15-Mar-21",
+        "kind": "date",
+        "isoDate": "2021-03-15"
+      }
+    ]
+  },
+  {
+    "id": "employee-nic",
+    "cells": [
+      {
+        "col": 0,
+        "text": "NIC :"
+      },
+      {
+        "col": 1,
+        "text": "X0000000000001"
+      }
+    ]
+  },
+  {
+    "id": "spacer",
+    "rule": "black"
+  },
+  {
+    "id": "headings",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Earnings",
+        "span": 2,
+        "bold": true,
+        "size": 12,
+        "align": "center"
+      },
+      {
+        "col": 2,
+        "text": "Deductions",
+        "span": 2,
+        "bold": true,
+        "size": 12,
+        "align": "center"
+      }
+    ]
+  },
+  {
+    "id": "currency",
+    "cells": [
+      {
+        "col": 1,
+        "text": "Rs",
+        "align": "center"
+      },
+      {
+        "col": 3,
+        "text": "Rs",
+        "align": "center"
+      }
+    ]
+  },
+  {
+    "id": "body-1",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Basic Salary"
+      },
+      {
+        "col": 1,
+        "text": "18,000",
+        "kind": "money",
+        "cents": 1800000,
+        "lineId": "basic"
+      },
+      {
+        "col": 2,
+        "text": "Contributions"
+      }
+    ]
+  },
+  {
+    "id": "body-2",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Govt Increment"
+      },
+      {
+        "col": 1,
+        "text": "635",
+        "kind": "money",
+        "cents": 63500,
+        "lineId": "increment"
+      }
+    ]
+  },
+  {
+    "id": "body-3",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Allowances"
+      },
+      {
+        "col": 1,
+        "text": "-",
+        "kind": "money",
+        "cents": 0,
+        "lineId": "allowances"
+      },
+      {
+        "col": 2,
+        "text": "CSG"
+      },
+      {
+        "col": 3,
+        "text": "279.52",
+        "kind": "money",
+        "cents": 27952,
+        "lineId": "csg"
+      }
+    ]
+  },
+  {
+    "id": "body-4",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Transport Allowance"
+      },
+      {
+        "col": 1,
+        "text": "2,450",
+        "kind": "money",
+        "cents": 245000,
+        "lineId": "transport"
+      },
+      {
+        "col": 2,
+        "text": "NSF"
+      },
+      {
+        "col": 3,
+        "text": "210.85",
+        "kind": "money",
+        "cents": 21085,
+        "lineId": "nsf"
+      }
+    ]
+  },
+  {
+    "id": "body-5",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Presence Bonus"
+      },
+      {
+        "col": 1,
+        "text": "-",
+        "kind": "money",
+        "cents": 0,
+        "lineId": "presenceBonus"
+      },
+      {
+        "col": 2,
+        "text": "PAYE"
+      },
+      {
+        "col": 3,
+        "text": "-",
+        "kind": "money",
+        "cents": 0,
+        "lineId": "paye"
+      }
+    ]
+  },
+  {
+    "id": "body-6",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Productivity Bonus"
+      },
+      {
+        "col": 1,
+        "text": "-",
+        "kind": "money",
+        "cents": 0,
+        "lineId": "productivityBonus"
+      }
+    ]
+  },
+  {
+    "id": "body-7",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Advance"
+      },
+      {
+        "col": 1,
+        "text": "-",
+        "kind": "money",
+        "cents": 0,
+        "lineId": "advance"
+      },
+      {
+        "col": 2,
+        "text": "Others Deductions :"
+      }
+    ]
+  },
+  {
+    "id": "body-8",
+    "cells": [
+      {
+        "col": 2,
+        "text": "Absences :"
+      },
+      {
+        "col": 3,
+        "text": "-",
+        "kind": "money",
+        "cents": 0,
+        "lineId": "absences"
+      }
+    ]
+  },
+  {
+    "id": "body-9",
+    "cells": [
+      {
+        "col": 2,
+        "text": "Lateness"
+      },
+      {
+        "col": 3,
+        "text": "-",
+        "kind": "money",
+        "cents": 0,
+        "lineId": "lateness"
+      }
+    ]
+  },
+  {
+    "id": "gap-1"
+  },
+  {
+    "id": "totals",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Total Earnings"
+      },
+      {
+        "col": 1,
+        "text": "21,085",
+        "kind": "money",
+        "cents": 2108500,
+        "lineId": "totalEarnings",
+        "formula": {
+          "op": "sum",
+          "lineIds": [
+            "basic",
+            "increment",
+            "allowances",
+            "transport",
+            "presenceBonus",
+            "productivityBonus",
+            "advance"
+          ]
+        }
+      },
+      {
+        "col": 2,
+        "text": "Total Deductions"
+      },
+      {
+        "col": 3,
+        "text": "490.37",
+        "kind": "money",
+        "cents": 49037,
+        "lineId": "totalDeductions",
+        "formula": {
+          "op": "sum",
+          "lineIds": [
+            "csg",
+            "nsf",
+            "paye",
+            "absences",
+            "lateness"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "gap-2"
+  },
+  {
+    "id": "gap-3"
+  },
+  {
+    "id": "net-pay",
+    "cells": [
+      {
+        "col": 2,
+        "text": "Net Pay :"
+      },
+      {
+        "col": 3,
+        "text": "20,594.63",
+        "kind": "money",
+        "cents": 2059463,
+        "lineId": "netPay",
+        "formula": {
+          "op": "subtract",
+          "lineIds": [
+            "totalEarnings",
+            "totalDeductions"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "gap-4"
+  },
+  {
+    "id": "signatures",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Signature Employee :"
+      },
+      {
+        "col": 2,
+        "text": "Signature Employer :"
+      }
+    ]
+  },
+  {
+    "id": "sign-date",
+    "cells": [
+      {
+        "col": 0,
+        "text": "Date :"
+      },
+      {
+        "col": 1,
+        "text": "28-Sep-26",
+        "kind": "date",
+        "align": "right",
+        "isoDate": "2026-09-28"
+      }
+    ]
+  },
+  {
+    "id": "gap-5"
+  },
+  {
+    "id": "end"
+  }
+]

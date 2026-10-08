@@ -4,7 +4,7 @@
 // Text widths come from the bundled font metrics table, not from the browser.
 
 import metricsJson from '../assets/fonts/metrics.json'
-import type { DocCell, PayslipDocument } from '../lib/layoutModel'
+import { KNOWN_DRAWINGS, unknownDrawing, type DocCell, type PayslipDocument } from '../lib/layoutModel'
 
 export type FontName = 'regular' | 'bold'
 
@@ -53,6 +53,9 @@ export interface DrawList {
   overflow: string[]
 }
 
+// DRAWING VERSION 1. Everything from here to the end of layoutPage is frozen: payslips were
+// issued with it and must always be drawn the same way (tests/format1.test.ts). A change to any
+// number or rule below is a new drawing version, added beside this one, never in place of it.
 export const PAGE = { width: 595.28, height: 841.89 } // A4 portrait, in points
 const MARGIN_X = 40
 const TOP = 56
@@ -81,6 +84,7 @@ export function measureText(text: string, font: FontName, size: number): { width
 }
 
 export function layoutPage(doc: PayslipDocument): DrawList {
+  if (!KNOWN_DRAWINGS.includes(doc.drawing)) throw new Error(unknownDrawing(doc.drawing))
   const contentWidth = PAGE.width - 2 * MARGIN_X
   const totalWidth = doc.columnWidths.reduce((sum, width) => sum + width, 0)
   const colX: number[] = [MARGIN_X]

@@ -42,8 +42,22 @@ export interface DocRow {
   ruleBelow: 'black' | 'grey' | null
 }
 
+/**
+ * The drawing version of the payslips made now: the rules that turn this model into a page and
+ * a sheet (page geometry, sizes, line weights, cell styles). Any change to them is a new version,
+ * and the old rules are kept for the payslips issued with them (CLAUDE.md, hard rules).
+ */
+export const DRAWING_VERSION = 1
+/** The drawing versions this app can draw. */
+export const KNOWN_DRAWINGS: readonly number[] = [1]
+/** Said instead of drawing a payslip with rules this app does not have. */
+export const unknownDrawing = (drawing: unknown) =>
+  `This payslip was issued with drawing version ${String(drawing)}, which this version of the app cannot draw. It is not shown, rather than drawn another way.`
+
 export interface PayslipDocument {
   template: { id: string; version: string }
+  /** The drawing version this payslip is drawn with. An issued payslip keeps the one it was issued with. */
+  drawing: number
   page: { size: 'A4'; orientation: 'portrait' }
   fonts: { excel: string; print: string }
   /** Excel column widths of B to E, from the reference. Other writers use them as proportions. */
@@ -165,6 +179,7 @@ export function buildPayslipDocument(input: DocumentInput): PayslipDocument {
 
   return {
     template: { id: template.id, version: template.version },
+    drawing: DRAWING_VERSION,
     page: { size: 'A4', orientation: 'portrait' },
     fonts: { excel: 'Book Antiqua', print: 'TeX Gyre Pagella' },
     columnWidths: COLUMN_WIDTHS,

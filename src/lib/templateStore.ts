@@ -11,6 +11,7 @@ import {
   type Failure,
   type HubCompany,
   type HubPort,
+  type HubRole,
   type SaveEnd,
 } from './hubWire'
 import { sameBody, type TemplateBody } from './templateBody'
@@ -70,11 +71,11 @@ export type TemplateVersion = z.infer<typeof versionSchema>
 const savedDraftSchema = z.object({ template_id: id, name, draft_revision: revision, updated_at: stamp })
 const publishedSchema = z.object({ template_id: id, version: revision, draft_revision: revision, published_at: stamp })
 
-type Loaded<T> = { ok: true; value: T; company: HubCompany } | { ok: false; failure: Failure }
+type Loaded<T> = { ok: true; value: T; company: HubCompany; role: HubRole | null } | { ok: false; failure: Failure }
 
 export async function listTemplates(port: HubPort, expectedBrn: string | null): Promise<Loaded<TemplateSummary[]>> {
   const answer = await ask(port, PAYSLIP_TEMPLATE, { action: 'list' }, expectedBrn, summarySchema)
-  return answer.ok ? { ok: true, value: answer.rows, company: answer.company } : answer
+  return answer.ok ? { ok: true, value: answer.rows, company: answer.company, role: answer.role } : answer
 }
 
 async function loadOne<T extends { templateId: string }>(
@@ -89,7 +90,7 @@ async function loadOne<T extends { templateId: string }>(
   if (answer.rows.length !== 1 || answer.rows[0].templateId !== params.template_id) {
     return { ok: false, failure: failure('bad-answer') }
   }
-  return { ok: true, value: answer.rows[0], company: answer.company }
+  return { ok: true, value: answer.rows[0], company: answer.company, role: answer.role }
 }
 
 export function loadDraft(port: HubPort, expectedBrn: string | null, templateId: string): Promise<Loaded<TemplateDraft>> {

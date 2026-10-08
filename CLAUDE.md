@@ -11,6 +11,7 @@ A frontend-only app (React + Vite + TypeScript + Tailwind, GitHub Pages) that tu
 - The repo is PUBLIC: fake data only (company "ABC Co Ltd", invented names and IDs) in tests, samples, screenshots and docs. Never commit a real payslip, real NIC numbers or real salaries. Never use or mention a service-role key.
 - The app must keep working on its own, outside the hub, with a manually imported payroll JSON.
 - No requests to outside servers at runtime: fonts, icons and libraries are bundled.
+- Issued payslips are drawn from their stored format. Format 1 must always render identically (the recordings enforce it). Any change to page geometry or drawing creates a new drawing version; old versions are kept and used for payslips issued with them.
 
 ## Stack and design
 React 18, Vite, TypeScript strict, Tailwind v4, Zod, lucide-react, Geist and Geist Mono (bundled). The look is in docs/DESIGN_SYSTEM.md. The payslip page itself is a picture of paper and does not follow the dark theme.
@@ -27,4 +28,4 @@ React 18, Vite, TypeScript strict, Tailwind v4, Zod, lucide-react, Geist and Gei
 - Keep this file lean. Detail belongs in docs/BRIEF.md.
 
 ## Status
-- [x] Phase 0 plan  - [x] Phase 1  - [x] Phase 2  - [x] Phase 3  - [ ] Phase 4  - [ ] Phase 5  - [ ] Phase 6
+- [x] Phase 0 plan  - [x] Phase 1  - [x] Phase 2  - [x] Phase 3  - [x] Phase 4  - [ ] Phase 5  - [ ] Phase 6

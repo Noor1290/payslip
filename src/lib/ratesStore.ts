@@ -10,6 +10,7 @@ import {
   type Failure,
   type HubCompany,
   type HubPort,
+  type HubRole,
   type SaveEnd,
 } from './hubWire'
 import { DEFAULT_STATUTORY_RATES } from '../data/defaultStatutoryRates'
@@ -53,12 +54,12 @@ const ratesRowSchema = z
 
 const savedRatesSchema = z.object({ effective_from: month, revision: z.number().int().min(1) })
 
-export type RatesLoad = { ok: true; versions: RatesVersion[]; company: HubCompany } | { ok: false; failure: Failure }
+export type RatesLoad = { ok: true; versions: RatesVersion[]; company: HubCompany; role: HubRole | null } | { ok: false; failure: Failure }
 
 /** Every version of the company's rates. `expectedBrn` is the BRN of the payroll data open, or null. */
 export async function loadRates(port: HubPort, expectedBrn: string | null): Promise<RatesLoad> {
   const answer = await ask(port, STATUTORY_RATES, {}, expectedBrn, ratesRowSchema)
-  return answer.ok ? { ok: true, versions: answer.rows, company: answer.company } : answer
+  return answer.ok ? { ok: true, versions: answer.rows, company: answer.company, role: answer.role } : answer
 }
 
 /** A save the user confirmed. Kept as it is until its outcome is known. */
@@ -168,7 +169,7 @@ export type RatesState =
   | { status: 'standalone' }
   | { status: 'waiting' }
   | { status: 'loading' }
-  | { status: 'loaded'; versions: RatesVersion[]; company: HubCompany }
+  | { status: 'loaded'; versions: RatesVersion[]; company: HubCompany; role?: HubRole | null }
   | { status: 'failed'; failure: Failure }
 
 const NOT_CHECKED = 'so CSG and NSF were not cross-checked.'
