@@ -522,6 +522,13 @@ try {
   await issuePanel.getByRole('button', { name: 'Ask again' }).click()
   await app.getByTestId('issued-count').filter({ hasText: '0 issued in the dashboard' }).waitFor()
   check((await employeeRows.filter({ hasText: 'Not issued' }).count()) === 7, 'Employees are not marked "Not issued".')
+  // The month review comes before issuing. Nothing was issued for September here, which is an answer:
+  // the app says so and asks for no review. (The review itself is checked in section 14.)
+  check((await app.getByTestId('cannot-issue').textContent()).includes('Compare with September 2026 first'), 'A month can be issued before it was compared with last month.')
+  check(await issueButton.isDisabled(), 'Issue is enabled before the comparison with last month.')
+  await app.getByTestId('month-review').getByRole('button', { name: 'Compare with September 2026' }).click()
+  await app.getByTestId('review-nothing').filter({ hasText: 'No payslip was issued for September 2026' }).waitFor()
+  check((await app.getByTestId('cannot-issue').count()) === 0, 'With nothing to compare with, issuing is still blocked.')
   check((await app.getByTestId('not-issued-note').textContent()).includes('7 of the selected payslips are not issued'), 'Downloads are not labelled "Not issued".')
   check(!(await app.getByTestId('payslip-page').textContent()).includes('Not issued'), '"Not issued" is printed on the payslip itself.')
   const previewBefore = await app.getByTestId('payslip-page').textContent()
@@ -697,11 +704,13 @@ try {
   check((await alone.getByTestId('draft-banner').count()) === 0, 'Standalone: the built-in template is treated as a draft.')
   check(!(await alone.getByRole('region', { name: 'Employees' }).textContent()).includes('draft'), 'Standalone: the export is blocked as a draft.')
   check((await alone.getByTestId('issue-panel').count()) === 0 && (await alone.getByText('Not issued').count()) === 0, 'Standalone: issuing is offered.')
+  check((await alone.getByTestId('month-review-standalone').textContent()).includes('available when this app is opened from there'), 'Standalone: the month review does not say it needs the dashboard.')
+  check((await alone.getByRole('button', { name: /^Compare with/ }).count()) === 0, 'Standalone: a comparison with issued payslips is offered.')
 
   // 11. Which template a payslip uses when the app opens: one published template is preselected;
   // with more than one, the user must pick and nothing is exported until then.
   const body = JSON.parse(readFileSync(join(root, 'tests/expected/template-body.json'), 'utf8'))
-  const seeded = async (names, role = 'admin') => {
+  const seeded = async (names, role = 'admin', data = payload(fixture, '2026-09')) => {
     const seededPage = await context.newPage()
     await seededPage.addInitScript(
       ([templateNames, templateBody, seededRole]) => {
@@ -720,7 +729,7 @@ try {
     await seededPage.goto(`${HUB}/payroll-hub/`)
     const frame = seededPage.frameLocator('#app')
     await frame.getByText('Dashboard connected').waitFor()
-    await seededPage.evaluate((data) => window.send('delivery-seed-01', data), payload(fixture, '2026-09'))
+    await seededPage.evaluate((rows) => window.send('delivery-seed-01', rows), data)
     await frame.getByRole('dialog', { name: 'Import payroll data' }).getByRole('button', { name: 'Import 7 employees' }).click()
     await frame.getByRole('img', { name: /Payslip of DOE JANE/ }).waitFor()
     return { seededPage, frame }
@@ -748,6 +757,8 @@ try {
   const memberNav = (name) => member.frame.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name, exact: true }).click()
   check((await member.frame.getByTestId('cannot-issue').textContent()).includes('Only an admin of this company can issue payslips'), 'A member can issue.')
   check(await member.frame.getByRole('button', { name: /Check what is issued/ }).isDisabled(), 'A member can ask for issued payslips.')
+  check(await member.frame.getByRole('button', { name: 'Compare with August 2026' }).isDisabled(), 'A member can ask for the issued payslips of last month.')
+  check((await member.frame.getByTestId('review-cannot-compare').textContent()).includes('Only an admin of this company can load issued payslips'), 'A member is not told why the month review is off.')
   await memberNav('Statutory rates')
   await member.frame.getByTestId('rates-cannot-save').filter({ hasText: 'Only an admin of this company can add rates' }).waitFor()
   check(await member.frame.getByRole('button', { name: 'Add rates from month...' }).isDisabled(), 'A member can add rates.')
@@ -780,6 +791,251 @@ try {
   check(!(await fresh.frame.getByTestId('issue-panel').textContent()).includes('published template version'), 'After publishing the built-in template the month still cannot be issued.')
   await fresh.seededPage.close()
   console.log('  roles and the built-in template: a member is read-only from the start; the built-in is published through draft then publish')
+
+  // 14. Month review: August 2026 is issued, then September 2026 is compared with it. Statuses,
+  // changed lines, bulk-approve for Unchanged rows only, what blocks the issue, a template version
+  // banner, and the paper preview, which is never marked. Fake data only.
+  const augustRows = JSON.parse(readFileSync(join(root, 'tests/fixtures/ABC Co Ltd-pdf-fill-2026-08.json'), 'utf8'))
+  const rv = await seeded(['Monthly payslip'], 'admin', payload(augustRows, '2026-08'))
+  const rf = rv.frame
+  rv.seededPage.on('pageerror', (error) => pageErrors.push(String(error)))
+  const rvFrame = () => rv.seededPage.frame({ url: `${HUB}/payslip/` })
+  const rvHub = (change, arg) => rv.seededPage.evaluate(change, arg)
+  const reviewCard = rf.getByTestId('month-review')
+  const rvPanel = rf.getByTestId('issue-panel')
+  const rvIssue = rvPanel.getByRole('button', { name: /^Issue \d* ?payslips?$/ })
+  const cannotIssue = async () => ((await rf.getByTestId('cannot-issue').count()) === 0 ? '' : await rf.getByTestId('cannot-issue').textContent())
+  const rvSends = () => rvHub(() => window.hub.state.log.filter((m) => m.type === 'send-data' && m.payload.dataType === 'payslip-issue').map((m) => m.payload.rows[0]))
+  const acceptRounding = async () => {
+    await rf.getByRole('button', { name: /^Accept \d+ rounding differences?$/ }).click()
+    await rf.getByRole('dialog', { name: 'Accept the rounding differences?' }).getByRole('button', { name: /^Accept \d+$/ }).click()
+  }
+  const issueNow = async (month) => {
+    await rvIssue.click()
+    const confirm = rf.getByRole('dialog', { name: new RegExp(`^Issue \\d+ payslips? for ${month}\\?$`) })
+    await confirm.getByRole('button', { name: 'Issue', exact: true }).click()
+    await confirm.waitFor({ state: 'detached' })
+  }
+  const rvAccessible = async (name) => {
+    for (const html of await rvFrame().evaluate(unnamedControls)) check(false, `${name}: control without a name: ${html}`)
+    for (const item of await rvFrame().evaluate(lowContrast)) check(false, `${name}: low contrast ${item}`)
+  }
+  const paperLook = () =>
+    rf.getByTestId('payslip-page').evaluate((el) => {
+      const style = getComputedStyle(el)
+      const well = getComputedStyle(el.parentElement)
+      return JSON.stringify({
+        background: style.backgroundColor,
+        filter: style.filter,
+        backdrop: style.backdropFilter,
+        opacity: style.opacity,
+        mix: style.mixBlendMode,
+        outline: style.outlineStyle,
+        wellFilter: well.filter,
+        wellBackdrop: well.backdropFilter,
+        children: el.parentElement.children.length,
+        classes: el.getAttribute('class'),
+      })
+    })
+  const paperMarkup = () => rf.getByTestId('payslip-page').evaluate((el) => el.outerHTML)
+  const reviewRow = (name) => reviewCard.getByTestId('review-row').filter({ hasText: name })
+  const statusOf = (name) => reviewRow(name).getByTestId('review-status').textContent()
+  const progress = () => reviewCard.getByTestId('review-progress').textContent()
+
+  // August first. July has no issued payslip: a declined load blocks, an empty month does not.
+  await rf.getByTestId('template-chip').filter({ hasText: 'Monthly payslip, version 1 (published)' }).waitFor()
+  check((await reviewCard.textContent()).includes('Month review: compared with July 2026'), 'The month review does not name last month.')
+  await acceptRounding()
+  await rvPanel.getByRole('button', { name: /Check what is issued/ }).click()
+  await rf.getByTestId('issued-count').filter({ hasText: '0 issued in the dashboard' }).waitFor()
+  check((await cannotIssue()).includes('Compare with July 2026 first'), 'August can be issued before it was compared with July.')
+  await rvHub(() => (window.hub.state.prompt = 'deny'))
+  await reviewCard.getByRole('button', { name: 'Compare with July 2026' }).click()
+  await rf.getByTestId('review-load-failure').filter({ hasText: 'The request was declined in the dashboard' }).waitFor()
+  check((await cannotIssue()).includes('The comparison with July 2026 could not be loaded'), 'A declined comparison does not block the issue.')
+  check(await rvIssue.isDisabled(), 'Issue is enabled although the comparison was declined.')
+  check(await rf.getByRole('button', { name: 'Download PDFs (zip)' }).isEnabled(), 'Downloads wait for the month review.')
+  await rvHub(() => (window.hub.state.prompt = 'allow'))
+  await reviewCard.getByRole('button', { name: 'Ask again' }).click()
+  await rf.getByTestId('review-nothing').filter({ hasText: 'No payslip was issued for July 2026' }).waitFor()
+  check((await cannotIssue()) === '', `With nothing to compare with, the issue is still blocked: ${await cannotIssue()}`)
+  await issueNow('August 2026')
+  await rf.getByTestId('issue-summary').filter({ hasText: 'Issued: 7. Not issued: 0.' }).waitFor()
+
+  // September replaces August in the app. It is compared with August as it was issued.
+  await rv.seededPage.evaluate((rows) => window.send('delivery-seed-02', rows), payload(fixture, '2026-09'))
+  await rf.getByRole('dialog', { name: 'Import payroll data' }).getByRole('button', { name: 'Replace with 7 employees' }).click()
+  await rf.getByRole('img', { name: /Payslip of DOE JANE for September 2026/ }).waitFor()
+  check((await reviewCard.textContent()).includes('Month review: compared with August 2026'), 'The month review does not follow the pay month.')
+  await acceptRounding()
+  await rvPanel.getByRole('button', { name: /Check what is issued/ }).click()
+  await rf.getByTestId('issued-count').filter({ hasText: '0 issued in the dashboard' }).waitFor()
+  // August was loaded and issued in this sitting, so the app already holds it: the review is there
+  // without another question in the dashboard. "Load again" asks for exactly that month.
+  await reviewCard.getByTestId('review-row').first().waitFor()
+  const paperBefore = { look: await paperLook(), markup: await paperMarkup() }
+  const loadsBeforeReview = await rvHub(() => window.hub.state.log.filter((m) => m.type === 'request-data' && m.payload.dataType === 'payslip-issue').length)
+  await reviewCard.getByRole('button', { name: 'Load August 2026 again' }).click()
+  await reviewCard.getByTestId('review-row').first().waitFor()
+  const reviewLoads = await rvHub((from) => window.hub.state.log.filter((m) => m.type === 'request-data' && m.payload.dataType === 'payslip-issue').slice(from).map((m) => m.payload.params), loadsBeforeReview)
+  check(JSON.stringify(reviewLoads) === '[{"action":"load","period":"2026-08","brn":"C1234567"}]', `The comparison did not ask for exactly last month's issued payslips: ${JSON.stringify(reviewLoads)}`)
+
+  const expectedStatuses = [
+    ['DOE JANE', 'Unchanged'],
+    ['PALMYRE JEAN MARC', 'Changed'],
+    ['SAMPLE ALEX', 'Changed'],
+    ['TESTER SAM', 'Unchanged'],
+    ['EXEMPLE PRIYA', 'New'],
+    ['FICTIF MARIE', 'Unchanged'],
+    ['TEMPO LEA', 'Unchanged'],
+    ['ANCIEN PAUL', 'Left'],
+  ]
+  check((await reviewCard.getByTestId('review-row').count()) === 8, 'The month review does not have one row per employee, with the one who left.')
+  for (const [name, status] of expectedStatuses) check((await statusOf(name)) === status, `${name} is "${await statusOf(name)}", expected "${status}".`)
+  check((await reviewCard.getByTestId('review-status').evaluateAll((badges) => badges.every((badge) => badge.querySelector('svg') && badge.textContent.trim().length > 0))) === true, 'A status is shown without its icon or without its text.')
+  const counts = await reviewCard.getByTestId('review-counts').textContent()
+  check(['4 Unchanged', '2 Changed', '1 New', '1 Left'].every((text) => counts.includes(text)), `The counts are wrong: ${counts}`)
+  check((await reviewCard.getByTestId('review-banner-template').count()) === 0 && (await reviewCard.getByTestId('review-banner-rates').count()) === 0, 'A banner is shown although the template and the rates versions are the same.')
+  check((await cannotIssue()).includes('3 selected payslips are changed, new or not comparable and not reviewed yet: PALMYRE JEAN MARC, SAMPLE ALEX, EXEMPLE PRIYA.'), `The issue does not wait for the changed and new payslips: ${await cannotIssue()}`)
+  check(await rvIssue.isDisabled(), 'Issue is enabled before the review is done.')
+
+  // Expanding a row: each line with last month, this month and the difference; changed lines are marked.
+  await reviewCard.getByRole('button', { name: 'Show the lines of PALMYRE JEAN MARC' }).click()
+  const palmyre = reviewCard.getByTestId('review-details')
+  const basic = palmyre.locator('tr', { hasText: 'Basic Salary' })
+  check((await basic.textContent()).replace(/\s+/g, ' ').includes('18,365') && (await basic.textContent()).includes('19,480') && (await basic.textContent()).includes('+1,115') && (await basic.textContent()).includes('Changed'), `The changed line is not shown with both months and the difference: ${await basic.textContent()}`)
+  check((await basic.getAttribute('data-changed')) === 'true' && (await basic.locator('svg').count()) === 1, 'A changed line is not marked with an icon and text.')
+  const increment = palmyre.locator('tr', { hasText: 'Govt Increment' })
+  check((await increment.getAttribute('data-changed')) === null && !(await increment.textContent()).includes('Changed'), 'An unchanged line is marked as changed.')
+  check((await palmyre.locator('tr[data-changed="true"]').count()) === 6, 'Not exactly the three changed lines and the three changed totals are marked.')
+  if (shots) {
+    await reviewCard.getByRole('button', { name: 'Hide the lines of PALMYRE JEAN MARC' }).scrollIntoViewIfNeeded()
+    await rv.seededPage.locator('#app').screenshot({ path: join(shots, 'month-review.png') })
+  }
+  await reviewCard.getByRole('button', { name: 'Hide the lines of PALMYRE JEAN MARC' }).click()
+  // One cent.
+  await reviewCard.getByRole('button', { name: 'Show the lines of SAMPLE ALEX' }).click()
+  const transport = reviewCard.getByTestId('review-details').locator('tr', { hasText: 'Transport Allowance' })
+  check((await transport.textContent()).includes('1,200.01') && (await transport.textContent()).includes('-0.01') && (await transport.getAttribute('data-changed')) === 'true', `A one-cent change is not shown: ${await transport.textContent()}`)
+  await reviewCard.getByRole('button', { name: 'Hide the lines of SAMPLE ALEX' }).click()
+  // What is not money is a note.
+  await reviewCard.getByRole('button', { name: 'Show the lines of TESTER SAM' }).click()
+  check((await reviewCard.getByTestId('review-notes').textContent()).includes('Name: "TESTER SAMUEL" last month, "TESTER SAM" now.'), 'A name written another way last month is not noted.')
+  await rvAccessible('month review, a row open')
+
+  // The paper is never marked: with rows open and a changed employee on screen, the page is the
+  // same picture of paper as without the review.
+  check((await paperLook()) === paperBefore.look && (await paperMarkup()) === paperBefore.markup, 'The payslip preview changed when rows of the month review were opened.')
+  await reviewCard.getByRole('button', { name: 'Show the payslip of PALMYRE JEAN MARC' }).click()
+  await rf.getByRole('img', { name: /Payslip of PALMYRE JEAN MARC/ }).waitFor()
+  const palmyrePaper = { look: await paperLook(), markup: await paperMarkup() }
+  check(palmyrePaper.look === paperBefore.look, `The paper of a changed employee is not plain white paper: ${palmyrePaper.look}`)
+  check(!/Changed|Unchanged|last month|18,365/i.test(await rf.getByTestId('payslip-page').textContent()), 'Something from the review is printed on the payslip.')
+  check(JSON.parse(palmyrePaper.look).background === 'rgb(255, 255, 255)' && JSON.parse(palmyrePaper.look).filter === 'none' && JSON.parse(palmyrePaper.look).children === 1, `The paper is tinted or has something drawn beside it: ${palmyrePaper.look}`)
+  await reviewCard.getByRole('button', { name: 'Hide the lines of TESTER SAM' }).click()
+
+  // Keyboard: every control of the review shows the 2px accent focus ring.
+  const accent = await rvFrame().evaluate(() => {
+    const probe = document.createElement('span')
+    probe.style.color = 'var(--accent)'
+    document.body.appendChild(probe)
+    const value = getComputedStyle(probe).color
+    probe.remove()
+    return value
+  })
+  await reviewCard.getByRole('button', { name: 'Show the lines of DOE JANE' }).focus()
+  for (let step = 0; step < 8; step++) {
+    await rv.seededPage.keyboard.press('Tab')
+    const ring = await rvFrame().evaluate(() => {
+      const el = document.activeElement
+      const style = getComputedStyle(el)
+      return { what: el.outerHTML.slice(0, 80), inside: Boolean(el.closest('[data-testid="month-review"]')), style: style.outlineStyle, width: style.outlineWidth, color: style.outlineColor }
+    })
+    if (ring.inside && (ring.style === 'none' || ring.width !== '2px' || ring.color !== accent)) check(false, `Month review: focus ring is ${ring.width} ${ring.style} ${ring.color} on ${ring.what}`)
+  }
+
+  // Bulk-approve marks the Unchanged rows, and no other.
+  check((await progress()).trim() === '0 of 8 reviewed.', `Something is reviewed before anyone reviewed it: ${await progress()}`)
+  await reviewCard.getByRole('button', { name: 'Approve 4 unchanged payslips' }).click()
+  check((await progress()).trim() === '4 of 8 reviewed.', `Bulk-approve did not mark exactly the 4 unchanged rows: ${await progress()}`)
+  for (const [name, status] of expectedStatuses) {
+    const box = reviewRow(name).getByRole('checkbox')
+    check((await box.isChecked()) === (status === 'Unchanged'), `After bulk-approve, ${name} (${status}) is ${(await box.isChecked()) ? 'marked' : 'not marked'}.`)
+  }
+  check(await reviewCard.getByTestId('review-approve-unchanged').isDisabled(), 'Bulk-approve is still offered when no unchanged row is left.')
+  check((await cannotIssue()).includes('3 selected payslips are changed, new or not comparable'), 'After bulk-approve the changed and new payslips no longer block the issue.')
+  for (const name of ['PALMYRE JEAN MARC', 'SAMPLE ALEX', 'EXEMPLE PRIYA']) await rf.getByLabel(`Mark ${name} as reviewed`).check()
+  check((await cannotIssue()).includes('1 employee who left is not acknowledged yet: ANCIEN PAUL.'), `The employee who left does not block the issue: ${await cannotIssue()}`)
+  await rf.getByLabel('Acknowledge that ANCIEN PAUL left').check()
+  check((await cannotIssue()) === '' && (await rvIssue.isEnabled()), `A fully reviewed month cannot be issued: ${await cannotIssue()}`)
+  check((await progress()).trim() === '8 of 8 reviewed.', 'The progress does not say everything is reviewed.')
+
+  // A new template version: a banner says so, and what was reviewed has to be looked at again.
+  await rvHub(() => {
+    const state = window.hub.state
+    const template = state.templates[0]
+    const next = JSON.parse(JSON.stringify(state.versions[0].body))
+    next.earnings = next.earnings.map((line) => (line.id === 'transport' ? { ...line, label: 'Travelling allowance' } : line))
+    Object.assign(template, { body: next, revision: template.revision + 1 })
+    state.versions.push({ templateId: template.id, version: 2, name: template.name, body: next, publishedAt: '2026-10-08T09:05:00+04:00', by: 'other' })
+  })
+  const rvNav = (name) => rf.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name, exact: true }).click()
+  await rvNav('Template')
+  await rf.getByRole('region', { name: 'Templates saved in the dashboard' }).getByRole('button', { name: 'Reload', exact: true }).click()
+  await rf.getByRole('button', { name: 'Use version 2 of Monthly payslip' }).click()
+  await rf.getByTestId('template-in-use').filter({ hasText: 'version 2 (published)' }).waitFor()
+  await rvNav('Payslips')
+  const banner = rf.getByTestId('review-banner-template')
+  await banner.waitFor()
+  check((await banner.textContent()).includes('The template version is not the one August 2026 was issued with') && (await banner.textContent()).includes('August 2026: 7 payslips with this template, version 1.') && (await banner.textContent()).includes('September 2026: Monthly payslip, version 2.'), `The template banner does not say what differs: ${await banner.textContent()}`)
+  for (const [name, status] of expectedStatuses) check((await statusOf(name)) === status, `A reworded label changed the status of ${name} to "${await statusOf(name)}".`)
+  check((await progress()).trim() === '1 of 8 reviewed.', `Marks were kept although what they covered changed: ${await progress()}`)
+  await reviewCard.getByRole('button', { name: 'Show the lines of DOE JANE' }).click()
+  const notes = await reviewCard.getByTestId('review-notes').textContent()
+  check(notes.includes('"Transport Allowance" last month is "Travelling allowance" now.') && notes.includes('Template: version 1 last month, version 2 now.'), `The reworded label and the template version are not noted: ${notes}`)
+  await reviewCard.getByRole('button', { name: 'Hide the lines of DOE JANE' }).click()
+  // The other theme (this browser starts light): names and contrast of the review, banner included.
+  await rf.getByRole('button', { name: 'Dark theme' }).click()
+  // Let the 150ms colour transitions finish, however busy the machine is.
+  await rv.seededPage.waitForTimeout(400)
+  await rvFrame().waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== 'running' || animation.effect?.getTiming().iterations === Infinity))
+  await rvAccessible('month review, dark theme')
+  check((await paperLook()) === paperBefore.look, 'The paper changed with the theme or the banner.')
+  if (shots) await rv.seededPage.locator('#app').screenshot({ path: join(shots, 'month-review-dark.png') })
+  await rf.getByRole('button', { name: 'Light theme' }).click()
+  await rv.seededPage.waitForTimeout(400)
+
+  // Review again, then issue: what is sent is September's own payslips, nothing of August.
+  await reviewCard.getByRole('button', { name: /^Approve 4 unchanged payslips$/ }).click()
+  for (const name of ['PALMYRE JEAN MARC', 'SAMPLE ALEX', 'EXEMPLE PRIYA']) await rf.getByLabel(`Mark ${name} as reviewed`).check()
+  check((await cannotIssue()) === '' && (await rvIssue.isEnabled()), `The reviewed month cannot be issued: ${await cannotIssue()}`)
+  await issueNow('September 2026')
+  await rf.getByTestId('issue-summary').filter({ hasText: 'Issued: 7. Not issued: 0.' }).waitFor()
+  const sentMonths = await rvSends()
+  const september = sentMonths[sentMonths.length - 1]
+  check(sentMonths.length === 2 && september.period === '2026-09' && september.payslips.length === 7, 'The September issue is not one message with seven payslips.')
+  check(september.payslips.every((p) => p.template_version === 2 && p.expected_revision === 0 && p.lines[0].period === '2026-09'), 'A September payslip is not made with the template in use, as revision 1 of September.')
+  check(september.payslips.every((p) => JSON.stringify(p.lines).includes('Pay period: September 2026') && !JSON.stringify(p.lines).includes('August')), 'Something of August is in a September payslip.')
+  check(!september.payslips.some((p) => p.national_id === 'X0000000000008'), 'A payslip was issued for the employee who left.')
+  check(Object.keys(september.payslips[0]).join() === 'national_id,expected_revision,template_id,template_version,rates,lines,accepted_differences', 'The review added a key to the issued payslip.')
+
+  // The identical re-issue rule still applies after a review: a second question, and Cancel sends nothing.
+  await rvIssue.click()
+  await rf.getByRole('dialog', { name: /^Issue 7 payslips for September 2026\?$/ }).getByRole('button', { name: 'Issue', exact: true }).click()
+  const again = rf.getByRole('dialog', { name: 'Issue 7 identical payslips again?' })
+  await again.waitFor()
+  check((await again.textContent()).includes('Nothing has changed since revision 1. Issue an identical revision 2 anyway?'), 'The second question about an identical re-issue is not asked after a review.')
+  await again.getByRole('button', { name: 'Cancel' }).click()
+  await again.waitFor({ state: 'detached' })
+  check((await rvSends()).length === 2, 'Cancelling the identical re-issue sent something.')
+
+  const rvMessages = await rv.seededPage.evaluate(() => window.log)
+  check(rvMessages.every((m) => m.from === 'payslip' && m.to === 'dashboard' && m.origin === 'https://noor1290.github.io'), 'Month review: a message did not come from this app at the hub origin.')
+  const rvStorage = await rvFrame().evaluate(async () => localStorage.length + sessionStorage.length + (indexedDB.databases ? (await indexedDB.databases()).length : 0) + document.cookie.length)
+  check(rvStorage === 0, 'Month review: something was written to browser storage.')
+  check(!rvFrame().url().includes('X000') && !/[?#]/.test(rvFrame().url()), 'Month review: something was put in the URL.')
+  await rv.seededPage.close()
+  console.log('  month review: nothing to compare with, declined load blocks, four statuses, changed lines, one cent, notes, paper untouched, bulk-approve for unchanged only, left acknowledged, template banner, marks dropped, issue is this month only, identical re-issue asked twice')
 
   check(outside.length === 0, `Requests to other addresses: ${[...new Set(outside)].join(', ')}`)
   check(pageErrors.length === 0, `Page errors: ${pageErrors.join(' | ')}`)

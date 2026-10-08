@@ -5,12 +5,14 @@ import { preparePayslips } from './lib/build'
 import { formatPeriod, todayIso } from './lib/dates'
 import { HUB_APP_ID, mergePayroll, PAYROLL_RESULT, readHubPayload, readHubReply, type MergeResult } from './lib/hubBridge'
 import { bridgePort, type HubRole } from './lib/hubWire'
+import { ratesSnapshot } from './lib/issueStore'
 import type { ImportedPayroll } from './lib/payrollFile'
 import type { AcceptedChecks } from './lib/payslip'
 import type { Reasons } from './lib/reasons'
 import { loadRates, ratesForCrossCheck, type RatesState } from './lib/ratesStore'
 import { isMonth, ratesFor } from './lib/statutoryRates'
 import { useIssuing } from './lib/useIssuing'
+import { useMonthReview } from './lib/useMonthReview'
 import { useTemplates } from './lib/useTemplates'
 import { IssuedScreen } from './screens/IssuedScreen'
 import { PayslipsScreen } from './screens/PayslipsScreen'
@@ -153,6 +155,14 @@ export default function App() {
         : [],
     [data, period, template, mapping, crossCheckRates, treatAsZero, issueDate],
   )
+
+  // The month review: this month's payslips beside the ones issued last month. It only reads them.
+  const ratesUsed = useMemo(() => (isMonth(period) ? ratesFor(crossCheckRates.versions, period) : null), [crossCheckRates, period])
+  const ratesUsedSnapshot = useMemo(() => ratesSnapshot(ratesUsed), [ratesUsed])
+  const templateRef = useMemo(() => ({ id: template.id, version: template.version }), [template.id, template.version])
+  const templateItems = templates.list.status === 'loaded' ? templates.list.items : null
+  const templateName = useCallback((id: string) => templateItems?.find((found) => found.templateId === id)?.name ?? null, [templateItems])
+  const review = useMonthReview({ issuing, company: insideDashboard ? brn : null, period, data, prepared, template: templateRef, rates: ratesUsedSnapshot, templateName })
 
   const loadData = (next: ImportedPayroll | null) => {
     // Replacing or clearing the data clears everything that was decided about the old data.
@@ -323,7 +333,7 @@ export default function App() {
             onOpenTemplate={() => setScreen('template')}
             issue={
               insideDashboard
-                ? { issuing, readOnly, choice: templates.choice, rates: isMonth(period) ? ratesFor(crossCheckRates.versions, period) : null }
+                ? { issuing, readOnly, choice: templates.choice, rates: ratesUsed, review }
                 : null
             }
             accepted={accepted}

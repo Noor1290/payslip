@@ -14,6 +14,7 @@ import { useEffect, useId, useMemo, useRef, useState, type Dispatch, type SetSta
 import sampleText from '../../samples/ABC Co Ltd-pdf-fill-2026-09.json?raw'
 import { Dialog } from '../components/Dialog'
 import { IssuePanel } from '../components/IssuePanel'
+import { MonthReview } from '../components/MonthReview'
 import { PayslipPreview } from '../components/PayslipPreview'
 import { ReasonDialog } from '../components/ReasonDialog'
 import type { PreparedPayslip } from '../lib/build'
@@ -22,11 +23,13 @@ import { buildPdfZip, buildWorkbook, download, exportBaseName } from '../lib/exp
 import { buildIssue, issueStatuses } from '../lib/issueBuild'
 import { decodeLines } from '../lib/issuedLines'
 import { formatCents } from '../lib/money'
+import { withReview } from '../lib/monthReview'
 import { importPayrollText, type ImportError, type ImportedPayroll } from '../lib/payrollFile'
 import { isReady, pendingChecks, type AcceptedChecks, type ReconcileCheck } from '../lib/payslip'
 import { isMonth, type RatesVersion } from '../lib/statutoryRates'
 import type { TemplateChoice } from '../lib/templateUse'
 import type { Issuing } from '../lib/useIssuing'
+import type { MonthReview as Review } from '../lib/useMonthReview'
 import { checkKey, ROUNDING_REASON, withReason, zeroKey, type Reasons } from '../lib/reasons'
 import type { TemplateMapping } from '../lib/template'
 
@@ -65,6 +68,8 @@ export interface IssueSetup {
   choice: TemplateChoice
   /** The rates the cross-check used for this month, or null when it did not run. */
   rates: RatesVersion | null
+  /** The comparison with last month. Issuing waits for it; downloads do not. */
+  review: Review
 }
 
 type Status = 'ready' | 'review' | 'fix'
@@ -145,6 +150,8 @@ export function PayslipsScreen(props: Props) {
         : null,
     [data, issue, period, prepared, selected, accepted, props.reasons, props.templateKind, issuedMonth],
   )
+  // The month review adds its reasons to wait. It never changes a payslip that is to be issued.
+  const reviewedBuild = issue && issueBuild ? withReview(issueBuild, issue.review.problems([...selected])) : issueBuild
 
   const accept = (next: ImportedPayroll) => {
     setImportErrors(null)
@@ -579,14 +586,28 @@ export function PayslipsScreen(props: Props) {
               </div>
             </section>
 
-            {issue && issueBuild && (
+            {issue ? (
+              <MonthReview period={period} review={issue.review} readOnly={issue.readOnly} current={item?.computation.rowIndex ?? null} onShow={setCurrent} />
+            ) : (
+              <section className="card" aria-label="Month review" data-testid="month-review-standalone">
+                <div className="card-header">
+                  <h2 className="card-title">Month review</h2>
+                </div>
+                <p className="m-0 p-4 text-sm text-muted">
+                  The month review compares each payslip with the one issued last month. Issued payslips are kept by the Payroll Hub dashboard, so the
+                  review is available when this app is opened from there.
+                </p>
+              </section>
+            )}
+
+            {issue && reviewedBuild && (
               <IssuePanel
                 period={period}
                 brn={data.company.brn}
                 month={monthState}
                 issuing={issue.issuing}
                 readOnly={issue.readOnly}
-                build={issueBuild}
+                build={reviewedBuild}
                 templateLabel={props.templateChip}
                 ratesLabel={issue.rates ? `Version of ${formatPeriod(issue.rates.effectiveFrom)}, revision ${issue.rates.revision}` : 'Not cross-checked'}
                 onLoad={() => void issue.issuing.load(period)}
