@@ -77,3 +77,11 @@ The month review needs nothing new from the hub. It uses two requests the hub al
 12. **A code for "no payroll for that month".** NOT STARTED, small. Today a request for a month with no saved run is refused with a sentence and no code ("There is no saved run for 2026-08.", "That run has no employees."), like a request the bridge gave up on. The payslip app has to recognise the sentence to tell "nothing to compare with" from a failure. Wanted: `code: "not-found"` on those two refusals (the app already accepts it), the sentences kept as they are. Also useful: `meta.brn` on a `payroll-result` answer, as on the other answers, so the app can check the company before it reads a row.
 
 13. **A record of the month review (later).** NOT STARTED, to design. The app keeps "reviewed", "approved" and "acknowledged" marks in memory only, because an issued payslip accepts no other key. If an audit trail is wanted (who reviewed which employee against which revision of last month, and when), the hub needs a place for it: for example an optional, strictly checked key on each payslip of an issue, or one row per issue. Nothing in it would be a payroll figure. Until then the review leaves no trace once the tab is closed.
+
+## Later change to the bridge file (13 October 2026)
+
+Not one of the items above, and not asked for by this app. The hub added one message to `bridge.js`, `activity`: while someone works in an app, the bridge says so at most once every 30 seconds, with nothing in it, so the dashboard neither signs its user out nor locks its password gate in the middle of that work. Still protocol version 1, and the app has nothing to do for it.
+
+- `src/payrollHubBridge.js` and `docs/bridge.js` are the hub's new file, copied unchanged; `docs/INTEGRATION.md` is the hub's too. The hash in `tests/bridge.test.ts` names the new file.
+- Tests: "working in the app, inside the dashboard" in `tests/bridge.test.ts`, and one line in `scripts/check-bridge.mjs`.
+- Deploy the dashboard before this app: a dashboard that does not know `activity` yet drops it and writes a warning to its console each time.

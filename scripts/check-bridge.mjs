@@ -675,6 +675,13 @@ try {
   const messages = await page.evaluate(() => window.log)
   check(messages.every((m) => m.from === 'payslip' && m.to === 'dashboard' && m.version === 1), 'A message did not come from "payslip" to "dashboard".')
   check(messages.every((m) => m.origin === HUB), 'A message came from another origin.')
+  // Working in the app is reported, so the dashboard does not sign its user out mid-work: at
+  // least once for everything clicked and typed above, never more than once in 30 seconds
+  // (this whole script takes minutes, not hours), and with nothing in it.
+  const activity = messages.filter((m) => m.type === 'activity')
+  check(activity.length >= 1, 'Working in the app was not reported to the dashboard ("activity").')
+  check(activity.length <= 20, `"activity" was sent ${activity.length} times: it is not held to one every 30 seconds.`)
+  check(activity.every((m) => JSON.stringify(m.payload) === '{}'), 'An "activity" message carried something.')
   const storage = await page.frame({ url: `${HUB}/payslip/` }).evaluate(async () => ({
     local: localStorage.length,
     session: sessionStorage.length,

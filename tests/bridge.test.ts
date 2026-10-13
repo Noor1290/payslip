@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import vm from 'node:vm'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mergePayroll, readHubPayload, readHubReply } from '../src/lib/hubBridge'
 import type { ImportedPayroll } from '../src/lib/payrollFile'
 import { FIXTURE_NAME, loadFixture, readFixtureText, root } from './helpers'
@@ -65,7 +65,8 @@ const validPayload = () => ({ dataType: 'payroll-result', rows: fixtureRows(), m
 describe('the copied bridge file', () => {
   it('is byte for byte the hub version it was copied from', () => {
     const hash = createHash('sha256').update(readFileSync(bridgeFile)).digest('hex')
-    expect(hash).toBe('6e80690fe39545eaf9d8bcdaea59a5cd0c8a3688af98feb8f264af0433760564')
+    // The hub's docs/bridge.js of 13 October 2026, which added the "activity" message.
+    expect(hash).toBe('0806072a5fd6e273b58bef63c1e814ca4f6f0f3d45da3f5333d8cbb76af7e7ac')
   })
 
   it('does nothing when the app is opened on its own', () => {
@@ -234,5 +235,64 @@ describe('adding new data to the data already open', () => {
     expect(allThere).toMatchObject({ ok: false, reason: 'All of these employees are already in the list.' })
     // The ID itself is never printed.
     expect(JSON.stringify(overlap)).not.toContain('X0000000000001')
+  })
+})
+
+describe('working in the app, inside the dashboard', () => {
+  /** The real bridge file in a fake frame, with the things a person does in the app. */
+  function workingBridge() {
+    const posted: (Posted & { at: number })[] = []
+    const listeners = new Map<string, (event: unknown) => void>()
+    const window: Record<string, unknown> = {
+      parent: { postMessage: (message: Posted['message'], targetOrigin: string) => posted.push({ message, targetOrigin, at: Date.now() }) },
+      addEventListener: (type: string, listener: (event: unknown) => void) => listeners.set(type, listener),
+      crypto: { randomUUID },
+    }
+    vm.runInNewContext(readFileSync(bridgeFile, 'utf8'), { window, setTimeout, clearTimeout, Date })
+    ;(window.PayrollHubBridge as Window['PayrollHubBridge']).init({ appId: 'payslip', onData: () => undefined })
+    return {
+      listeners,
+      act: (type: string, event: Record<string, unknown> = {}) => listeners.get(type)?.({ type, ...event }),
+      activity: () => posted.filter((p) => p.message.type === 'activity'),
+    }
+  }
+
+  afterEach(() => vi.useRealTimers())
+
+  it('tells the dashboard when the user clicks, types, scrolls or touches, so it does not sign them out mid-work', () => {
+    for (const event of ['pointerdown', 'keydown', 'wheel', 'touchstart']) {
+      const app = workingBridge()
+      expect(app.activity()).toEqual([])
+      app.act(event)
+      expect(app.activity(), event).toHaveLength(1)
+      expect(app.activity()[0]!.message).toMatchObject({ type: 'activity', from: 'payslip', to: 'dashboard', version: 1, payload: {} })
+      expect(app.activity()[0]!.targetOrigin).toBe(HUB_ORIGIN)
+    }
+  })
+
+  it('says only that something was done: no key, no figure, no name is in the message', () => {
+    const app = workingBridge()
+    app.act('keydown', { key: '7', target: { value: '18115.00', name: 'Basic Salary' } })
+    const { message } = app.activity()[0]!
+    expect(Object.keys(message).sort()).toEqual(['from', 'id', 'payload', 'to', 'type', 'version'])
+    expect(message.payload).toEqual({})
+    expect(JSON.stringify(message)).not.toMatch(/18115|Basic Salary/)
+  })
+
+  it('sends one message every 30 seconds at most, however much is typed, and none once the work stops', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-13T09:00:00Z'))
+    const app = workingBridge()
+    const start = Date.now()
+
+    // Three minutes of typing, four keys a second.
+    for (let ms = 0; ms < 3 * 60_000; ms += 250) {
+      app.act('keydown')
+      vi.advanceTimersByTime(250)
+    }
+    expect(app.activity().map((p) => (p.at - start) / 1000)).toEqual([0, 30, 60, 90, 120, 150, 180])
+
+    vi.advanceTimersByTime(60 * 60_000)
+    expect(app.activity()).toHaveLength(7)
   })
 })
