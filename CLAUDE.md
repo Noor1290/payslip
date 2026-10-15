@@ -1,6 +1,6 @@
 # Payslip app: project memory
 
-A frontend-only app (React + Vite + TypeScript + Tailwind, GitHub Pages) that turns payroll results into payslips: a preview, a PDF per employee and an Excel file. It is one of the apps in Payroll Hub (https://noor1290.github.io/payroll-hub/) and gets its data from the hub through the postMessage bridge, or from a payroll JSON file when opened on its own. Full spec: **docs/BRIEF.md**. Look and feel: **docs/DESIGN_SYSTEM.md**. The reference template is in **docs/reference/**.
+A frontend-only app (React + Vite + TypeScript + Tailwind, GitHub Pages) that turns payroll results into payslips: a preview, a PDF per employee and an Excel file. It is one of the apps in Payroll Hub (https://noor1290.github.io/payroll_hub/) and gets its data from the hub through the postMessage bridge, or from a payroll JSON file when opened on its own. Full spec: **docs/BRIEF.md**. Look and feel: **docs/DESIGN_SYSTEM.md**. The reference template is in **docs/reference/**.
 
 ## Hard rules (never break these)
 - The payroll figures are the product. Show the numbers exactly as the payroll system exported them. Never recalculate a payroll figure, never round one silently, never change a value to make a payslip "add up". If a payslip does not add up, show a clear warning and tell me.
