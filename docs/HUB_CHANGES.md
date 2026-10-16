@@ -2,7 +2,7 @@
 
 A to-do list for the `payroll_hub` repo, written from the payslip repo on 6 October 2026 and updated on 7 October 2026 to say what was built. Every SQL file is run by hand by the owner in the Supabase SQL editor. `bridge.js` is not changed by any item.
 
-Status: items 1 and 2 are done and merged (Stage A). Items 3 to 7, 9 and 10 are built on the branch `feature/payslip-bridge-b` (Stage B), not merged; migrations 0008 to 0010 are written and still to be run. Item 8 is not started.
+Status (16 October 2026): items 1 to 10 are built and merged into the hub's `main`: Stage A, Stage B (pull request #3, `feature/payslip-bridge-b`) and item 8 (pull request #4, `feature/payslip-issue`); the hub's later migrations moved and replaced some of the file names given below (its `main` is at 0014). Item 12 is built on the hub's branch `backlog-fixes`, not merged. Item 11 is as described below; item 13 is not started. The older items are kept as they were written, as a history; `docs/INTEGRATION.md` is the contract.
 
 The contract the payslip app codes against is `docs/INTEGRATION.md`, payslip section. Where this file and that one differ, that one is right.
 
@@ -54,7 +54,7 @@ The contract the payslip app codes against is `docs/INTEGRATION.md`, payslip sec
 
 ## Payslip Phase 4 (issued payslips)
 
-8. **`payslip-issue`.** NOT STARTED. Migration `0011_issued_payslips.sql`: `issued_payslips` (company, employee, period, revision, template version, rates snapshot, the exact lines shown, accepted differences, who, when). Insert-only through one atomic function; admin-only read.
+8. **`payslip-issue`.** BUILT and merged (hub pull request #4, 8 October 2026). As first written: Migration `0011_issued_payslips.sql`: `issued_payslips` (company, employee, period, revision, template version, rates snapshot, the exact lines shown, accepted differences, who, when). Insert-only through one atomic function; admin-only read.
    - The save carries the BRN and the period. The hub refuses it if the BRN is not the selected company's.
    - Reads and saves sit behind the password gate; add the query key to `GATED_QUERY_KEYS` (`src/lib/queryClient.ts`).
    - A request with a period returns that month's issued payslips (used for the month comparison).
@@ -74,7 +74,7 @@ The contract the payslip app codes against is `docs/INTEGRATION.md`, payslip sec
 
 The month review needs nothing new from the hub. It uses two requests the hub already answers: `payslip-issue` `{ action: "load", brn, period }` for last month's issued payslips, and `request-data { dataType: "payroll-result", period }` for last month's payroll run when no payslip was issued. The two items below would make it sturdier; neither is started, and the app works without them.
 
-12. **A code for "no payroll for that month".** NOT STARTED, small. Today a request for a month with no saved run is refused with a sentence and no code ("There is no saved run for 2026-08.", "That run has no employees."), like a request the bridge gave up on. The payslip app has to recognise the sentence to tell "nothing to compare with" from a failure. Wanted: `code: "not-found"` on those two refusals (the app already accepts it), the sentences kept as they are. Also useful: `meta.brn` on a `payroll-result` answer, as on the other answers, so the app can check the company before it reads a row.
+12. **A code for "no payroll for that month".** BUILT on the hub's branch `backlog-fixes` (16 October 2026), not merged: both refusals carry `code: "not-found"`, the sentences unchanged. `meta.brn` on a `payroll-result` answer is not done. As first written: Today a request for a month with no saved run is refused with a sentence and no code ("There is no saved run for 2026-08.", "That run has no employees."), like a request the bridge gave up on. The payslip app has to recognise the sentence to tell "nothing to compare with" from a failure. Wanted: `code: "not-found"` on those two refusals (the app already accepts it), the sentences kept as they are. Also useful: `meta.brn` on a `payroll-result` answer, as on the other answers, so the app can check the company before it reads a row.
 
 13. **A record of the month review (later).** NOT STARTED, to design. The app keeps "reviewed", "approved" and "acknowledged" marks in memory only, because an issued payslip accepts no other key. If an audit trail is wanted (who reviewed which employee against which revision of last month, and when), the hub needs a place for it: for example an optional, strictly checked key on each payslip of an issue, or one row per issue. Nothing in it would be a payroll figure. Until then the review leaves no trace once the tab is closed.
 

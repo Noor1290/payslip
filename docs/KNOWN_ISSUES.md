@@ -60,7 +60,9 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **To decide.** Whether the theme is worth an exception to "nothing is stored in the browser".
 
-## 9. The link with the real dashboard can only be seen after both are deployed
+## 9. (Obsolete) The link with the real dashboard can only be seen after both are deployed
+
+**Obsolete (16 October 2026).** Both are deployed and the dashboard lists this app with its address (`https://noor1290.github.io/payslip/`, the hub's `src/config/apps.config.ts`). Kept for the record.
 
 **What happens.** The bridge file only trusts the deployed dashboard at https://noor1290.github.io. It does not connect on localhost, and the dashboard still lists this app as "coming soon" with no URL.
 
@@ -212,6 +214,8 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **To decide.** Whether to add that CSS line to the preview.
 
+**Fixed (16 October 2026, backlog batch H).** The preview now has `text-rendering: geometricPrecision` (`src/components/PayslipPreview.tsx`). In the built app the largest difference is 0.014 pt, and `npm run check:build` now accepts at most 0.05 pt, which the old preview fails (0.085 pt on "Date of Employment :"). Screen only: the drawing list, the PDF and the Excel file are not touched, so drawing version 1 is unchanged.
+
 ## 31. Small things in how the PDF names its fonts
 
 **What happens.** Three things pdf-lib does, all harmless while the font loads. The font is marked "symbolic" and not "serif", so a viewer that ever had to substitute it would pick a sans-serif. Every text on the page gets its own font resource name (53 names for 2 fonts on one payslip). The font names end in a number ("TeXGyrePagella-Bold-4482") in place of the usual six-letter prefix of a subset.
@@ -235,6 +239,8 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 **Evidence.** `tests/baseline.test.ts` ("no saved run is an answer", "a locked dashboard, and any other refusal, is a failure"). The sentences are the ones in the hub's `src/features/workspace/BridgeDialogs.tsx` (read on 8 October 2026).
 
 **To decide.** Add the code in the hub: `docs/HUB_CHANGES.md`, item 12.
+
+**Fixed in the hub (16 October 2026, its branch `backlog-fixes`, not merged).** The dashboard now sends `code: "not-found"` with both refusals, and the sentences are unchanged. This app already took the code as "nothing to compare with"; it still recognises the two sentences, for a dashboard that has not been updated yet. Proven in the hub by `src/features/workspace/baseline.test.tsx` (two tests that fail on the old code).
 
 ## 34. With no payslip issued last month, the issue waits for the payroll answer
 
@@ -276,7 +282,9 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **To decide.** Whether a not-matched line of zero on both months should leave the row Unchanged.
 
-## 39. `docs/HUB_CHANGES.md` is behind what the hub has built
+## 39. (Fixed) `docs/HUB_CHANGES.md` is behind what the hub has built
+
+**Fixed (16 October 2026, backlog batch I).** Its status line and items 8 and 12 now say what is built and merged; the older items are kept as a history, and `docs/INTEGRATION.md` stays the contract. What follows is the record of the problem.
 
 **What happens.** Its status paragraph and item 8 still say that Stage B is on a branch and that `payslip-issue` is "NOT STARTED". The hub's `main` has both merged (its log on 8 October 2026: "Merge pull request #4 from Noor1290/feature/payslip-issue"), and `docs/INTEGRATION.md`, which is the contract, describes `payslip-issue` as built. Only the Phase 5 section was added to the file in this phase; the older items were left as they were.
 
