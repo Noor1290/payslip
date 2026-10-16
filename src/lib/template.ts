@@ -155,7 +155,18 @@ export function mappableKeys(
   mapping: TemplateMapping,
 ): string[] {
   const blocked = new Set(mapping.neverMap)
-  return keys.filter((key) => !blocked.has(key) && rows.some((row) => typeof row[key] === 'number'))
+  return keys.filter((key) => !blocked.has(key) && !isEmployerContributionKey(key) && rows.some((row) => typeof row[key] === 'number'))
+}
+
+/**
+ * When two payroll columns share a name, the payroll app's export names each with its category,
+ * e.g. "CSG (Employer Contribution)". A column named that way is employer side whatever comes
+ * before the category, so it is never used on a payslip either.
+ */
+export const EMPLOYER_CONTRIBUTION_SUFFIX = '(Employer Contribution)'
+
+export function isEmployerContributionKey(key: string): boolean {
+  return key.trim().toLowerCase().endsWith(EMPLOYER_CONTRIBUTION_SUFFIX.toLowerCase())
 }
 
 // ---------- fixed in code, never part of a stored template ----------

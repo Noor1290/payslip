@@ -12,6 +12,7 @@ import { normaliseKey } from './payrollFile'
 import {
   DEFAULT_TABLE_MAPPING,
   FIXED_LINES,
+  isEmployerContributionKey,
   NEVER_MAP,
   RESERVED_LINE_IDS,
   TABLE_TEMPLATE,
@@ -235,7 +236,7 @@ export function bodyProblems(body: TemplateBody): string[] {
   const blocked = new Set(NEVER_MAP.map(normaliseKey))
   for (const line of all) {
     const key = body.mapping.lines[line.id]?.key
-    if (key && blocked.has(normaliseKey(key))) {
+    if (key && (blocked.has(normaliseKey(key)) || isEmployerContributionKey(key))) {
       problems.push(
         `The line "${line.label}" is mapped to "${key}", a column that must never be on a payslip (employer side, or the second PAYE column).`,
       )

@@ -4,7 +4,7 @@ import { Dialog } from '../components/Dialog'
 import { FailurePanel, SavedPanel } from '../components/FailurePanel'
 import { formatShortDate, isIsoDate } from '../lib/dates'
 import type { ImportedPayroll } from '../lib/payrollFile'
-import { DEFAULT_TABLE_MAPPING, FIXED_LINES, mappableKeys, NEVER_MAP } from '../lib/template'
+import { DEFAULT_TABLE_MAPPING, EMPLOYER_CONTRIBUTION_SUFFIX, FIXED_LINES, mappableKeys, NEVER_MAP } from '../lib/template'
 import { bodyChanges, bodyRows, LABEL_MAX, MAX_BODY_ROWS, NAME_MAX, type BodyLine, type TemplateBody } from '../lib/templateBody'
 import {
   addLine,
@@ -611,7 +611,9 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
                   </div>
                 </div>
                 <p className="m-0 text-sm text-muted md:col-span-2">
-                  Never used on a payslip: {NEVER_MAP.join(', ')}. These are employer-side columns, or a second PAYE column.
+                  Never used on a payslip, because they are employer-side columns or a second PAYE column: {NEVER_MAP.join(', ')},
+                  and any column whose name ends in "{EMPLOYER_CONTRIBUTION_SUFFIX}". Employee contributions, such as "Employee CSG"
+                  and "Employee NSF", or "CSG (Employee Contribution)" and "NSF (Employee Contribution)", can still be used.
                 </p>
               </div>
             </fieldset>

@@ -213,11 +213,31 @@ describe('two payroll columns both called "CSG"', () => {
   })
 
   // The template editor never offers the employer columns "CSG" and "NSF" for a payslip line.
-  // That protection goes by the exact names, so it does not know the employer column under its
-  // new name.
-  it.fails('BUG: the employer column "CSG (Employer Contribution)" is not offered for a payslip line', () => {
+  // Was audit M18: that protection went by the exact names only, so it did not know the employer
+  // column under its new name.
+  it('the employer column "CSG (Employer Contribution)" is not offered for a payslip line', () => {
     const data = imported([clashing])
     expect(mappableKeys(data.keys, data.rows, DEFAULT_TABLE_MAPPING)).not.toContain('CSG (Employer Contribution)')
+  })
+
+  it('the employee column under its category name still is', () => {
+    const data = imported([clashing])
+    expect(mappableKeys(data.keys, data.rows, DEFAULT_TABLE_MAPPING)).toContain('CSG (Employee Contribution)')
+  })
+
+  it('employee CSG and NSF are offered under both names the payroll export can give them; the employer columns under neither', () => {
+    const keys = [
+      'Employee CSG',
+      'Employee NSF',
+      'CSG (Employee Contribution)',
+      'NSF (Employee Contribution)',
+      'CSG',
+      'NSF',
+      'CSG (Employer Contribution)',
+      'NSF (Employer Contribution)',
+    ]
+    const rows = [Object.fromEntries(keys.map((key, i) => [key, 100 + i]))]
+    expect(mappableKeys(keys, rows, DEFAULT_TABLE_MAPPING)).toEqual(['Employee CSG', 'Employee NSF', 'CSG (Employee Contribution)', 'NSF (Employee Contribution)'])
   })
 
   it('evidence: the plain employer names are blocked, as designed', () => {

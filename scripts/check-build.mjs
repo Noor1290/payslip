@@ -136,9 +136,10 @@ try {
     const units = [...text.text].reduce((sum, char) => sum + metrics[text.font].widths[char.codePointAt(0)], 0)
     const difference = Math.abs(text.length - (units * text.size) / metrics[text.font].unitsPerEm)
     widest = Math.max(widest, difference)
-    // The browser rounds glyph advances to its own grid: up to about 0.1 pt on the longest label.
-    // Another font would differ by whole points... unless it has the same widths, hence the checks above.
-    if (!(difference < 0.25)) problems.push(`The preview draws "${text.text}" ${text.length.toFixed(2)} wide, not as the payslip font measures it.`)
+    // With geometricPrecision the browser keeps the font's own advances: about 0.014 pt on the
+    // longest label (it was 0.085 pt rounded to the pixel grid, known issue 30). Another font
+    // would differ by whole points... unless it has the same widths, hence the checks above.
+    if (!(difference < 0.05)) problems.push(`The preview draws "${text.text}" ${text.length.toFixed(2)} wide, not as the payslip font measures it.`)
   }
   note(`preview: ${drawn.texts.length} texts in ${drawn.family.split(',')[0]}, largest width difference ${widest.toFixed(3)} pt`)
 

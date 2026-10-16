@@ -103,6 +103,17 @@ describe('a body is refused on load, with a message naming the problem', () => {
     expect(problemsOf((body) => (body.mapping.lines.csg.key = ' csg ')).join(' ')).toContain('must never be on a payslip')
   })
 
+  // Audit M18 (backlog batch H): the employer column under the name the payroll export gives it
+  // when two columns share a name.
+  it('when a line is mapped to a column named "... (Employer Contribution)"', () => {
+    for (const column of ['CSG (Employer Contribution)', 'NSF (Employer Contribution)', ' levy (employer contribution) ']) {
+      const problems = problemsOf((body) => (body.mapping.lines.csg.key = column))
+      expect(problems.join(' '), column).toContain(`The line "CSG" is mapped to "${column}", a column that must never be on a payslip`)
+    }
+    // The employee side under its category name is still allowed.
+    expect(problemsOf((body) => (body.mapping.lines.csg.key = 'CSG (Employee Contribution)'))).toEqual([])
+  })
+
   it.each([
     ['csg', 'Employee CSG'],
     ['nsf', 'Employee NSF'],

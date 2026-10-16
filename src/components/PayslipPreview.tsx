@@ -4,11 +4,17 @@ import type { DrawList } from '../writers/pageGeometry'
 /**
  * The on-screen payslip: the same drawing list the PDF writer uses, as SVG on a white page.
  * It is a picture of paper, so it looks the same in the dark and the light theme.
+ *
+ * geometricPrecision: the browser then lays the glyphs out at the font's own advances instead of
+ * rounding each to its pixel grid, so a long label ends where it ends in the PDF (known issue 30:
+ * 0.085 pt short before, about 0.014 pt after). Screen only: the drawing list, the PDF and the
+ * Excel file are not touched.
  */
 export const PayslipPreview = memo(function PayslipPreview({ page, label }: { page: DrawList; label: string }) {
   return (
     <svg
       className="paper"
+      textRendering="geometricPrecision"
       viewBox={`0 0 ${page.width} ${page.height}`}
       role="img"
       aria-label={label}
