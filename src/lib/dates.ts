@@ -36,6 +36,16 @@ export function formatPeriod(period: string): string {
   return `${MONTHS[Number(month) - 1]} ${year}`
 }
 
+/** This month and the `count - 1` before it, newest first, as "YYYY-MM" (the months "Get from dashboard" offers). */
+export function recentMonths(now = new Date(), count = 24): string[] {
+  const months: string[] = []
+  for (let i = 0; i < count; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+  }
+  return months
+}
+
 /** Today's date in the user's own time zone, as "YYYY-MM-DD". */
 export function todayIso(now = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, '0')

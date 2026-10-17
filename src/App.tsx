@@ -2,7 +2,7 @@ import { CircleAlert, Download, FileCheck2, Inbox, LayoutTemplate, Moon, Percent
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ImportDialog, type IncomingPayroll } from './components/ImportDialog'
 import { preparePayslips } from './lib/build'
-import { formatPeriod, todayIso } from './lib/dates'
+import { formatPeriod, recentMonths, todayIso } from './lib/dates'
 import { HUB_APP_ID, mergePayroll, PAYROLL_RESULT, readHubPayload, readHubReply, type MergeResult } from './lib/hubBridge'
 import { bridgePort, type HubRole } from './lib/hubWire'
 import { ratesSnapshot } from './lib/issueStore'
@@ -65,6 +65,9 @@ export default function App() {
   // True once the import dialog for waiting dashboard data was closed without importing.
   const [previewClosed, setPreviewClosed] = useState(false)
   const [requesting, setRequesting] = useState(false)
+  /** The month "Get from dashboard" asks for: '' is the latest saved month (rehearsal fix F3). */
+  const [askMonth, setAskMonth] = useState('')
+  const askMonths = useMemo(() => recentMonths(), [])
   const [dashboardError, setDashboardError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -137,7 +140,7 @@ export default function App() {
   const getFromDashboard = async () => {
     setRequesting(true)
     setDashboardError(null)
-    const result = readHubReply(await window.PayrollHubBridge.requestData(PAYROLL_RESULT))
+    const result = readHubReply(await window.PayrollHubBridge.requestData(PAYROLL_RESULT, askMonth || undefined))
     setRequesting(false)
     if (result.ok) offer(result.data, 'dashboard')
     else setDashboardError(result.error)
@@ -244,6 +247,20 @@ export default function App() {
               <span className={`badge ${connected ? 'tone-accent' : ''}`} role="status">
                 {connected ? 'Dashboard connected' : 'Waiting for the dashboard'}
               </span>
+              <select
+                className="input h-8 w-auto px-2 text-[13px]"
+                aria-label="Month to get from the dashboard"
+                value={askMonth}
+                onChange={(event) => setAskMonth(event.target.value)}
+                disabled={requesting}
+              >
+                <option value="">Latest saved month</option>
+                {askMonths.map((month) => (
+                  <option key={month} value={month}>
+                    {formatPeriod(month)}
+                  </option>
+                ))}
+              </select>
               <button type="button" className="btn btn-sm" onClick={() => void getFromDashboard()} disabled={requesting}>
                 <Download aria-hidden="true" />
                 {requesting ? 'Waiting for the dashboard' : 'Get from dashboard'}

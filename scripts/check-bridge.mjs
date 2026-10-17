@@ -195,6 +195,22 @@ try {
   await notice.getByRole('button', { name: 'Discard' }).click()
   await notice.waitFor({ state: 'detached' })
   check((await employeeRows.count()) === 7, 'Discard changed the data that was open.')
+  // Rehearsal fix F3: a month can be chosen; the default still asks for the latest saved month.
+  const asks = () => page.evaluate(() => window.log.filter((m) => m.type === 'request-data' && m.payload.dataType === 'payroll-result').map((m) => m.payload.period ?? null))
+  check(JSON.stringify(await asks()) === '[null,null]', `F3: "Get from dashboard" named a month by default: ${JSON.stringify(await asks())}`)
+  const askMonth = app.getByLabel('Month to get from the dashboard')
+  check((await askMonth.inputValue()) === '' && (await askMonth.locator('option').first().textContent()) === 'Latest saved month', 'F3: the month picker does not start on the latest saved month.')
+  await page.evaluate((rows) => (window.hub.state.runs['2026-09'] = rows), twoNewPeople)
+  await askMonth.selectOption({ label: 'September 2026' })
+  await app.getByRole('button', { name: 'Get from dashboard' }).click()
+  await dialog.waitFor()
+  check((await notice.textContent()).includes('2 employees, September 2026'), 'F3: the month chosen was not the month received.')
+  check(JSON.stringify((await asks()).slice(-1)) === '["2026-09"]', `F3: "Get from dashboard" did not ask for the month chosen: ${JSON.stringify(await asks())}`)
+  await dialog.getByRole('button', { name: 'Not now' }).click()
+  await notice.getByRole('button', { name: 'Discard' }).click()
+  await notice.waitFor({ state: 'detached' })
+  await askMonth.selectOption('')
+  await page.evaluate(() => delete window.hub.state.runs['2026-09'])
 
   // 8b. Statutory rates, saved through the dashboard.
   const warnings = () => app.getByRole('region', { name: 'Checks' }).textContent()
