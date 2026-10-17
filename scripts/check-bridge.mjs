@@ -387,8 +387,15 @@ try {
   await app.getByTestId('template-saved').filter({ hasText: 'Published as version 1' }).waitFor()
   const publishRow = (await templateSaves())[1]
   check(publishRow.action === 'publish' && publishRow.expected_revision === 1 && publishRow.brn === 'C1234567' && !('body' in publishRow), `Templates: the publish row is wrong: ${JSON.stringify(publishRow)}`)
+  // Rehearsal fix F7: the version just published is offered once, "Use version 1" first.
+  const useNow = app.getByRole('dialog', { name: 'Use version 1 now?' })
+  await useNow.waitFor()
+  check((await useNow.textContent()).includes('The payslips are then made with "Monthly payslip", version 1.'), 'F7: the "use it now" question does not name the version.')
+  check(await app.getByRole('button', { name: 'Use version 1', exact: true }).evaluate((b) => b === document.activeElement), 'F7: "Use version 1" is not the default answer.')
+  await accessible('template, use the published version now')
+  await useNow.getByRole('button', { name: 'Use version 1', exact: true }).click()
+  await app.getByTestId('template-in-use').filter({ hasText: 'Monthly payslip, version 1 (published)' }).waitFor()
   await app.getByLabel('Preview this draft on the Payslips page').uncheck()
-  await app.getByRole('button', { name: 'Use version 1 of Monthly payslip' }).click()
   await app.getByTestId('template-in-use').filter({ hasText: 'Monthly payslip, version 1 (published)' }).waitFor()
   await nav('Payslips')
   check((await chip.textContent()) === 'Monthly payslip, version 1 (published)', 'The chip does not say which published version is used.')
@@ -446,6 +453,11 @@ try {
   check(await page.evaluate(() => window.hub.state.versions.length === 1), 'Templates: a publish that was not stored shows as published.')
   await app.getByRole('button', { name: 'Publish again' }).click()
   await app.getByTestId('template-saved').filter({ hasText: 'Published as version 2' }).waitFor()
+  // F7: asked once; "Not now" keeps version 1.
+  const useTwo = app.getByRole('dialog', { name: 'Use version 2 now?' })
+  await useTwo.waitFor()
+  await useTwo.getByRole('button', { name: 'Not now' }).click()
+  await useTwo.waitFor({ state: 'detached' })
   check((await app.getByTestId('template-in-use').textContent()) === 'Monthly payslip, version 1 (published)', 'Publishing changed the version in use without being asked.')
   // Publishing the same draft again: nothing needed saving.
   await app.getByRole('button', { name: 'Publish as version 3' }).click()

@@ -680,6 +680,25 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
         </section>
       )}
 
+      {t.justPublished && (
+        <Dialog
+          title={`Use version ${t.justPublished.version} now?`}
+          description={`The payslips are then made with "${t.justPublished.name}", version ${t.justPublished.version}. Not now keeps the template they use today; you can choose it later under "Used for the payslips".`}
+          icon={<FilePlus2 />}
+          onClose={t.declineJustPublished}
+          actions={
+            <>
+              <button type="button" className="btn" onClick={t.declineJustPublished}>
+                Not now
+              </button>
+              <button type="button" className="btn btn-primary" data-autofocus onClick={() => void t.acceptJustPublished()}>
+                Use version {t.justPublished.version}
+              </button>
+            </>
+          }
+        />
+      )}
+
       {leaving && (
         <Dialog
           title={leaving.title}

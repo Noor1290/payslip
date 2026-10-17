@@ -82,6 +82,8 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
   const [busy, setBusy] = useState<TemplatesBusy>(null)
   const [notice, setNotice] = useState<TemplateNotice | null>(null)
   const [pending, setPending] = useState<Pending | null>(null)
+  /** A version just published, offered once for the payslips ("Use version N now?"). */
+  const [justPublished, setJustPublished] = useState<{ templateId: string; name: string; version: number } | null>(null)
   /** The company the current choice was made for: a choice is never carried to another company. */
   const chosenFor = useRef<string | null>(null)
 
@@ -179,6 +181,15 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     await choosePublished(templateId, version)
     setBusy(null)
   }
+
+  /** "Use version N now?" answered yes: the same as pressing "Use version N" in the list. */
+  const acceptJustPublished = async () => {
+    const offered = justPublished
+    setJustPublished(null)
+    if (offered) await pickPublished(offered.templateId, offered.version)
+  }
+  /** Answered "Not now": the payslips keep the template they use; the notice says how to choose it later. */
+  const declineJustPublished = () => setJustPublished(null)
 
   const pickBuiltIn = () => {
     setChoice({ kind: 'built-in' })
@@ -278,6 +289,7 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
       setEditor((previous) => (previous ? { ...previous, publishedVersion: version } : previous))
       setPending(null)
       setNotice({ kind: 'ok', text: `Published as version ${version}. Choose it under "Used for the payslips" to export with it.` })
+      setJustPublished({ templateId: sent.templateId, name: sent.name, version })
       reload()
       return
     }
@@ -388,6 +400,9 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     choice,
     choiceNeeded,
     pickPublished,
+    justPublished,
+    acceptJustPublished,
+    declineJustPublished,
     pickBuiltIn,
     publishBuiltIn,
     editor,
