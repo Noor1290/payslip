@@ -240,7 +240,7 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **To decide.** Add the code in the hub: `docs/HUB_CHANGES.md`, item 12.
 
-**Fixed in the hub (16 October 2026, its branch `backlog-fixes`, not merged).** The dashboard now sends `code: "not-found"` with both refusals, and the sentences are unchanged. This app already took the code as "nothing to compare with"; it still recognises the two sentences, for a dashboard that has not been updated yet. Proven in the hub by `src/features/workspace/baseline.test.tsx` (two tests that fail on the old code).
+**Fixed in the hub (16 October 2026, backlog fixes; merged and deployed).** The dashboard now sends `code: "not-found"` with both refusals, and the sentences are unchanged. This app already took the code as "nothing to compare with"; it still recognises the two sentences, for a dashboard that has not been updated yet. Proven in the hub by `src/features/workspace/baseline.test.tsx` (two tests that fail on the old code).
 
 ## 34. With no payslip issued last month, the issue waits for the payroll answer
 
