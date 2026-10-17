@@ -123,12 +123,21 @@ export function validateRates(input: RatesInput): Partial<Record<keyof RatesInpu
 }
 
 /**
- * The payroll app rounds each exported column with toFixed(2) on a floating-point value.
- * The cross-check repeats that on purpose (it is not half-up), so a correct payroll figure matches
- * to the cent. The three payslip totals do NOT use this: they are integer cents.
+ * Rounds to 2 decimals exactly as the payroll app rounds each exported column since October 2026
+ * (its audit fix C5, `roundHalfUp` in Payroll_sys `src/lib/format.js`): half-up on the decimal
+ * figure, read to 15 significant digits, so 271.725 is 271.73 although the float is 271.72499...
+ * The cross-check repeats it, so a correct payroll figure matches to the cent. The three payslip
+ * totals do NOT use this: they are integer cents.
  */
 export function payrollRound2(value: number): number {
-  return Number(value.toFixed(2))
+  if (!Number.isFinite(value)) return value
+  const magnitude = Math.abs(value)
+  const text = String(Number(magnitude.toPrecision(15)))
+  const rounded = text.includes('e')
+    ? Math.round(magnitude * 100) / 100
+    : Number(`${Math.round(Number(`${text}e2`))}e-2`)
+  if (rounded === 0) return 0
+  return value < 0 ? -rounded : rounded
 }
 
 /** Employee NSF as the payroll app should calculate it: rate x min(base, ceiling). */

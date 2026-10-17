@@ -56,9 +56,10 @@ describe('employee CSG cross-check: 1.5% at or below the threshold, 3% strictly 
     expect(crossCheckCsg(50000, rates)).toBe(750)
     expect(crossCheckCsg(50000.01, rates)).toBe(1500) // 1,500.0003, not marginal
   })
-  it('repeats the payroll arithmetic, not half-up: 18,635 x 1.5% = 279.525 exports as 279.52', () => {
-    expect(crossCheckCsg(18635, rates)).toBe(279.52)
-    expect(crossCheckCsg(20115, rates)).toBe(301.72) // 301.725
+  it('rounds half-up like the payroll app (its fix C5): 18,635 x 1.5% = 279.525 is 279.53 (rehearsal fix F8)', () => {
+    expect(crossCheckCsg(18635, rates)).toBe(279.53)
+    expect(crossCheckCsg(20115, rates)).toBe(301.73) // 301.725
+    expect(crossCheckCsg(18115, rates)).toBe(271.73) // 271.725: rehearsal E2E006, the float is 271.72499...
   })
   it('is 0 for a zero or negative base', () => {
     expect(crossCheckCsg(0, rates)).toBe(0)

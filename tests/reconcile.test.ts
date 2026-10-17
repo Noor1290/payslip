@@ -166,10 +166,24 @@ describe('mapping errors are visible, never a blank or a zero', () => {
 })
 
 describe('cross-check: a warning only, the copied figure is never replaced', () => {
-  it('is silent when the payroll figures follow the rules', () => {
+  // The fixture was exported before the payroll app rounded half-up (its fix C5, October 2026): three
+  // of its CSG figures sit on an exact half cent rounded the old way. It stays as it is (the
+  // recordings and the frozen format-1 payslip are made from it); today's export of those rows has
+  // the figures below. Rehearsal fix F8.
+  const TODAYS_CSG: Record<string, number> = { DOE: 279.53, PALMYRE: 301.73, SAMPLE: 474.53 }
+  const asExportedToday = (row: PayrollRow): PayrollRow =>
+    typeof row.Surname === 'string' && row.Surname in TODAYS_CSG ? { ...row, 'Employee CSG': TODAYS_CSG[row.Surname] } : row
+
+  it('is silent when the payroll figures follow the rules, as the payroll app exports them today (half-up)', () => {
     for (const row of loadFixture().rows) {
-      const c = compute(row)
+      const c = compute(asExportedToday(row))
       expect(codes(c.warnings).filter((w) => w.startsWith('cross-check'))).toEqual([])
+    }
+  })
+
+  it('warns on a half cent rounded the old way, as in the fixture exported before October 2026 (F8)', () => {
+    for (const surname of Object.keys(TODAYS_CSG)) {
+      expect(codes(compute(fixtureRow(surname)).warnings), surname).toContain('cross-check-csg:csg')
     }
   })
 
@@ -187,6 +201,11 @@ describe('cross-check: a warning only, the copied figure is never replaced', () 
     const c = compute(row)
     expect(codes(c.warnings)).toContain('cross-check-nsf:nsf')
     expect(line(c, 'nsf').cents).toBe(29710)
+  })
+
+  it('is silent on an exact half cent the payroll app rounded half-up: 18,115 x 1.5% = 271.725 is 271.73 (rehearsal fix F8, E2E006)', () => {
+    const row = { ...fixtureRow('DOE'), 'New Basic Salary': 18115, 'Employee CSG': 271.73 }
+    expect(codes(compute(row).warnings).filter((w) => w.startsWith('cross-check-csg'))).toEqual([])
   })
 
   it('flags a CSG at the wrong tier (3% at exactly 50,000)', () => {
