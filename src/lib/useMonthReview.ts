@@ -126,6 +126,11 @@ export function useMonthReview({ port, issuing, company, period, data, prepared,
     checkAgain,
     isReviewed: (row: ReviewRow) => reviewedKeys.has(row.key),
     setReviewed,
+    /**
+     * Some payslip shown now is marked reviewed, and this month's issue has not finished yet. Marks
+     * live in this tab's memory only: a reload loses them. Once the month is issued, they did their job.
+     */
+    marked: reviewedKeys.size > 0 && !(issuing.run?.status === 'done' && issuing.run.period === period),
     /** How many Unchanged rows one click would approve. */
     unchangedToApprove: comparison ? bulkApprovable(marks, comparison).length : 0,
     approveUnchanged: approveAllUnchanged,

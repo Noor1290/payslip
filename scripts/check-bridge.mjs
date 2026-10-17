@@ -215,6 +215,12 @@ try {
   // 8b. Statutory rates, saved through the dashboard.
   const warnings = () => app.getByRole('region', { name: 'Checks' }).textContent()
   check((await warnings()).includes('The dashboard has no statutory rates saved for this company, so CSG and NSF were not cross-checked.'), 'With no rates saved, the cross-check does not say so.')
+  // Rehearsal fix F1: what the app last told the dashboard with "unsaved" (undefined: nothing yet).
+  // The dashboard asks before it reloads the app on a change of company while it is true.
+  const lastUnsaved = (target) => target.evaluate(() => window.log.filter((m) => m.type === 'unsaved').at(-1)?.payload.unsaved)
+  const toldUnsaved = async (target, want, message) => {
+    await target.waitForFunction((value) => window.log.filter((m) => m.type === 'unsaved').at(-1)?.payload.unsaved === value, want, { timeout: 5000 }).catch(() => check(false, message))
+  }
   const savesOf = (dataType) => page.evaluate((wanted) => window.hub.state.log.filter((m) => m.type === 'send-data' && m.payload.dataType === wanted).map((m) => m.payload.rows), dataType)
   const confirmRates = app.getByRole('dialog', { name: 'Save these rates?' })
   const saveRatesVersion = async (fill) => {
@@ -375,11 +381,13 @@ try {
   await titleInput.fill('Pay advice')
   await app.getByRole('button', { name: 'Add a line to Earnings' }).click()
   await app.getByLabel('Label of New line').fill('Year-end bonus')
+  await toldUnsaved(page, true, 'F1: unsaved template changes were not told to the dashboard ("unsaved").')
   check((await app.getByTestId('editor-status').textContent()).includes('Draft, never saved'), 'A new template is not marked as a draft that was never saved.')
   await accessible('template editor')
   await shot('template-editor')
   await saveDraftButton.click()
   await app.getByTestId('template-saved').filter({ hasText: 'Draft saved as revision 1' }).waitFor()
+  await toldUnsaved(page, false, 'F1: the dashboard was not told the template changes are saved.')
   const [created] = await templateSaves()
   check(created.action === 'save-draft' && !('template_id' in created) && created.expected_revision === 0 && created.brn === 'C1234567', `Templates: the first save is wrong: ${JSON.stringify({ ...created, body: '...' })}`)
   check(created.body.labels.title === 'Pay advice' && created.body.earnings.at(-1).label === 'Year-end bonus', 'Templates: the saved body does not hold the edits.')
@@ -703,6 +711,7 @@ try {
   const messages = await page.evaluate(() => window.log)
   check(messages.every((m) => m.from === 'payslip' && m.to === 'dashboard' && m.version === 1), 'A message did not come from "payslip" to "dashboard".')
   check(messages.every((m) => m.origin === HUB), 'A message came from another origin.')
+  check(messages.filter((m) => m.type === 'unsaved').every((m) => JSON.stringify(m.payload) === '{"unsaved":true}' || JSON.stringify(m.payload) === '{"unsaved":false}'), 'An "unsaved" message carried something else.')
   // Working in the app is reported, so the dashboard does not sign its user out mid-work: at
   // least once for everything clicked and typed above, never more than once in 30 seconds
   // (this whole script takes minutes, not hours), and with nothing in it.
@@ -1027,7 +1036,10 @@ try {
 
   // Bulk-approve marks the Unchanged rows, and no other.
   check((await progress()).trim() === '0 of 8 reviewed.', `Something is reviewed before anyone reviewed it: ${await progress()}`)
+  check((await lastUnsaved(rv.seededPage)) !== true, 'F1: the dashboard is told something is unsaved before anything is marked.')
   await reviewCard.getByRole('button', { name: 'Approve 4 unchanged payslips' }).click()
+  // Review marks live in this tab's memory only: the dashboard asks before a reload loses them.
+  await toldUnsaved(rv.seededPage, true, 'F1: review marks were not told to the dashboard as unsaved.')
   check((await progress()).trim() === '4 of 8 reviewed.', `Bulk-approve did not mark exactly the 4 unchanged rows: ${await progress()}`)
   for (const [name, status] of expectedStatuses) {
     const box = reviewRow(name).getByRole('checkbox')
@@ -1082,6 +1094,8 @@ try {
   check((await cannotIssue()) === '' && (await rvIssue.isEnabled()), `The reviewed month cannot be issued: ${await cannotIssue()}`)
   await issueNow('September 2026')
   await rf.getByTestId('issue-summary').filter({ hasText: 'Issued: 7. Not issued: 0.' }).waitFor()
+  // Once the month is issued, its review marks have done their job: nothing is unsaved any more.
+  await toldUnsaved(rv.seededPage, false, 'F1: after the issue, the dashboard is still told the review marks are unsaved.')
   const sentMonths = await rvSends()
   const september = sentMonths[sentMonths.length - 1]
   check(sentMonths.length === 2 && september.period === '2026-09' && september.payslips.length === 7, 'The September issue is not one message with seven payslips.')

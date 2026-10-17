@@ -177,6 +177,15 @@ export default function App() {
     templateName,
   })
 
+  // Inside the dashboard, it is told while a reload would lose something, so it asks before it
+  // reloads this app on a change of company (rehearsal fix F1): unsaved template changes, an issue
+  // not finished, or review marks. On its own, nothing is sent.
+  const issueUnfinished = issuing.run !== null && issuing.run.status !== 'done'
+  const holdsUnsaved = templates.unsaved || issueUnfinished || review.marked
+  useEffect(() => {
+    window.PayrollHubBridge.setUnsaved(holdsUnsaved)
+  }, [holdsUnsaved])
+
   const loadData = (next: ImportedPayroll | null) => {
     // Replacing or clearing the data clears everything that was decided about the old data.
     setData(next)

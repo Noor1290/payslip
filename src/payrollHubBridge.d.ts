@@ -16,6 +16,8 @@ interface Window {
     init(options: { appId: string; onData?: (payload: PayrollHubPayload) => unknown }): boolean
     sendToDashboard(type: 'send-data' | 'request-data', payload: unknown): Promise<PayrollHubReply>
     requestData(dataType: string, period?: string): Promise<PayrollHubReply>
+    /** Says whether the app holds changes not saved yet; the dashboard asks before reloading it. */
+    setUnsaved(unsaved: boolean): void
     onStatus(listener: (connected: boolean) => void): () => void
   }
 }

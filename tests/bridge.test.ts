@@ -65,8 +65,8 @@ const validPayload = () => ({ dataType: 'payroll-result', rows: fixtureRows(), m
 describe('the copied bridge file', () => {
   it('is byte for byte the hub version it was copied from', () => {
     const hash = createHash('sha256').update(readFileSync(bridgeFile)).digest('hex')
-    // The hub's docs/bridge.js of 13 October 2026, which added the "activity" message.
-    expect(hash).toBe('0806072a5fd6e273b58bef63c1e814ca4f6f0f3d45da3f5333d8cbb76af7e7ac')
+    // The hub's docs/bridge.js of 17 October 2026, which added setUnsaved (rehearsal fix F1).
+    expect(hash).toBe('2caa2e73c7aca406d4dab88f344ef6087acb7255d0e535ede7647346f9bcda20')
   })
 
   it('does nothing when the app is opened on its own', () => {
