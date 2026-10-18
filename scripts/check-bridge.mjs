@@ -579,6 +579,7 @@ try {
 
   // Locked: refused at once, nothing stored, nothing reloaded; the very same message goes again.
   await hub(() => (window.hub.state.gateOpen = false))
+  check((await lastUnsaved(page)) !== true, 'F1: the dashboard is told something is unsaved before the issue.')
   const loadsBefore = await monthLoads()
   await issueButton.click()
   await issueDialog.waitFor()
@@ -588,9 +589,12 @@ try {
   await issueDialog.getByRole('button', { name: 'Issue', exact: true }).click()
   await app.getByTestId('issue-outcome').filter({ hasText: 'The dashboard is locked' }).waitFor()
   check((await issuedInHub()) === 0 && (await monthLoads()) === loadsBefore, 'After "locked", something was stored or the month was reloaded.')
+  // An issue that has not finished counts as unsaved (rehearsal fix F1); once it is done, it no longer does.
+  await toldUnsaved(page, true, 'F1: an issue that has not finished was not told to the dashboard as unsaved.')
   await hub(() => (window.hub.state.gateOpen = true))
   await issuePanel.getByRole('button', { name: 'Issue again' }).click()
   await app.getByTestId('issue-summary').filter({ hasText: 'Issued: 7. Not issued: 0.' }).waitFor()
+  await toldUnsaved(page, false, 'F1: after the issue finished, the dashboard is still told something is unsaved.')
   const [lockedSend, issuedSend] = await issueSends()
   check(JSON.stringify(lockedSend) === JSON.stringify(issuedSend), 'After "locked", the message sent again was not the same one.')
   const sentRow = issuedSend[0]
