@@ -155,7 +155,7 @@ Same as `pdf-form-filler`: copy the file, `init({ appId: "payslip", onData })`, 
 
 The payslip needs each employee's `Employee CSG` and `Employee NSF`. They are optional in the rows (see the note in the `pdf-form-filler` section): when a key is missing, show that employee's figure as missing; do not use `0`.
 
-A row from a saved run also has `Date of Employment` (text, `YYYY-MM-DD`) when the dashboard has that employee's date. The key is left out when it does not; it is never `""`. The date is typed in the dashboard's Data explorer: a payroll file cannot set it.
+A row from a saved run also has `Date of Employment` (text, `YYYY-MM-DD`) when the dashboard has that employee's date. The key is left out when it does not; it is never `""`. It is set from what the payroll app sends ("Send to dashboard", or a saved payroll file): since 20 Oct 2026 a different date already set is replaced, so a date changed in a later month reaches the payslip. It can also be typed in the dashboard's Data explorer. The date is per employee, not per month. This app also reads the key whatever its capitals and spaces, and a `DD/MM/YYYY` value as in a PDF fill file; without a date the line is blank and the payslip says so.
 
 ### Rates and templates: what is the same for both
 

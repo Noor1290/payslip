@@ -2,9 +2,9 @@
 // in whole cents, the totals checked against the payroll's own, and the warning-only cross-check.
 // Nothing here changes a payroll figure. A problem is reported, never patched.
 
-import { isIsoDate } from './dates'
+import { readDateOfEmployment } from './dates'
 import { formatCents, parseMoney, type MoneyProblem } from './money'
-import { employeeName, type PayrollRow } from './payrollFile'
+import { employeeName, normaliseKey, type PayrollRow } from './payrollFile'
 import { crossCheckCsg, crossCheckNsf, type RatesVersion } from './statutoryRates'
 import { templateLines, type LineSide, type PayslipTemplate, type TemplateMapping } from './template'
 
@@ -87,6 +87,12 @@ const CHECK_LABEL: Record<CheckId, string> = {
   gross: 'Total Earnings',
   deductions: 'Total Deductions',
   net: 'Net Pay',
+}
+
+/** The key of `row` named `wanted`, ignoring capitals and spaces; the exact name first. */
+function keyIn(row: PayrollRow, wanted: string): string | null {
+  if (wanted in row) return wanted
+  return Object.keys(row).find((key) => normaliseKey(key) === normaliseKey(wanted)) ?? null
 }
 
 function hasValue(row: PayrollRow, key: string): boolean {
@@ -184,15 +190,27 @@ export function computePayslip(input: ComputeInput): PayslipComputation {
 
   warnings.push(...crossCheck(row, lines, mapping, rates, input.whyNoRates ?? null))
 
+  // The date of employment: found under its name whatever the capitals and spaces ("Date of
+  // employment" too), written YYYY-MM-DD or DD/MM/YYYY. Missing: the line stays blank and the
+  // payslip says so. Not a clear date: an error, never a guess.
   let dateOfEmployment: string | null = null
-  if (hasValue(row, mapping.dateOfEmployment)) {
-    const value = row[mapping.dateOfEmployment]
-    if (typeof value === 'string' && isIsoDate(value)) dateOfEmployment = value
-    else {
-      errors.push({
-        code: 'bad-date',
+  if (mapping.dateOfEmployment) {
+    const key = keyIn(row, mapping.dateOfEmployment)
+    if (key !== null && hasValue(row, key)) {
+      const value = row[key]
+      dateOfEmployment = typeof value === 'string' ? readDateOfEmployment(value) : null
+      if (dateOfEmployment === null) {
+        errors.push({
+          code: 'bad-date',
+          lineId: 'dateOfEmployment',
+          message: `Date of Employment can't be read as a date. Write it as DD/MM/YYYY (for example 15/03/2021) or YYYY-MM-DD in the payroll app.`,
+        })
+      }
+    } else {
+      warnings.push({
+        code: 'no-date',
         lineId: 'dateOfEmployment',
-        message: `Date of Employment: "${mapping.dateOfEmployment}" is not a date written as YYYY-MM-DD.`,
+        message: 'No Date of Employment in the payroll data for this employee, so that line is left blank. Type it in the payroll app.',
       })
     }
   }

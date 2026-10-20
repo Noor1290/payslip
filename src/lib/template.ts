@@ -111,7 +111,10 @@ export interface TemplateMapping {
   checks: { gross: string; deductions: string; net: string }
   /** Where the warning-only cross-check finds its bases. A mapping, not a rate. */
   crossCheck: { csgBase: string; nsfBase: string; nsfBaseToConfirm: boolean; aged60: string }
-  /** Optional key holding the date of employment (YYYY-MM-DD). The line is blank without it. */
+  /**
+   * Key holding the date of employment, found whatever its capitals and spaces, written YYYY-MM-DD or
+   * DD/MM/YYYY. Without a date the line is blank and the payslip says so.
+   */
   dateOfEmployment: string
   /** Keys that must never fill a payslip line: employer-side columns and "PAYE (calculated)". */
   neverMap: string[]

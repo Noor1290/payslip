@@ -24,6 +24,22 @@ export function isIsoDate(value: string): boolean {
   return day <= new Date(Date.UTC(year, month, 0)).getUTCDate()
 }
 
+/**
+ * A date of employment as the payroll data holds it: "YYYY-MM-DD" (from the dashboard, or the
+ * payroll app's "Send to dashboard") or "DD/MM/YYYY", day first, as the payroll app's "Export for
+ * PDF fill" writes it (also "1/8/2026", or with "-" or "." between). Returns "YYYY-MM-DD", or null
+ * when it is not a clear date: nothing is guessed (no two-digit year, no month first).
+ */
+export function readDateOfEmployment(value: string): string | null {
+  const text = value.trim()
+  if (isIsoDate(text)) return text
+  const match = /^(\d{1,2})([/.-])(\d{1,2})\2(\d{4})$/.exec(text)
+  if (!match) return null
+  const pad = (n: string) => n.padStart(2, '0')
+  const iso = `${match[4]}-${pad(match[3])}-${pad(match[1])}`
+  return isIsoDate(iso) ? iso : null
+}
+
 /** "2026-09-28" -> "28-Sep-26", the reference's d-mmm-yy. */
 export function formatShortDate(iso: string): string {
   const [year, month, day] = iso.split('-')
