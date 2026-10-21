@@ -10,6 +10,8 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **To decide.** Keep the reference layout, or move "Date of Employment" down to the NIC row so the name gets three columns.
 
+**Decided and built (21 October 2026, drawing version 2).** A name that does not fit on one line, even at 6 points, goes on two: broken at a space after the surname, at the normal size or smaller down to 6 points. Two lines at the normal size need more height than the row and the blank above the NIC give, so (owner's choice) the name row is twice as tall on those payslips only, and every row below it is one row lower; the page keeps more than 150 points free at the bottom. Only a name whose two lines do not fit at 6 points is still refused, for example a single word wider than the column at 6 points. A name that fits on one line is drawn exactly as before. `docs/ISSUED_PAYSLIP.md`, "Drawing 2"; tests: `tests/longNames.test.ts`.
+
 ## 2. The payroll's Total deductions differs by 0.01 from the lines for some employees
 
 **What happens.** The payroll app rounds each column on its own and adds unrounded figures for its totals. The payslip adds the lines it shows. So Total Deductions can differ by exactly 0.01. The app labels it "rounding" and lets all of them be accepted together.
@@ -186,6 +188,8 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **To decide.** Nothing now. There is one drawing version, so nothing chooses between versions yet: the first change to the geometry has to add that choice (keep the present code as version 1, add version 2 beside it). The bundled font files are part of the drawing too: replacing them is a new drawing version.
 
+**21 October 2026.** Drawing version 2 is added beside 1 (a long name on two lines, issue 1): `layoutPage` draws each payslip with its own version, the code of version 1 is unchanged, and the frozen format-1 files are unchanged. Version 2 draws every payslip that version 1 could draw exactly as 1 does, so a payslip issued with drawing 1 still shows "Issued, revision N", not "Changed since", and the month review is the same with either.
+
 ## 27. Right after issuing, the date of issue is not shown until the month is opened again
 
 **What happens.** The dashboard answers an issue with the revisions and one time for the whole message. The app marks those payslips as issued by me at once; their date appears after "Open the month again", which reads it from the dashboard.
@@ -291,3 +295,11 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 **Evidence.** `docs/HUB_CHANGES.md`, "Status" and item 8; `docs/INTEGRATION.md`, section "payslip-issue".
 
 **To decide.** Whether to bring the older items up to date, or to keep the file as a history and rely on `docs/INTEGRATION.md`.
+
+## 40. In Excel, a name set smaller on the page is cut off
+
+**What happens.** On the page, a name too wide for its column at the normal size is set smaller on one line (issue 1). The Excel sheet does not follow: its name cell stays at 11 points, and Excel cuts the name off where "Date of Employment :" begins. This was already so with drawing 1, and drawing 2 keeps it, because a name that fits on one line is drawn by drawing 2 exactly as by drawing 1. A name on two lines (drawing 2) is set smaller in Excel too, and is not cut off.
+
+**Evidence.** Found on 21 October 2026. "LONGSURNAME-EXAMPLE Marie Anne" (fake) is whole on the page at 6.0 points; the same sheet printed to PDF by Excel for Microsoft 365 shows "LONGSURNAME-EXAMPLE Marie ." with the rest hidden.
+
+**To decide.** Whether Excel should set such a name smaller too, as it does for two lines. It changes the Excel sheet of payslips that are issued today, so it is a new drawing version (or part of drawing 2, if decided before any payslip is issued with it).

@@ -5,7 +5,7 @@ import type { ImportedPayroll } from './payrollFile'
 import { computePayslip, type PayslipComputation } from './payslip'
 import { ratesFor, type RatesVersion } from './statutoryRates'
 import type { PayslipTemplate, TemplateMapping } from './template'
-import { layoutPage, type DrawList } from '../writers/pageGeometry'
+import { layoutPage, withNameOnTwoLines, type DrawList } from '../writers/pageGeometry'
 
 export interface BuildSettings {
   template: PayslipTemplate
@@ -42,14 +42,10 @@ export function documentFor(
   period: string,
   issueDate: string,
 ): PayslipDocument {
-  return buildPayslipDocument({
-    template,
-    computation,
-    company: data.company,
-    nic: String(data.rows[computation.rowIndex].ID),
-    period,
-    issueDate,
-  })
+  const row = data.rows[computation.rowIndex]
+  const document = buildPayslipDocument({ template, computation, company: data.company, nic: String(row.ID), period, issueDate })
+  // A name too long for one line goes on two, the surname whole on the first (drawing 2).
+  return withNameOnTwoLines(document, typeof row.Surname === 'string' ? row.Surname : '')
 }
 
 /**

@@ -180,6 +180,27 @@ try {
   if (missing !== 1) problems.push('The missing Employee CSG was not shown as an error for that employee.')
   if ((await page.getByTestId('payslip-page').count()) !== 0) problems.push('A payslip with an error was still drawn.')
 
+  // A long name (fake): the preview draws it on two lines, one row apart, and nothing overlaps.
+  const longName = JSON.parse(readFileSync(join(root, 'samples', 'ABC Co Ltd-pdf-fill-2026-09.json'), 'utf8'))
+  Object.assign(longName[0], { Surname: 'BHAGWANSINGH', 'Other names': 'Marie Anne Josee Claudette' })
+  await page.locator('input[type="file"]').setInputFiles({ name: 'ABC Co Ltd-pdf-fill-2026-09.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(longName)) })
+  await page.getByRole('dialog', { name: 'Import payroll data' }).getByRole('button', { name: 'Replace with 7 employees' }).click()
+  await page.getByRole('button', { name: 'BHAGWANSINGH Marie Anne Josee Claudette' }).click()
+  const boxes = await page.getByRole('img', { name: /Payslip of BHAGWANSINGH Marie Anne Josee Claudette/ }).evaluate(async (svg) => {
+    await document.fonts.ready
+    return [...svg.querySelectorAll('text')].map((text) => {
+      const box = text.getBBox()
+      return { text: text.textContent, x: Number(text.getAttribute('x')), y: Number(text.getAttribute('y')), x1: box.x, x2: box.x + box.width, y1: box.y, y2: box.y + box.height }
+    })
+  })
+  const [first, second] = ['BHAGWANSINGH Marie', 'Anne Josee Claudette'].map((text) => boxes.find((box) => box.text === text))
+  if (!first || !second) problems.push('The long name was not drawn on two lines in the preview.')
+  else if (first.x !== second.x || Math.abs(second.y - first.y - 17) > 0.01) problems.push(`The two lines of the long name are not one row apart: ${JSON.stringify([first, second])}`)
+  // The browser's boxes include the font's line gap, so a box may touch the next row's by a hair.
+  const touching = boxes.flatMap((a, i) => boxes.slice(i + 1).filter((b) => a.x1 < b.x2 - 0.5 && b.x1 < a.x2 - 0.5 && a.y1 < b.y2 - 0.5 && b.y1 < a.y2 - 0.5).map((b) => `"${a.text}" and "${b.text}"`))
+  note(`long name in the preview: ${first && second ? 'two lines' : 'NOT two lines'}, ${touching.length} overlapping texts`)
+  if (touching.length > 0) problems.push(`Texts overlap in the preview of the long name: ${touching.join(', ')}`)
+
   await page.getByRole('button', { name: 'Template', exact: true }).click()
   await page.getByRole('heading', { name: 'Where each line comes from' }).waitFor()
   await page.getByRole('button', { name: 'Statutory rates', exact: true }).click()

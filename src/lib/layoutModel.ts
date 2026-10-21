@@ -17,7 +17,10 @@ export interface DocCell {
   /** How many columns the cell covers (a merged cell in Excel). */
   span: 1 | 2 | 4
   kind: 'text' | 'money' | 'date'
-  /** Exactly what the preview, the PDF and (through its number format) Excel show. */
+  /**
+   * Exactly what the preview, the PDF and (through its number format) Excel show. From drawing 2,
+   * the name may hold one line break: it is then printed on two lines.
+   */
   text: string
   bold: boolean
   /** Font size in the Excel file (the reference's 11 and 12). */
@@ -47,9 +50,14 @@ export interface DocRow {
  * a sheet (page geometry, sizes, line weights, cell styles). Any change to them is a new version,
  * and the old rules are kept for the payslips issued with them (CLAUDE.md, hard rules).
  */
-export const DRAWING_VERSION = 1
-/** The drawing versions this app can draw. */
-export const KNOWN_DRAWINGS: readonly number[] = [1]
+export const DRAWING_VERSION = 2
+/** The drawing versions this app can draw. 2 is 1 with a name on two lines when it does not fit on one. */
+export const KNOWN_DRAWINGS: readonly number[] = [1, 2]
+/**
+ * The drawing version whose look a version gives the same lines. Version 2 draws everything
+ * version 1 could draw exactly as 1 did, so a payslip does not count as changed for that alone.
+ */
+export const sameLookAs = (drawing: number): number => (drawing === 2 ? 1 : drawing)
 /** Said instead of drawing a payslip with rules this app does not have. */
 export const unknownDrawing = (drawing: unknown) =>
   `This payslip was issued with drawing version ${String(drawing)}, which this version of the app cannot draw. It is not shown, rather than drawn another way.`
@@ -193,5 +201,5 @@ export function buildPayslipDocument(input: DocumentInput): PayslipDocument {
 
 /** Every piece of text on the page, in reading order. Used to compare the three outputs. */
 export function documentTexts(doc: PayslipDocument): string[] {
-  return doc.rows.flatMap((r) => r.cells.map((cell) => cell.text)).filter((value) => value !== '')
+  return doc.rows.flatMap((r) => r.cells.flatMap((cell) => cell.text.split('\n'))).filter((value) => value !== '')
 }

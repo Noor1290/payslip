@@ -12,7 +12,14 @@ When a month is issued, the app sends one message to the Payroll Hub dashboard (
 
 ## Drawing version
 
-`lines[0].drawing` is `1`. It names the rules the payslip is drawn with: the page geometry, sizes and line weights of the preview and the PDF, the styles of the Excel sheet, and the bundled font files. A change to any of them is a new drawing version, and the app keeps the old rules for the payslips issued with them, so a payslip of format 1, drawing 1 always looks the same (`tests/format1.test.ts`). A payslip whose drawing version this app does not have is not shown. A payslip issued before this key existed has none: it is read as `1`, the only version there was.
+`lines[0].drawing` names the rules the payslip is drawn with: the page geometry, sizes and line weights of the preview and the PDF, the styles of the Excel sheet, and the bundled font files. A change to any of them is a new drawing version, and the app keeps the old rules for the payslips issued with them, so a payslip of format 1, drawing 1 always looks the same (`tests/format1.test.ts`). A payslip whose drawing version this app does not have is not shown. A payslip issued before this key existed has none: it is read as `1`, the only version there was.
+
+| Drawing | Since | What it adds |
+|---|---|---|
+| 1 | Phase 4 | The reference layout. A name too wide for its column is set smaller, down to 6 points; below that the payslip is refused. |
+| 2 | 21 October 2026 | A name that does not fit on one line, even at 6 points, goes on two (known issue 1). Payslips are made with it now. |
+
+**Drawing 2.** The break is chosen when the payslip is made and stored in the name cell's `text` as one line break (`"BHAGWANSINGH Marie\nAnne Josee Claudette"`, fake), so a reopened payslip breaks in the same place. `employeeName` keeps the name on one line. The break is at a space after the surname, so the surname stays whole on the first line. The size is the normal one when the two lines fit, otherwise the largest that fits, down to 6 points; if two lines do not fit either, the payslip is refused as before. The name row is then twice as tall and every row below it is one row lower. In Excel the name cell wraps at the line break, in whole points (9.7 on the page is 10 in Excel), the row is 30 points high, and the other cells of that row sit at its top. A payslip whose name fits on one line is drawn by drawing 2 exactly as by drawing 1 (`tests/longNames.test.ts`), so the format stays 1 and two stored payslips that differ only by drawing 1 or 2 are the same payslip (`sameLines`). The frozen drawing-2 payslip is `tests/frozen/format-1-drawing-2/`.
 
 ## Shape (format 1)
 
@@ -25,7 +32,7 @@ When a month is issued, the app sends one message to the Payroll Hub dashboard (
      "kind": "document",
      "format": 1,
      "template": { "id": "20000000-0000-4000-8000-000000000001", "version": "v2" },
-     "drawing": 1,
+     "drawing": 2,
      "page": { "size": "A4", "orientation": "portrait" },
      "fonts": { "excel": "Book Antiqua", "print": "TeX Gyre Pagella" },
      "columnWidths": [28.77734375, 32.77734375, 35.6640625, 40.5546875],

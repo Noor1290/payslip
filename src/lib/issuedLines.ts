@@ -7,7 +7,7 @@
 
 import { z } from 'zod'
 import { canonicalJson } from './hubWire'
-import { KNOWN_DRAWINGS, unknownDrawing, type DocCell, type DocRow, type PayslipDocument } from './layoutModel'
+import { KNOWN_DRAWINGS, sameLookAs, unknownDrawing, type DocCell, type DocRow, type PayslipDocument } from './layoutModel'
 import type { PayslipComputation } from './payslip'
 
 /** Goes up when the shape changes. A payslip in a format this app does not know is never guessed at. */
@@ -213,7 +213,18 @@ function withDrawing(lines: unknown): unknown {
   return [{ ...lines[0], drawing: DRAWING_BEFORE_IT_WAS_RECORDED }, ...lines.slice(1)]
 }
 
-/** Whether two lists of stored lines are the same payslip, whatever order the database gave their keys. */
+/** Stored lines with the drawing version replaced by the one whose look it gives (`sameLookAs`). */
+function withLook(lines: unknown): unknown {
+  if (!Array.isArray(lines)) return lines
+  const first = lines[0] as { drawing?: unknown } | null
+  if (typeof first?.drawing !== 'number') return lines
+  return [{ ...first, drawing: sameLookAs(first.drawing) }, ...lines.slice(1)]
+}
+
+/**
+ * Whether two lists of stored lines are the same payslip, whatever order the database gave their
+ * keys. Two drawing versions that draw these lines the same way do not make them different.
+ */
 export function sameLines(a: unknown, b: unknown): boolean {
-  return canonicalJson(withDrawing(a)) === canonicalJson(withDrawing(b))
+  return canonicalJson(withLook(withDrawing(a))) === canonicalJson(withLook(withDrawing(b)))
 }

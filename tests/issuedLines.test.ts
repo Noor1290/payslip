@@ -64,7 +64,7 @@ describe('the lines of an issued payslip', () => {
   it('issued before the drawing version was recorded: read as drawing 1, and still the same payslip', () => {
     const before = JSON.parse(JSON.stringify(encoded[0])) as Record<string, unknown>[]
     delete before[0].drawing
-    expect(decoded(before)).toEqual(documents[0])
+    expect(decoded(before)).toEqual({ ...documents[0], drawing: 1 })
     expect(sameLines(before, encoded[0])).toBe(true)
     expect(sameLines(stored(before), encoded[0])).toBe(true)
     // Any other difference is a difference.
@@ -143,7 +143,7 @@ describe('stored lines are refused, never guessed at', () => {
   })
 
   it('with a drawing version this app cannot draw, or one that is not a version number', () => {
-    expect(change((lines) => (lines[0].drawing = DRAWING_VERSION + 1))).toMatchObject({ ok: false, problem: expect.stringContaining('drawing version 2') })
+    expect(change((lines) => (lines[0].drawing = DRAWING_VERSION + 1))).toMatchObject({ ok: false, problem: expect.stringContaining('drawing version 3') })
     expect(change((lines) => (lines[0].drawing = '1')).ok).toBe(false)
     expect(change((lines) => (lines[0].drawing = 0)).ok).toBe(false)
   })
