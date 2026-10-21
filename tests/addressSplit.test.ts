@@ -5,7 +5,9 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_STATUTORY_RATES } from '../src/data/defaultStatutoryRates'
 import { preparePayslips, type PreparedPayslip } from '../src/lib/build'
+import { issueStatuses } from '../src/lib/issueBuild'
 import { decodeLines, encodeLines, figuresOf, sameLines } from '../src/lib/issuedLines'
+import { loadMonth, type IssuedPayslip } from '../src/lib/issueStore'
 import { documentTexts, type PayslipDocument } from '../src/lib/layoutModel'
 import { importPayrollText } from '../src/lib/payrollFile'
 import { DEFAULT_TABLE_MAPPING, TABLE_TEMPLATE } from '../src/lib/template'
@@ -16,6 +18,8 @@ import { ISSUE_DATE, PERIOD } from './fixtureDocuments'
 import { expectFrozen, FIXTURE_NAME, readFixtureText, readFont } from './helpers'
 import { readWorkbook } from './readExcel'
 import { readPdf } from './readPdf'
+import { BRN } from './fakeHubPort'
+import { dashboard, issue, monthFrom } from './monthFixtures'
 
 const ADDRESSES = {
   threeCommas: 'Impasse Fictive 2, Avenue Exemple Remy Sample, Bonne Terre, Vacoas',
@@ -195,5 +199,75 @@ describe('drawing version 3, as stored (frozen)', () => {
     expectFrozen('format-1-drawing-3/page', layoutPage(read.document))
     expectFrozen('format-1-drawing-3/pdf', await readPdf(await writePayslipPdf(read.document, fonts)))
     expectFrozen('format-1-drawing-3/excel', JSON.parse(JSON.stringify(await readWorkbook(await writePayslipWorkbook([read.document])))))
+  })
+})
+
+describe('the employee list after the switch to drawing 3', () => {
+  /** September of the fake payroll with another address, and optionally one row changed, read through the importer. */
+  function month(address: string, change: (row: Record<string, unknown>) => void = () => {}) {
+    const rows = (JSON.parse(readFixtureText(FIXTURE_NAME)) as Record<string, unknown>[]).map((row) => ({ ...row, Address: address }))
+    change(rows[0])
+    const imported = importPayrollText(JSON.stringify(rows), FIXTURE_NAME)
+    if (!imported.ok) throw new Error(JSON.stringify(imported.errors))
+    return monthFrom(imported.data, PERIOD)
+  }
+
+  /** The month issued through the stand-in dashboard, then stored as drawing 2 stored it: drawing 2, the address split at its first comma. */
+  async function issuedAsDrawing2(address: string): Promise<IssuedPayslip[]> {
+    const { port } = dashboard()
+    await issue(port, month(address))
+    const loaded = await loadMonth(port, BRN, PERIOD)
+    if (!loaded.ok) throw new Error(loaded.failure.title)
+    const [line3, ...rest] = address.split(',').map((part) => part.trim())
+    return loaded.payslips.map((payslip) => ({
+      ...payslip,
+      lines: (payslip.lines as Record<string, unknown>[]).map((line, index) => {
+        if (index === 0) return { ...line, drawing: 2 }
+        if (line.id === 'address-1') return { ...line, cells: [{ ...(line.cells as object[])[0], text: line3 }] }
+        if (line.id === 'address-2') return { ...line, cells: [{ ...(line.cells as object[])[0], text: rest.join(', ') }] }
+        return line
+      }),
+    }))
+  }
+
+  const statusesOf = (now: ReturnType<typeof month>, issued: IssuedPayslip[]) =>
+    [...issueStatuses(now.data, now.prepared, issued, now.accepted, now.reasons).values()].map((status) => (status.kind === 'issued' && status.same ? 'issued' : 'changed'))
+
+  it('a payslip issued with drawing 2 for a 3-comma address is still "Issued", not "Changed since"', async () => {
+    const issued = await issuedAsDrawing2(ADDRESSES.threeCommas)
+    const stored = issued[0].lines as { id?: string; drawing?: number; cells?: { text: string }[] }[]
+    expect(stored[0].drawing).toBe(2)
+    expect(stored.find((line) => line.id === 'address-1')!.cells![0].text).toBe('Impasse Fictive 2')
+    const now = month(ADDRESSES.threeCommas)
+    expect(now.prepared[0].document!.drawing).toBe(3)
+    expect(linesOf(now.prepared[0].document!)).toEqual(['Impasse Fictive 2, Avenue Exemple Remy Sample, Bonne Terre', 'Vacoas'])
+    expect(statusesOf(now, issued)).toEqual(Array(7).fill('issued'))
+  })
+
+  it('a real change still shows: a figure, the name, the address text itself', async () => {
+    const issued = await issuedAsDrawing2(ADDRESSES.threeCommas)
+    const changed = (change: (row: Record<string, unknown>) => void) => statusesOf(month(ADDRESSES.threeCommas, change), issued)
+    expect(changed((row) => (row['Basic Salary'] = (row['Basic Salary'] as number) + 1))[0]).toBe('changed')
+    expect(changed((row) => (row['Other names'] = 'JANET'))[0]).toBe('changed')
+    expect(statusesOf(month('Impasse Fictive 4, Avenue Exemple Remy Sample, Bonne Terre, Vacoas'), issued)).toEqual(Array(7).fill('changed'))
+    expect(statusesOf(month('Impasse Fictive 2, Avenue Exemple Remy Sample, Bonne Terre, Curepipe'), issued)).toEqual(Array(7).fill('changed'))
+  })
+
+  it('an address whose words moved down to line 4 is the same address, however it was split', () => {
+    const now = month(ADDRESSES.movedBetweenWords)
+    const { item } = { item: now.prepared[0] }
+    const lines = encodeLines(item.document!, figuresOf(item.computation)) as Record<string, unknown>[]
+    const [first, ...rest] = ADDRESSES.movedBetweenWords.split(',').map((part) => part.trim())
+    const asDrawing2 = lines.map((line, index) =>
+      index === 0
+        ? { ...line, drawing: 2 }
+        : line.id === 'address-1'
+          ? { ...line, cells: [{ ...(line.cells as object[])[0], text: first }] }
+          : line.id === 'address-2'
+            ? { ...line, cells: [{ ...(line.cells as object[])[0], text: rest.join(', ') }] }
+            : line,
+    )
+    expect(linesOf(item.document!)[0]).not.toBe(first)
+    expect(sameLines(asDrawing2, lines)).toBe(true)
   })
 })

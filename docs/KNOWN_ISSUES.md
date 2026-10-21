@@ -306,10 +306,12 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **Fixed in drawing 2 (21 October 2026, before any payslip was issued with it).** Whenever the page sets the name smaller, on one line or two, the Excel cell is set smaller too: 11 x the page size / 10, rounded down to a whole point (whole points because that is what is read back; rounding down so it is never wider than the page). "LONGSURNAME-EXAMPLE Marie Anne" is 6 points in Excel and printed whole by Excel for Microsoft 365. Payslips issued with drawing 1 keep 11 points. The same Excel print showed that a two-line name at the normal size lost the bottom of its second line in a 30-point row; the row is now 36 points. Tests: `tests/longNames.test.ts`.
 
-## 41. A payslip issued before the address split shows as changed when the address has two commas or more
+## 41. (Decided) A payslip issued before the address split would show as changed when the address has two commas or more
 
 **What happens.** From drawing 3 the company address is split at its last comma (`docs/ISSUED_PAYSLIP.md`). The drawing number alone never makes a payslip "Changed since revision N": drawings 1, 2 and 3 count as the same. But for a company whose address has two commas or more, the two address lines of a new payslip are different text from those of a payslip issued before, so the employee list says "Changed since revision N" for each payslip of that month issued before this change, and a new issue of it is not asked about as identical. Its stored copy keeps the old split. With one comma or none, nothing changes.
 
 **Evidence.** Found 21 October 2026 while building drawing 3. `sameLines` compares the stored text of every row; the address rows differ ("Impasse Fictive 2" / "Avenue Exemple Remy Sample, Bonne Terre, Vacoas" then, "Impasse Fictive 2, Avenue Exemple Remy Sample, Bonne Terre" / "Vacoas" now, fake).
 
 **To decide.** Whether the comparison should treat the address as the same when only its split differs.
+
+**Decided and built (21 October 2026, owner: option b).** The comparison now ignores how the address is split over lines 3 and 4, as it ignores the drawing number: two payslips whose address is the same text, split at the first comma, at the last, or with words moved down, are the same. A payslip issued with drawing 2 for a 3-comma address stays "Issued, revision N" after the switch to drawing 3. A real change still shows: a figure, the name, or the address text itself. Tests: `tests/addressSplit.test.ts`, "the employee list after the switch to drawing 3".

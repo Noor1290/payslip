@@ -9,6 +9,7 @@ import { z } from 'zod'
 import { canonicalJson } from './hubWire'
 import { KNOWN_DRAWINGS, sameLookAs, unknownDrawing, type DocCell, type DocRow, type PayslipDocument } from './layoutModel'
 import type { PayslipComputation } from './payslip'
+import { addressParts } from '../writers/pageGeometry'
 
 /** Goes up when the shape changes. A payslip in a format this app does not know is never guessed at. */
 export const LINES_FORMAT = 1
@@ -226,5 +227,38 @@ function withLook(lines: unknown): unknown {
  * keys. Two drawing versions that draw these lines the same way do not make them different.
  */
 export function sameLines(a: unknown, b: unknown): boolean {
-  return canonicalJson(withLook(withDrawing(a))) === canonicalJson(withLook(withDrawing(b)))
+  const [first, second] = [withoutAddress(withLook(withDrawing(a))), withoutAddress(withLook(withDrawing(b)))]
+  return canonicalJson(first.lines) === canonicalJson(second.lines) && sameAddress(first.address, second.address)
+}
+
+const ADDRESS_ROWS = ['address-1', 'address-2']
+
+/** Stored lines with the text of the two address rows taken out, and those two texts. */
+function withoutAddress(lines: unknown): { lines: unknown; address: string[] } {
+  if (!Array.isArray(lines)) return { lines, address: [] }
+  const address: string[] = []
+  const rest = lines.map((line) => {
+    const row = line as { id?: unknown; cells?: { text?: unknown }[] } | null
+    if (typeof row?.id !== 'string' || !ADDRESS_ROWS.includes(row.id) || !Array.isArray(row.cells) || row.cells.length !== 1) return line
+    address.push(typeof row.cells[0]?.text === 'string' ? row.cells[0].text : '')
+    return { ...row, cells: [{ ...row.cells[0], text: '' }] }
+  })
+  return { lines: rest, address }
+}
+
+/** The address as one text, for each way its two lines may have been split: at a comma or between words. */
+function addressReadings(lines: readonly string[]): string[] {
+  const [line3 = '', line4 = ''] = lines
+  return [`${line3}, ${line4}`, `${line3} ${line4}`].map((text) => addressParts(text).join(', '))
+}
+
+/**
+ * Whether two payslips show the same address, however it was split over lines 3 and 4 (drawing 3
+ * splits at the last comma, drawings 1 and 2 at the first, and a long line 3 moves words down).
+ */
+function sameAddress(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false
+  if (a.length === 0) return true
+  const readings = addressReadings(b)
+  return addressReadings(a).some((reading) => readings.includes(reading))
 }
