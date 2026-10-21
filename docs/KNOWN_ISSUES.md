@@ -188,7 +188,7 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **To decide.** Nothing now. There is one drawing version, so nothing chooses between versions yet: the first change to the geometry has to add that choice (keep the present code as version 1, add version 2 beside it). The bundled font files are part of the drawing too: replacing them is a new drawing version.
 
-**21 October 2026.** Drawing version 2 is added beside 1 (a long name on two lines, issue 1): `layoutPage` draws each payslip with its own version, the code of version 1 is unchanged, and the frozen format-1 files are unchanged. Version 2 draws every payslip that version 1 could draw exactly as 1 does, so a payslip issued with drawing 1 still shows "Issued, revision N", not "Changed since", and the month review is the same with either.
+**21 October 2026.** Drawing version 2 is added beside 1 (a long name on two lines, issue 1): `layoutPage` draws each payslip with its own version, the code of version 1 is unchanged, and the frozen format-1 files are unchanged. Version 2 draws every payslip that version 1 could draw exactly as 1 does, except that Excel sets a name smaller when the page does (issue 40), so a payslip issued with drawing 1 still shows "Issued, revision N", not "Changed since", and the month review is the same with either.
 
 ## 27. Right after issuing, the date of issue is not shown until the month is opened again
 
@@ -303,3 +303,5 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 **Evidence.** Found on 21 October 2026. "LONGSURNAME-EXAMPLE Marie Anne" (fake) is whole on the page at 6.0 points; the same sheet printed to PDF by Excel for Microsoft 365 shows "LONGSURNAME-EXAMPLE Marie ." with the rest hidden.
 
 **To decide.** Whether Excel should set such a name smaller too, as it does for two lines. It changes the Excel sheet of payslips that are issued today, so it is a new drawing version (or part of drawing 2, if decided before any payslip is issued with it).
+
+**Fixed in drawing 2 (21 October 2026, before any payslip was issued with it).** Whenever the page sets the name smaller, on one line or two, the Excel cell is set smaller too: 11 x the page size / 10, rounded down to a whole point (whole points because that is what is read back; rounding down so it is never wider than the page). "LONGSURNAME-EXAMPLE Marie Anne" is 6 points in Excel and printed whole by Excel for Microsoft 365. Payslips issued with drawing 1 keep 11 points. The same Excel print showed that a two-line name at the normal size lost the bottom of its second line in a 30-point row; the row is now 36 points. Tests: `tests/longNames.test.ts`.

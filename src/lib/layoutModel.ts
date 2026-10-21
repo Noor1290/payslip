@@ -51,11 +51,15 @@ export interface DocRow {
  * and the old rules are kept for the payslips issued with them (CLAUDE.md, hard rules).
  */
 export const DRAWING_VERSION = 2
-/** The drawing versions this app can draw. 2 is 1 with a name on two lines when it does not fit on one. */
+/**
+ * The drawing versions this app can draw. 2 is 1 with a name on two lines when it does not fit on
+ * one, and a name set smaller in Excel when the page sets it smaller.
+ */
 export const KNOWN_DRAWINGS: readonly number[] = [1, 2]
 /**
  * The drawing version whose look a version gives the same lines. Version 2 draws everything
- * version 1 could draw exactly as 1 did, so a payslip does not count as changed for that alone.
+ * version 1 could draw as 1 did, the same text in the same places; only Excel sets a name smaller
+ * where the page does, so it is no longer cut off. A payslip does not count as changed for that.
  */
 export const sameLookAs = (drawing: number): number => (drawing === 2 ? 1 : drawing)
 /** Said instead of drawing a payslip with rules this app does not have. */

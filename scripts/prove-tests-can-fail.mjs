@@ -113,6 +113,7 @@ const changes = [
   ['Long name: Excel keeps the usual row height', 'src/writers/excelWriter.ts', 'if (nameRow) sheetRow.height = TWO_LINE_NAME_ROW_HEIGHT', 'if (false) sheetRow.height = TWO_LINE_NAME_ROW_HEIGHT'],
   ['Long name: Excel does not wrap the name', 'src/writers/excelWriter.ts', '...(isName ? { wrapText: true } : {})', '...{}'],
   ['Long name: Excel keeps the usual size for a smaller name', 'src/writers/excelWriter.ts', 'size: isName && nameExcelSize ? nameExcelSize : (cell?.size ?? 11)', 'size: cell?.size ?? 11'],
+  ['Long name: Excel keeps the usual size for a name set smaller on one line', 'src/writers/excelWriter.ts', 'const twoLines = printedName !== null && printedName.lines.length === 2\n  const nameExcelSize = printedName &&', 'const twoLines = printedName !== null && printedName.lines.length === 2\n  const nameExcelSize = twoLines && printedName &&'],
   ['Long name: the new drawing version makes an issued payslip "Changed since"', 'src/lib/issuedLines.ts', 'drawing: sameLookAs(first.drawing)', 'drawing: first.drawing'],
   ['A stopped run counts the failed batch as issued', 'src/lib/useIssuing.ts', "const doneUpTo = run.status === 'done' ? run.batches.length : run.at", "const doneUpTo = run.status === 'done' ? run.batches.length : run.at + 1"],
   ['Month review: a one-cent change counts as unchanged', 'src/lib/monthCompare.ts', '  changed: line.cents !== before.cents,', '  changed: Math.abs(line.cents - before.cents) > 1,'],

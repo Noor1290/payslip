@@ -10,7 +10,7 @@
 import ExcelJS from 'exceljs'
 import { KNOWN_DRAWINGS, unknownDrawing, type DocCell, type DocRow, type PayslipDocument } from '../lib/layoutModel'
 import { centsToNumber, isWholeRupees } from '../lib/money'
-import { twoLineName } from './pageGeometry'
+import { nameOnPage } from './pageGeometry'
 
 // Accounting-style formats, as in the reference: a zero shows as "-".
 export const FORMAT_WHOLE = '_-* #,##0_-;-* #,##0_-;_-* "-"??_-;_-@'
@@ -23,8 +23,8 @@ const COLUMN_LETTERS = ['B', 'C', 'D', 'E'] as const
 /** Row heights the reference sets by hand (Excel row number -> points). */
 const BAND_ROW_HEIGHT = 16.2
 const HEADINGS_ROW_HEIGHT = 15.6
-/** Drawing 2: the name row when the name is on two lines, two rows of the sheet's usual height. */
-const TWO_LINE_NAME_ROW_HEIGHT = 30
+/** Drawing 2: the name row when the name is on two lines: two rows of the height Excel gives one line of Book Antiqua 11 (18). */
+const TWO_LINE_NAME_ROW_HEIGHT = 36
 
 export function moneyFormat(cents: number): string {
   return isWholeRupees(cents) ? FORMAT_WHOLE : FORMAT_DECIMALS
@@ -78,17 +78,18 @@ function addSheet(workbook: ExcelJS.Workbook, name: string, doc: PayslipDocument
   })
 
   const ruleColour = (rule: DocRow['ruleBelow']) => (rule === 'grey' ? GREY : BLACK)
-  // Drawing 2: a name on two lines wraps at its line break, set smaller as on the page when the
-  // page does (in whole points); its row is twice as tall, and the other texts of that row sit on
-  // its first line.
-  const twoLines = twoLineName(doc)
-  const nameExcelSize = twoLines ? Math.floor((11 * twoLines.size) / 10) : null
+  // Drawing 2: a name the page sets smaller, on one line or two, is set smaller here too, rounded
+  // down to a whole point so it is never cut off. A name on two lines wraps at its line break; its
+  // row is twice as tall, and the other texts of that row sit on its first line.
+  const printedName = nameOnPage(doc)
+  const twoLines = printedName !== null && printedName.lines.length === 2
+  const nameExcelSize = printedName && printedName.size < printedName.normal ? Math.floor((11 * printedName.size) / 10) : null
 
   doc.rows.forEach((row, index) => {
     const sheetRow = sheet.getRow(excelRow(index))
     if (row.fill || ['company', 'address-1', 'address-2', 'brn', 'period'].includes(row.id)) sheetRow.height = BAND_ROW_HEIGHT
     if (row.id === doc.dividerFromRowId) sheetRow.height = HEADINGS_ROW_HEIGHT
-    const nameRow = twoLines !== null && row.id === 'employee-name'
+    const nameRow = twoLines && row.id === 'employee-name'
     if (nameRow) sheetRow.height = TWO_LINE_NAME_ROW_HEIGHT
 
     const cellAt = new Map<number, DocCell>()
@@ -112,7 +113,7 @@ function addSheet(workbook: ExcelJS.Workbook, name: string, doc: PayslipDocument
       else if (row.ruleBelow) border.bottom = { style: 'medium', color: ruleColour(row.ruleBelow) }
       target.border = border
 
-      const isName = nameRow && cell?.col === 1
+      const isName = row.id === 'employee-name' && cell?.col === 1
       target.font = { name: doc.fonts.excel, size: isName && nameExcelSize ? nameExcelSize : (cell?.size ?? 11), bold: cell?.bold ?? false }
       target.alignment = nameRow
         ? { horizontal: cell?.align ?? 'left', vertical: 'top', ...(isName ? { wrapText: true } : {}) }

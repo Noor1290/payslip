@@ -212,15 +212,19 @@ function cellWidth(doc: PayslipDocument, cell: DocCell): number {
   return colX[cell.col + cell.span] - colX[cell.col] - 2 * PADDING_X
 }
 
-/** The name of a drawing-2 payslip shown on two lines, and its printed size. Null when it is on one line. */
-export function twoLineName(doc: PayslipDocument): { lines: [string, string]; size: number } | null {
+/**
+ * The name of a drawing-2 payslip as the page prints it: its one or two lines, its printed size,
+ * and the normal size of its cell. Null for drawing 1, and for a name that does not fit.
+ */
+export function nameOnPage(doc: PayslipDocument): { lines: string[]; size: number; normal: number } | null {
   if (doc.drawing < 2) return null
   const row = doc.rows.find((found) => found.id === NAME_ROW_ID)
   const cell = row?.cells.find((found) => found.col === NAME_COL)
-  const lines = row && cell ? nameLinesOf(doc, row, cell) : null
-  if (!cell || !lines) return null
-  const size = sizeToFit(lines, cell.bold ? 'bold' : 'regular', PRINT_SIZE[cell.size], cellWidth(doc, cell))
-  return size === null ? null : { lines, size }
+  if (!row || !cell || cell.text === '') return null
+  const lines = nameLinesOf(doc, row, cell) ?? [cell.text]
+  const normal = PRINT_SIZE[cell.size]
+  const size = sizeToFit(lines, cell.bold ? 'bold' : 'regular', normal, cellWidth(doc, cell))
+  return size === null ? null : { lines, size, normal }
 }
 
 /**

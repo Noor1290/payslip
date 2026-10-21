@@ -162,6 +162,26 @@ describe('a long name goes on two lines (drawing 2)', () => {
     expect(page).toEqual(layoutPage({ ...doc, drawing: 1 }))
   })
 
+  it('Excel sets a name the page sets smaller on one line smaller too, rounded down to a whole size (known issue 40); drawing 1 keeps 11', async () => {
+    const { doc, page } = payslip(['LONGSURNAME-EXAMPLE', 'Marie Anne'])
+    const size = textOf(page, 'LONGSURNAME-EXAMPLE Marie Anne').size
+    expect(size).toBe(6)
+    const [sheet] = await readWorkbook(await writePayslipWorkbook([doc]))
+    expect(sheet.cells.C11.font).toEqual({ name: 'Book Antiqua', size: 6 })
+    expect(sheet.cells.C11.alignment).toEqual({ horizontal: 'left', vertical: 'middle' })
+    expect(sheet.rowHeights[11]).toBeUndefined()
+    const [asDrawing1] = await readWorkbook(await writePayslipWorkbook([{ ...doc, drawing: 1 }]))
+    expect(asDrawing1.cells.C11.font).toEqual({ name: 'Book Antiqua', size: 11 })
+    // Only the name cell differs from drawing 1.
+    expect({ ...sheet.cells, C11: null }).toEqual({ ...asDrawing1.cells, C11: null })
+    // A name a little too wide: 10.x on the page would round up past the column, so it rounds down.
+    const near = payslip(['PALMYRE-LONGNAME', 'Jean Marc'])
+    const nearSize = textOf(near.page, 'PALMYRE-LONGNAME Jean Marc').size
+    expect(nearSize).toBeLessThan(10)
+    const [nearSheet] = await readWorkbook(await writePayslipWorkbook([near.doc]))
+    expect((nearSheet.cells.C11.font as { size: number }).size).toBe(Math.floor((11 * nearSize) / 10))
+  })
+
   it('nothing overlaps on any of these payslips, and every text stays inside its column', () => {
     for (const name of [NAMES.fiveWords39, NAMES.twoLinesAtNormalSize, NAMES.sixty, NAMES.longWordSurname, NAMES.hyphenated, NAMES.surnameOfWords]) {
       const { page } = payslip(name)
@@ -205,7 +225,7 @@ describe('a long name goes on two lines (drawing 2)', () => {
     const [sheet] = await readWorkbook(await writePayslipWorkbook([doc]))
     expect(sheet.cells.C11.value).toBe('BHAGWANSINGH Marie\nAnne Josee Claudette')
     expect(sheet.cells.C11.alignment).toEqual({ horizontal: 'left', vertical: 'top', wrapText: true })
-    expect(sheet.rowHeights[11]).toBe(30)
+    expect(sheet.rowHeights[11]).toBe(36)
     for (const ref of ['B11', 'D11', 'E11']) expect(sheet.cells[ref].alignment).toEqual({ horizontal: 'left', vertical: 'top' })
   })
 
