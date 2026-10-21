@@ -52,12 +52,13 @@ function prepared(data: ImportedPayroll): PreparedPayslip[] {
  */
 function asDrawing3(surname: string, other: string): { doc: PayslipDocument; page: DrawList; item: PreparedPayslip } {
   const item = prepared(renamed(surname, other))[0]
-  expect(item.computation.errors.map((error) => error.message)).toEqual([])
-  const today = item.document!
+  // A name drawing 4 refuses (a word too wide for Excel at 8 points) still gets its drawing-3 payslip.
+  const today = item.document ?? prepared(renamed('DOE', 'JANE'))[0].document!
+  const name = `${surname} ${other}`
   const oneLine = today.rows.map((row) =>
-    row.id === 'employee-name' ? { ...row, cells: row.cells.map((cell) => (cell.col === 1 ? { ...cell, text: today.employeeName } : cell)) } : row,
+    row.id === 'employee-name' ? { ...row, cells: row.cells.map((cell) => (cell.col === 1 ? { ...cell, text: name } : cell)) } : row,
   )
-  const doc = withNameOnTwoLines({ ...today, drawing: 3, rows: oneLine }, surname)
+  const doc = withNameOnTwoLines({ ...today, drawing: 3, employeeName: name, rows: oneLine }, surname)
   return { doc, page: layoutPage(doc), item }
 }
 

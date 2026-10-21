@@ -10,7 +10,7 @@
 import ExcelJS from 'exceljs'
 import { KNOWN_DRAWINGS, unknownDrawing, type DocCell, type DocRow, type PayslipDocument } from '../lib/layoutModel'
 import { centsToNumber, isWholeRupees } from '../lib/money'
-import { addressOnPage, nameOnPage, nameOnPageV4, wideNameExcelSizes } from './pageGeometry'
+import { addressOnPage, nameOnPage, nameOnPageV4, wideNameInExcel } from './pageGeometry'
 
 // Accounting-style formats, as in the reference: a zero shows as "-".
 export const FORMAT_WHOLE = '_-* #,##0_-;-* #,##0_-;_-* "-"??_-;_-@'
@@ -25,6 +25,8 @@ const BAND_ROW_HEIGHT = 16.2
 const HEADINGS_ROW_HEIGHT = 15.6
 /** Drawing 2: the name row when the name is on two lines: two rows of the height Excel gives one line of Book Antiqua 11 (18). */
 const TWO_LINE_NAME_ROW_HEIGHT = 36
+/** Drawing 4: the height of each line of a name Excel wraps (one line of Book Antiqua 11). */
+const NAME_LINE_HEIGHT = 18
 
 export function moneyFormat(cents: number): string {
   return isWholeRupees(cents) ? FORMAT_WHOLE : FORMAT_DECIMALS
@@ -46,14 +48,17 @@ export function sheetNames(names: readonly string[]): string[] {
 }
 
 /**
- * Drawing 4: the name row of a name in the wide area. The name has the merged columns C and D; the
- * date's label and the date share column E, on the right: the date stays a date, its label written
- * before it by its number format (or the label alone when there is no date).
+ * Drawing 4: the name row of a name in the wide area. The name has the merged columns C and D, on
+ * the lines Excel gives it (`nameLines`); the date's label and the date share column E, on the
+ * right: the date stays a date, its label written before it by its number format (or the label
+ * alone when there is no date).
  */
-function wideNameRow(row: DocRow): { cells: DocCell[]; dateFormat: string | null } {
+function wideNameRow(row: DocRow, nameLines: readonly string[]): { cells: DocCell[]; dateFormat: string | null } {
   const label = row.cells.find((cell) => cell.col === 2 && cell.text !== '')
   const date = row.cells.find((cell) => cell.col === 3 && cell.text !== '')
-  const cells = row.cells.filter((cell) => cell.col < 2).map((cell) => (cell.col === 1 ? { ...cell, span: 2 as const } : cell))
+  const cells = row.cells
+    .filter((cell) => cell.col < 2)
+    .map((cell) => (cell.col === 1 ? { ...cell, span: 2 as const, text: nameLines.join('\n') } : cell))
   const last = date ?? (label && { ...label, col: 3 as const })
   if (last) cells.push({ ...last, align: 'right' })
   // A quote inside the label ends the quoted text, is written escaped, and the quoted text goes on.
@@ -97,12 +102,14 @@ function addSheet(workbook: ExcelJS.Workbook, name: string, doc: PayslipDocument
   // Drawing 2: a name the page sets smaller, on one line or two, is set smaller here too, rounded
   // down to a whole point so it is never cut off. A name on two lines wraps at its line break; its
   // row is twice as tall, and the other texts of that row sit on its first line.
-  // Drawing 4: a name in the wide area has columns C and D, and its own Excel sizes.
+  // Drawing 4: a name in the wide area has columns C and D, and its own Excel lines and sizes: it
+  // wraps there onto as many lines as it needs (the row as tall as they are), even when the page
+  // keeps it on one line.
   const printedName = doc.drawing >= 4 ? nameOnPageV4(doc) : nameOnPage(doc)
-  const wide = wideNameExcelSizes(doc)
-  const twoLines = printedName !== null && printedName.lines.length === 2
+  const wide = wideNameInExcel(doc)
+  const twoLines = wide ? wide.lines.length > 1 : printedName !== null && printedName.lines.length === 2
   const nameExcelSize = wide
-    ? wide.name < 11 ? wide.name : null
+    ? wide.size < 11 ? wide.size : null
     : printedName && printedName.size < printedName.normal ? Math.floor((11 * printedName.size) / 10) : null
   // Drawing 3: address lines the page sets smaller are set smaller here too, rounded down to a whole point.
   const printedAddress = addressOnPage(doc)
@@ -113,9 +120,9 @@ function addSheet(workbook: ExcelJS.Workbook, name: string, doc: PayslipDocument
     if (row.fill || ['company', 'address-1', 'address-2', 'brn', 'period'].includes(row.id)) sheetRow.height = BAND_ROW_HEIGHT
     if (row.id === doc.dividerFromRowId) sheetRow.height = HEADINGS_ROW_HEIGHT
     const nameRow = twoLines && row.id === 'employee-name'
-    if (nameRow) sheetRow.height = TWO_LINE_NAME_ROW_HEIGHT
+    if (nameRow) sheetRow.height = wide ? NAME_LINE_HEIGHT * wide.lines.length : TWO_LINE_NAME_ROW_HEIGHT
 
-    const wideRow = wide !== null && row.id === 'employee-name' ? wideNameRow(row) : null
+    const wideRow = wide !== null && row.id === 'employee-name' ? wideNameRow(row, wide.lines) : null
     const cellAt = new Map<number, DocCell>()
     for (const cell of wideRow?.cells ?? row.cells) {
       for (let offset = 0; offset < cell.span; offset++) cellAt.set(cell.col + offset, cell)

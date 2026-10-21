@@ -29,10 +29,12 @@ const NAMES = {
   longSurname: ['LONGSURNAME-EXAMPLE', 'Marie Anne'],
   sixty: ['MOHAMMUDHAWAMBOO-WAHAB', 'MARIE MAGDALENA WILHELMINA MAXIMILIEN'],
   sixtyMixedCase: ['LAMARQUE-FONTAINE', 'Jean Pierre Marie Emmanuel Christophe Alex'],
+  sixtyCapitals: ['LAMARQUE-FONTAINE', 'JEAN PIERRE MARIE EMMANUEL CHRISTOPHE ALEX'],
   oneWordTooLong: ['ABRACADABRAVERYLONGFAKESURNAMEWITHOUTANYSPACEATALLEVERYWHERE', 'Marie'],
   hyphenated: ['RAMKHELAWON-DOE-PERSAUD', 'Marie Anne Josee'],
   hyphenatedTwoLines: ['RAMKHELAWON-DOE-PERSAUD-BHAGWANSINGH', 'JEAN PIERRE MARIE EMMANUEL CHRISTOPHE'],
-  smallerInColumn: ['PALMYRE-LONG', 'Jean Marc'],
+  smallerInColumn: ['PALMYRE-DOE', 'Jean Marc'],
+  belowNineInColumn: ['PALMYRE-LONG', 'Jean Marc'],
   short: ['DOE', 'JANE'],
 } as const
 const full = ([surname, other]: readonly [string, string]) => `${surname} ${other}`
@@ -122,7 +124,7 @@ describe('a long name has a wider place on its row (drawing 4)', () => {
     const { lines } = nameRow(doc, page)
     expect(lines.map((line) => line.text)).toEqual([full(NAMES.sixtyMixedCase)])
     expect(lines[0].size).toBeLessThan(10)
-    expect(lines[0].size).toBeGreaterThanOrEqual(8)
+    expect(lines[0].size).toBeGreaterThanOrEqual(9)
   })
 
   it('a 60-character name too wide for one line at 8 points: two lines in the wide place, the surname first, the rows below one row lower', () => {
@@ -152,11 +154,11 @@ describe('a long name has a wider place on its row (drawing 4)', () => {
     const doc = item.document!
     const label = textOf(item.page!.texts, 'Date of Employment :')
     expect(rightOf(label)).toBeCloseTo(PAGE.width - 40 - 4, 1)
-    // More room than with a date: this name now fits on one line.
-    expect(nameCellOf(doc).text).toBe(full(NAMES.sixty))
+    // More room than with a date: the first line holds one more word.
+    expect(nameCellOf(doc).text).toBe('MOHAMMUDHAWAMBOO-WAHAB MARIE MAGDALENA WILHELMINA\nMAXIMILIEN')
     expect(overlaps(item.page!)).toEqual([])
     const [sheet] = await readWorkbook(await writePayslipWorkbook([doc]))
-    expect(sheet.cells.E11).toMatchObject({ value: 'Date of Employment :', alignment: { horizontal: 'right', vertical: 'middle' } })
+    expect(sheet.cells.E11).toMatchObject({ value: 'Date of Employment :', alignment: { horizontal: 'right', vertical: 'top' } })
     expect(sheet.cells.E11.numFmt).toBeUndefined()
   })
 
@@ -187,7 +189,7 @@ describe('a long name has a wider place on its row (drawing 4)', () => {
     expect(overlaps(two.page)).toEqual([])
   })
 
-  it('a short name, and a name its column takes at 8 points or more: drawn exactly as drawing 3 draws them', async () => {
+  it('a short name, and a name its column takes at 9 points or more: drawn exactly as drawing 3 draws them', async () => {
     for (const name of [NAMES.short, NAMES.smallerInColumn]) {
       const { doc, page } = payslip(name)
       expect(page).toEqual(layoutPage(asDrawing3(doc)))
@@ -197,7 +199,25 @@ describe('a long name has a wider place on its row (drawing 4)', () => {
     const smaller = payslip(NAMES.smallerInColumn)
     const size = textOf(smaller.page.texts, full(NAMES.smallerInColumn)).size
     expect(size).toBeLessThan(10)
-    expect(size).toBeGreaterThanOrEqual(8)
+    expect(size).toBeGreaterThanOrEqual(9)
+  })
+
+  it('one line never below 9 points: a name its column takes only at 8.8 goes to the wide place, at the normal size', () => {
+    const { doc, page } = payslip(NAMES.belowNineInColumn)
+    expect(layoutPage(asDrawing3(doc)).texts.find((t) => t.text === full(NAMES.belowNineInColumn))!.size).toBe(8.8)
+    const [name] = nameRow(doc, page).lines
+    expect(name.size).toBe(10)
+    expect(name.x).toBeLessThan(shortRow.lines[0].x)
+  })
+
+  it('a name the wide place takes on one line only below 9 points goes on two lines there, at the normal size', () => {
+    // At 9 points this name is wider than the wide place; it would fit at 8.1, but one line stops at 9.
+    const { doc, page } = payslip(NAMES.sixtyCapitals)
+    const room = nameRow(doc, page).dateLabel.x - 8 - nameRow(doc, page).lines[0].x
+    expect(measureText(full(NAMES.sixtyCapitals), 'regular', 9).width).toBeGreaterThan(room)
+    expect(measureText(full(NAMES.sixtyCapitals), 'regular', 8.1).width).toBeLessThan(room)
+    expect(nameCellOf(doc).text.split('\n')).toHaveLength(2)
+    expect(nameRow(doc, page).lines.map((line) => line.size)).toEqual([10, 10])
   })
 
   it('nothing else on the page moves: only the texts of the name row differ from a short name', () => {
@@ -284,6 +304,57 @@ describe('Excel: merged cells for the wide name, the columns unchanged', () => {
     const widest = Math.max(...nameCellOf(doc).text.split('\n').map((line) => measureText(line, 'regular', (size * 10) / 11).width))
     const cd = ((PAGE.width - 80) * (32.77734375 + 35.6640625)) / (28.77734375 + 32.77734375 + 35.6640625 + 40.5546875) - 8
     expect(widest).toBeLessThanOrEqual(cd)
+  })
+
+  it('the 60-character mixed-case name: one line on the page, two lines in Excel rather than below 9 points there', async () => {
+    const { doc, page } = payslip(NAMES.sixtyMixedCase)
+    expect(nameRow(doc, page).lines).toHaveLength(1)
+    const sheet = await sheetOf(doc)
+    expect(sheet.cells.C11.value).toBe('LAMARQUE-FONTAINE Jean Pierre Marie Emmanuel\nChristophe Alex')
+    expect(sheet.cells.C11.font).toEqual({ name: 'Book Antiqua', size: 10 })
+    expect(sheet.cells.C11.alignment).toEqual({ horizontal: 'left', vertical: 'top', wrapText: true })
+    expect(sheet.rowHeights[11]).toBe(36)
+    // The page alone is not changed by it.
+    expect(page.texts.find((t) => t.text === 'NIC :')).toEqual(short().page.texts.find((t) => t.text === 'NIC :'))
+  })
+
+  it('Excel never sets a name below 8 points, nor on one line below 9, and every line fits C and D', async () => {
+    const cd = ((PAGE.width - 80) * (32.77734375 + 35.6640625)) / (28.77734375 + 32.77734375 + 35.6640625 + 40.5546875) - 8
+    for (const name of Object.values(NAMES).filter((found) => found !== NAMES.oneWordTooLong)) {
+      const sheet = await sheetOf(payslip(name).doc)
+      const lines = String(sheet.cells.C11.value).split('\n')
+      const size = (sheet.cells.C11.font as { size: number }).size
+      expect(size, full(name)).toBeGreaterThanOrEqual(lines.length === 1 ? 9 : 8)
+      expect(lines.join(' ')).toBe(full(name))
+      for (const line of lines) expect(measureText(line, 'regular', (size * 10) / 11).width, line).toBeLessThanOrEqual(cd + 0.01)
+      if (lines.length > 1) expect(sheet.rowHeights[11]).toBe(18 * lines.length)
+    }
+  })
+
+  it('a name Excel cannot take on two lines at 8 points goes on three there, the row three lines tall', async () => {
+    const name = ['MOHAMMUDHAWAMBOO-WAHAB', 'MARIE MAGDALENA WILHELMINA MAXIMILIENNE JOSEPHINE AUGUSTINE BERNADETTE MAXIMILIA WILMA'] as const
+    const { doc, page } = payslip(name)
+    expect(nameRow(doc, page).lines.map((line) => line.size)).toEqual([8.4, 8.4])
+    const sheet = await sheetOf(doc)
+    expect(sheet.cells.C11.value).toBe('MOHAMMUDHAWAMBOO-WAHAB MARIE MAGDALENA\nWILHELMINA MAXIMILIENNE JOSEPHINE AUGUSTINE\nBERNADETTE MAXIMILIA WILMA')
+    expect(sheet.cells.C11.font).toEqual({ name: 'Book Antiqua', size: 9 })
+    expect(sheet.rowHeights[11]).toBe(54)
+  })
+
+  it('a name whose two lines need less than 8 points on the page is refused, never printed smaller', () => {
+    const name = ['MOHAMMUDHAWAMBOO-WAHAB', 'MARIE MAGDALENA WILHELMINA MAXIMILIENNE JOSEPHINE AUGUSTINE BERNADETTE MAXIMILIA WILMA MAY'] as const
+    const refused = prepared(name)
+    expect(refused.document).toBeNull()
+    expect(refused.computation.errors.map((error) => error.message)).toEqual([`"${full(name)}" is too long to fit on the payslip, even at the smallest size.`])
+  })
+
+  it('a word wider than C and D at 8 points in Excel is refused, as on the page, never printed smaller', () => {
+    // 50 capitals: the page could take it on its own line at 8.8 points, Excel could not at 8.
+    const refused = prepared(['ABRACADABRAVERYLONGFAKESURNAMEWITHOUTANYSPACEATALL', 'Marie'])
+    expect(refused.document).toBeNull()
+    expect(refused.computation.errors.map((error) => error.message)).toEqual([
+      '"ABRACADABRAVERYLONGFAKESURNAMEWITHOUTANYSPACEATALL Marie" is too long to fit on the payslip, even at the smallest size.',
+    ])
   })
 
   it('a short name: the sheet of drawing 3, nothing merged in its row', async () => {

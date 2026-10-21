@@ -462,16 +462,20 @@ function layoutPageV3(doc: PayslipDocument): DrawList {
   return { ...page, texts, overflow }
 }
 
-// DRAWING VERSION 4: version 3, and a wider place for a name that does not fit its column, at the
-// normal size or smaller down to 8 points. Such a name starts closer to "Name :", and "Date of
-// Employment :" with its date moves right on the same row, as far as the row allows, so the name
-// has the space between them. One line there, from the normal size down to 8 points; otherwise
-// two lines there (the row twice as tall, as in version 2), down to 8 points; otherwise the payslip
-// is refused. A name that fits its column at 8 points or more is drawn exactly as in version 3.
-// Frozen like versions 1 to 3 once payslips are issued with it.
+// DRAWING VERSION 4: version 3, and a wider place for a name that does not fit its column on one
+// line at 9 points or more. Such a name starts closer to "Name :", and "Date of Employment :" with
+// its date moves right on the same row, as far as the row allows, so the name has the space
+// between them. One line there, from the normal size down to 9 points; otherwise two lines there
+// (the row twice as tall, as in version 2), from the normal size down to 8 points; otherwise the
+// payslip is refused. A name that fits its column at 9 points or more is drawn exactly as in
+// version 3. In Excel a name is never below 8 points, nor on one line below 9: it is wrapped onto
+// more lines there instead. Frozen like versions 1 to 3 once payslips are issued with it.
+const NAME_ONE_LINE_MIN_SIZE = 9
 const NAME_MIN_SIZE = 8
 /** The space kept between two texts of the name row: the paddings of two neighbouring cells. */
 const NAME_GAP = 2 * PADDING_X
+/** In Excel: the smallest size of a name on one line, of a name on more, and the most lines. */
+const EXCEL_NAME = { oneLineMin: 9, min: 8, maxLines: 3 }
 
 /** The name row and its name cell, when the name is not empty. */
 function nameRowCells(doc: PayslipDocument): { index: number; row: DocRow; name: DocCell } | null {
@@ -505,8 +509,10 @@ function wideNameArea(doc: PayslipDocument, row: DocRow): { left: number; right:
   return { left, right: right - NAME_GAP, moved }
 }
 
-/** The name of a drawing-4 payslip as the page prints it, and whether it is in the wide area. Null before drawing 4, or when it does not fit. */
-export function nameOnPageV4(doc: PayslipDocument): { lines: string[]; size: number; normal: number; wide: boolean } | null {
+type PrintedName = { lines: string[]; size: number; normal: number; wide: boolean }
+
+/** The name as the page of a drawing-4 payslip prints it, by the page's rules alone. */
+function nameOnPageAlone(doc: PayslipDocument): PrintedName | null {
   if (doc.drawing < 4) return null
   const found = nameRowCells(doc)
   if (!found) return null
@@ -514,15 +520,64 @@ export function nameOnPageV4(doc: PayslipDocument): { lines: string[]; size: num
   const lines = nameLinesOf(doc, row, name) ?? [name.text]
   const font: FontName = name.bold ? 'bold' : 'regular'
   const normal = PRINT_SIZE[name.size]
-  const usual = lines.length === 1 ? sizeToFitFrom(lines, font, normal, cellWidth(doc, name), NAME_MIN_SIZE) : null
+  const usual = lines.length === 1 ? sizeToFitFrom(lines, font, normal, cellWidth(doc, name), NAME_ONE_LINE_MIN_SIZE) : null
   if (usual !== null) return { lines, size: usual, normal, wide: false }
   const area = wideNameArea(doc, row)
-  const size = sizeToFitFrom(lines, font, normal, area.right - area.left, NAME_MIN_SIZE)
+  const size = sizeToFitFrom(lines, font, normal, area.right - area.left, lines.length === 1 ? NAME_ONE_LINE_MIN_SIZE : NAME_MIN_SIZE)
   return size === null ? null : { lines, size, normal, wide: true }
 }
 
 /**
- * Drawing 4: a name that fits neither its column nor, on one line, the wide area (8 points or
+ * A name in the wide place, as the Excel sheet writes it in the merged columns C and D: its lines
+ * and its size in whole points. The size is the largest that fits C and D by the page's own
+ * measure (11 in Excel is 10 on the page), never above 11 nor above the page's size. One line
+ * when that is 9 points or more; otherwise two lines, then three, at 8 points or more, broken
+ * between words: the break that allows the largest size, and on a tie the fullest first line (when
+ * the page has two lines, never before the page's break, so the surname stays whole). Null when
+ * even three lines do not fit at 8 points (a single word wider than C and D).
+ */
+function nameInExcel(doc: PayslipDocument, printed: PrintedName, font: FontName): { lines: string[]; size: number } | null {
+  const colX = columnEdges(doc)
+  const room = colX[3] - colX[1] - 2 * PADDING_X
+  const cap = Math.min(11, Math.floor((11 * printed.size) / printed.normal))
+  const sizeOf = (lines: readonly string[]) =>
+    Math.min(cap, Math.floor((11 * room) / Math.max(...lines.map((line) => measureText(line, font, printed.normal).width))))
+  const text = printed.lines.join(' ')
+  const spaces: number[] = []
+  for (let at = text.indexOf(' '); at > 0; at = text.indexOf(' ', at + 1)) spaces.push(at)
+  // Every way to cut the name into `count` lines at spaces from `after` on, the fullest first lines first.
+  const cuts = (count: number, after: number): number[][] =>
+    count === 1 ? [[]] : spaces.filter((at) => at >= after).reverse().flatMap((at) => cuts(count - 1, at + 1).map((rest) => [at, ...rest]))
+  const linesAt = (cut: readonly number[]) => [0, ...cut.map((at) => at + 1)].map((start, index) => text.slice(start, index < cut.length ? cut[index] : undefined))
+  // After the page's break first (the surname whole); only when nothing fits so, anywhere between words.
+  const froms = printed.lines.length === 2 ? [printed.lines[0].length, 0] : [0]
+  for (const from of froms) {
+    for (let count = 1; count <= EXCEL_NAME.maxLines; count++) {
+      let best: { lines: string[]; size: number } | null = null
+      for (const cut of cuts(count, from)) {
+        const lines = linesAt(cut)
+        const size = sizeOf(lines)
+        if (best === null || size > best.size) best = { lines, size }
+      }
+      if (best && best.size >= (count === 1 ? EXCEL_NAME.oneLineMin : EXCEL_NAME.min)) return best
+    }
+  }
+  return null
+}
+
+/**
+ * The name of a drawing-4 payslip as the page prints it, and whether it is in the wide area. Null
+ * before drawing 4, or when it does not fit: on the page, or, in the wide area, in Excel at 8 points.
+ */
+export function nameOnPageV4(doc: PayslipDocument): PrintedName | null {
+  const printed = nameOnPageAlone(doc)
+  const found = nameRowCells(doc)
+  if (!printed?.wide || !found) return printed
+  return nameInExcel(doc, printed, found.name.bold ? 'bold' : 'regular') === null ? null : printed
+}
+
+/**
+ * Drawing 4: a name that fits neither its column nor, on one line, the wide area (9 points or
  * more) goes on two lines in the wide area, broken at a space after the surname, as in version 2:
  * the break that allows the largest size wins (on a tie, the fullest first line). When two lines
  * do not fit at 8 points either, the name is left on one line and the payslip reports it as too long.
@@ -533,7 +588,7 @@ export function withNameInWideArea(doc: PayslipDocument, surname: string): Paysl
   if (!found) return doc
   const { index: rowIndex, row, name: cell } = found
   if (cell.text !== doc.employeeName || cell.text.includes('\n') || !cell.text.startsWith(surname)) return doc
-  if (nameOnPageV4(doc) !== null) return doc
+  if (nameOnPageAlone(doc) !== null) return doc
   const name = cell.text
   const font: FontName = cell.bold ? 'bold' : 'regular'
   const area = wideNameArea(doc, row)
@@ -552,23 +607,22 @@ export function withNameInWideArea(doc: PayslipDocument, surname: string): Paysl
 }
 
 /**
- * The Excel sizes of a name in the wide area, in whole points. In Excel the name has the merged
- * columns C and D, and the date's label and the date share column E; each is set at the largest
- * whole size that fits there by the page's own measure (11 in Excel is 10 on the page), never
- * above 11 nor above the page's size. Null when the name is not in the wide area.
+ * How Excel writes a name in the wide area: its lines and size in the merged columns C and D
+ * (nameInExcel), and the size of column E, where the date's label and the date share one cell:
+ * the largest whole size up to 11 that fits E by the page's measure. Null when the name is not in
+ * the wide area.
  */
-export function wideNameExcelSizes(doc: PayslipDocument): { name: number; date: number } | null {
-  const printed = nameOnPageV4(doc)
+export function wideNameInExcel(doc: PayslipDocument): { lines: string[]; size: number; date: number } | null {
+  const printed = nameOnPageAlone(doc)
   const found = nameRowCells(doc)
   if (!printed?.wide || !found) return null
+  const name = nameInExcel(doc, printed, found.name.bold ? 'bold' : 'regular')
+  if (!name) return null
   const colX = columnEdges(doc)
-  const font: FontName = found.name.bold ? 'bold' : 'regular'
-  const widest = Math.max(...printed.lines.map((line) => measureText(line, font, printed.normal).width))
-  const name = Math.min(Math.floor((11 * printed.size) / printed.normal), Math.floor((11 * (colX[3] - colX[1] - 2 * PADDING_X)) / widest))
   // In column E the label and the date are one text, a space apart.
   const together = found.row.cells.filter((cell) => cell.col > NAME_COL && cell.text !== '').map((cell) => cell.text).join(' ')
   const date = Math.min(11, Math.floor((11 * (colX[4] - colX[3] - 2 * PADDING_X)) / measureText(together, 'regular', 10).width))
-  return { name, date }
+  return { ...name, date }
 }
 
 function layoutPageV4(doc: PayslipDocument): DrawList {
