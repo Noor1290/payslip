@@ -504,7 +504,7 @@ export function PayslipsScreen(props: Props) {
                   <tbody>
                     {prepared.map((p, index) => {
                       const c = p.computation
-                      const warnings = c.warnings.filter((w) => w.code.startsWith('cross-check') || w.code === 'old-name' || w.code === 'no-date').length
+                      const warnings = c.warnings.filter((w) => w.code.startsWith('cross-check') || w.code === 'old-name').length
                       return (
                         <tr key={c.rowIndex} className={index === current ? 'row-current' : undefined}>
                           <td>
