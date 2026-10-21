@@ -7,7 +7,7 @@ import { DEFAULT_STATUTORY_RATES } from '../src/data/defaultStatutoryRates'
 import { preparePayslips, type PreparedPayslip } from '../src/lib/build'
 import { issueStatuses } from '../src/lib/issueBuild'
 import { decodeLines, encodeLines, figuresOf, sameLines } from '../src/lib/issuedLines'
-import { documentTexts, type PayslipDocument } from '../src/lib/layoutModel'
+import { documentTexts, DRAWING_VERSION, type PayslipDocument } from '../src/lib/layoutModel'
 import { baselineFromIssued, compareMonth } from '../src/lib/monthCompare'
 import type { ImportedPayroll } from '../src/lib/payrollFile'
 import { DEFAULT_TABLE_MAPPING, TABLE_TEMPLATE } from '../src/lib/template'
@@ -15,7 +15,7 @@ import { writePayslipWorkbook } from '../src/writers/excelWriter'
 import { FONT_METRICS, layoutPage, measureText, type DrawList } from '../src/writers/pageGeometry'
 import { writePayslipPdf } from '../src/writers/pdfWriter'
 import { ISSUE_DATE, PERIOD } from './fixtureDocuments'
-import { expectFrozen, loadFixture, readFont } from './helpers'
+import { expectFrozen, loadFixture, readFont, readFrozen } from './helpers'
 import { current, issuedAugust, LAST_PERIOD, september } from './monthFixtures'
 import { readWorkbook, type SheetRecord } from './readExcel'
 import { readPdf, type PdfRecord } from './readPdf'
@@ -252,7 +252,7 @@ describe('a long name goes on two lines (drawing 2)', () => {
   it('is stored as it is drawn: the line break is in the stored text, and the reopened payslip is identical', async () => {
     const { doc, item } = payslip(NAMES.fiveWords39)
     const lines = encodeLines(doc, figuresOf(item.computation))
-    expect(lines[0]).toMatchObject({ format: 1, drawing: 2, employeeName: full(NAMES.fiveWords39) })
+    expect(lines[0]).toMatchObject({ format: 1, drawing: DRAWING_VERSION, employeeName: full(NAMES.fiveWords39) })
     const read = decodeLines(JSON.parse(JSON.stringify(lines)))
     if (!read.ok) throw new Error(read.problem)
     expect(read.document).toEqual(doc)
@@ -261,11 +261,12 @@ describe('a long name goes on two lines (drawing 2)', () => {
 })
 
 describe('drawing version 2, as stored (frozen)', () => {
-  // Like tests/format1.test.ts: written once, never re-recorded. The 39-character fake name.
+  // Like tests/format1.test.ts: written once, never re-recorded. The 39-character fake name, as
+  // it was stored when drawing 2 was the drawing of new payslips; it is drawn from that alone.
   it('the lines, the page, the PDF and the Excel sheet are the ones it was first written with', async () => {
-    const { doc, item } = payslip(NAMES.fiveWords39)
-    expectFrozen('format-1-drawing-2/lines', encodeLines(doc, figuresOf(item.computation)))
-    const read = decodeLines(JSON.parse(JSON.stringify(encodeLines(doc, figuresOf(item.computation)))))
+    const stored = readFrozen<Record<string, unknown>[]>('format-1-drawing-2/lines')
+    expect(stored[0]).toMatchObject({ format: 1, drawing: 2, employeeName: full(NAMES.fiveWords39) })
+    const read = decodeLines(stored)
     if (!read.ok) throw new Error(read.problem)
     expectFrozen('format-1-drawing-2/page', layoutPage(read.document))
     expectFrozen('format-1-drawing-2/pdf', (await readPdf(await writePayslipPdf(read.document, fonts))) satisfies PdfRecord)
@@ -280,7 +281,7 @@ describe('the new drawing version does not make anyone Changed', () => {
 
   it('the month review gives the same statuses, lines and notes as against payslips of drawing 2', async () => {
     const august = await issuedAugust()
-    expect((august[0].lines as { drawing: number }[])[0].drawing).toBe(2)
+    expect((august[0].lines as { drawing: number }[])[0].drawing).toBe(DRAWING_VERSION)
     const review = (issued: typeof august) => compareMonth(PERIOD, current(september()), baselineFromIssued(LAST_PERIOD, issued), () => 'Monthly payslip')
     const withDrawing1 = review(asDrawing1(august))
     expect(withDrawing1).toEqual(review(august))
@@ -289,7 +290,7 @@ describe('the new drawing version does not make anyone Changed', () => {
 
   it('a payslip issued with drawing 1 is still "Issued", not "Changed since", and the same payslip when it is issued again', async () => {
     const month = september()
-    expect(month.prepared[0].document!.drawing).toBe(2)
+    expect(month.prepared[0].document!.drawing).toBeGreaterThanOrEqual(2)
     const { issue, dashboard } = await import('./monthFixtures')
     const { port } = dashboard()
     await issue(port, month)
@@ -304,7 +305,7 @@ describe('the new drawing version does not make anyone Changed', () => {
     const renamedLines = [{ ...other[0], employeeName: 'DOE JANET' }, ...other.slice(1)]
     expect(sameLines(renamedLines, loaded.payslips[0].lines)).toBe(false)
     // A version this app does not know is never taken for the same look.
-    const later = [{ ...other[0], drawing: 3 }, ...other.slice(1)]
+    const later = [{ ...other[0], drawing: DRAWING_VERSION + 1 }, ...other.slice(1)]
     expect(sameLines(later, loaded.payslips[0].lines)).toBe(false)
   })
 })

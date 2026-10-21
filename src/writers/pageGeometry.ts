@@ -86,7 +86,7 @@ export function measureText(text: string, font: FontName, size: number): { width
 /** Draws a payslip with the rules of its own drawing version. */
 export function layoutPage(doc: PayslipDocument): DrawList {
   if (!KNOWN_DRAWINGS.includes(doc.drawing)) throw new Error(unknownDrawing(doc.drawing))
-  return doc.drawing === 1 ? layoutPageV1(doc) : layoutPageV2(doc)
+  return doc.drawing === 1 ? layoutPageV1(doc) : doc.drawing === 2 ? layoutPageV2(doc) : layoutPageV3(doc)
 }
 
 function layoutPageV1(doc: PayslipDocument): DrawList {
@@ -330,4 +330,134 @@ function layoutPageV2(doc: PayslipDocument): DrawList {
     unsupported: [...unsupported],
     overflow,
   }
+}
+
+// DRAWING VERSION 3: version 2, and the company address split at its LAST comma. Line 3 of the
+// header holds everything before that comma, line 4 what comes after it. When line 3 is too wide
+// at the normal size, its last words move down to the start of line 4; only when that does not
+// fit either are the two lines set smaller, together, never below 8 points. Everything else is
+// drawn exactly as in version 2. Frozen like versions 1 and 2 once payslips are issued with it.
+const ADDRESS_ROW_IDS = ['address-1', 'address-2'] as const
+const ADDRESS_MIN_SIZE = 8
+
+/** sizeToFit, with a smallest size of its own. */
+function sizeToFitFrom(lines: readonly string[], font: FontName, normal: number, available: number, smallest: number): number | null {
+  const widest = (size: number) => Math.max(...lines.map((line) => measureText(line, font, size).width))
+  if (widest(normal) <= available) return normal
+  const size = Math.max(smallest, Math.floor(((normal * available) / widest(normal)) * 10) / 10)
+  return widest(size) <= available + 0.01 ? size : null
+}
+
+/** The cells of the two address lines, when the page has both rows. */
+function addressCells(doc: PayslipDocument): [DocCell, DocCell] | null {
+  const [first, second] = ADDRESS_ROW_IDS.map((id) => doc.rows.find((row) => row.id === id)?.cells[0])
+  return first && second ? [first, second] : null
+}
+
+/**
+ * The parts of an address as the payroll gives it: cut at every comma and line break, each part
+ * trimmed, runs of spaces made one, empty parts left out (a trailing comma, ", ,").
+ */
+export function addressParts(address: string): string[] {
+  return address
+    .split(/\r?\n|,/)
+    .map((part) => part.replace(/\s+/g, ' ').trim())
+    .filter((part) => part !== '')
+}
+
+/**
+ * The ways to put the address on two lines, in the order they are preferred: split at the last
+ * comma; then the last parts of line 3 moved down to line 4, at a comma (the fewest first); then
+ * its last words moved down, between words (the fewest first). `atComma` is false for the last kind.
+ */
+function addressSplits(parts: readonly string[]): { lines: [string, string]; atComma: boolean }[] {
+  if (parts.length === 0) return [{ lines: ['', ''], atComma: true }]
+  const last = parts.length > 1 ? parts[parts.length - 1] : ''
+  const head = parts.length > 1 ? parts.slice(0, -1) : [...parts]
+  const down = (moved: string): string => (last === '' ? moved : `${moved}, ${last}`)
+  const line = head.join(', ')
+  const splits: { lines: [string, string]; atComma: boolean }[] = [{ lines: [line, last], atComma: true }]
+  for (let keep = head.length - 1; keep >= 1; keep--) {
+    splits.push({ lines: [head.slice(0, keep).join(', '), down(head.slice(keep).join(', '))], atComma: true })
+  }
+  for (let at = line.lastIndexOf(' '); at > 0; at = line.lastIndexOf(' ', at - 1)) {
+    // A space right after a comma is a break at a comma, already offered above.
+    if (line[at - 1] !== ',') splits.push({ lines: [line.slice(0, at), down(line.slice(at + 1))], atComma: false })
+  }
+  return splits
+}
+
+/**
+ * Drawing 3: the address on lines 3 and 4. The first split (in the order of addressSplits) whose
+ * two lines fit at the normal size; otherwise the split at a comma that allows the largest size,
+ * not below 8 points, and only when no split at a comma fits at 8 points, the split between words
+ * that does (on a tie, the one preferred first). When none fits even at 8 points, the address is
+ * split at its last comma and the payslip reports it as too long.
+ */
+export function withAddressSplitAtLastComma(doc: PayslipDocument, addressLines: readonly [string, string]): PayslipDocument {
+  if (doc.drawing < 3) return doc
+  const cells = addressCells(doc)
+  if (!cells) return doc
+  const [cell] = cells
+  const font: FontName = cell.bold ? 'bold' : 'regular'
+  const normal = PRINT_SIZE[cell.size]
+  const available = cellWidth(doc, cell)
+  const splits = addressSplits(addressParts(addressLines.join(',')))
+  const fits = (lines: readonly string[], smallest: number) => sizeToFitFrom(lines.filter((line) => line !== ''), font, normal, available, smallest)
+  let chosen = splits.find((split) => fits(split.lines, normal) !== null)?.lines ?? null
+  for (const atComma of [true, false]) {
+    let best = 0
+    for (const split of chosen ? [] : splits.filter((found) => found.atComma === atComma)) {
+      const size = fits(split.lines, ADDRESS_MIN_SIZE) ?? 0
+      if (size > best) [best, chosen] = [size, split.lines]
+    }
+  }
+  const [line3, line4] = chosen ?? splits[0].lines
+  const textOf: Record<string, string> = { 'address-1': line3, 'address-2': line4 }
+  const rows = doc.rows.map((row) =>
+    row.id in textOf ? { ...row, cells: row.cells.map((found, index) => (index === 0 ? { ...found, text: textOf[row.id] } : found)) } : row,
+  )
+  return { ...doc, rows }
+}
+
+/** The printed size of the address lines of a drawing-3 payslip, and their normal size. Null before drawing 3, or when they do not fit. */
+export function addressOnPage(doc: PayslipDocument): { size: number; normal: number } | null {
+  if (doc.drawing < 3) return null
+  const cells = addressCells(doc)
+  if (!cells) return null
+  const lines = cells.map((cell) => cell.text).filter((text) => text !== '')
+  if (lines.length === 0) return null
+  const normal = PRINT_SIZE[cells[0].size]
+  const size = sizeToFitFrom(lines, cells[0].bold ? 'bold' : 'regular', normal, cellWidth(doc, cells[0]), ADDRESS_MIN_SIZE)
+  return size === null ? null : { size, normal }
+}
+
+function layoutPageV3(doc: PayslipDocument): DrawList {
+  const page = layoutPageV2(doc)
+  const cells = addressCells(doc)
+  if (!cells) return page
+  const lines = cells.map((cell) => cell.text).filter((text) => text !== '')
+  if (lines.length === 0) return page
+  const font: FontName = cells[0].bold ? 'bold' : 'regular'
+  const colX = columnEdges(doc)
+  const fitted = sizeToFitFrom(lines, font, PRINT_SIZE[cells[0].size], cellWidth(doc, cells[0]), ADDRESS_MIN_SIZE)
+  const size = fitted ?? ADDRESS_MIN_SIZE
+  // The address rows are above the name, so they are where version 2 put them: one row each.
+  const overflow = page.overflow.filter((text) => !lines.includes(text))
+  if (fitted === null) overflow.push(...lines)
+  const texts = [...page.texts]
+  ADDRESS_ROW_IDS.forEach((id, index) => {
+    const cell = cells[index]
+    if (cell.text === '') return
+    const top = TOP + doc.rows.findIndex((row) => row.id === id) * ROW_HEIGHT
+    const at = texts.findIndex((text) => text.text === cell.text && text.y > top && text.y < top + ROW_HEIGHT)
+    if (at < 0) return
+    const width = measureText(cell.text, font, size).width
+    const cellLeft = colX[cell.col] + PADDING_X
+    const cellRight = colX[cell.col + cell.span] - PADDING_X
+    const x = cell.align === 'left' ? cellLeft : cell.align === 'right' ? cellRight - width : (cellLeft + cellRight - width) / 2
+    const capHeight = (FONT_METRICS[font].capHeight / FONT_METRICS[font].unitsPerEm) * size
+    texts[at] = { x: round(x), y: round(top + ROW_HEIGHT / 2 + capHeight / 2), text: cell.text, font, size }
+  })
+  return { ...page, texts, overflow }
 }

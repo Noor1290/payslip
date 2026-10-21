@@ -143,7 +143,7 @@ describe('stored lines are refused, never guessed at', () => {
   })
 
   it('with a drawing version this app cannot draw, or one that is not a version number', () => {
-    expect(change((lines) => (lines[0].drawing = DRAWING_VERSION + 1))).toMatchObject({ ok: false, problem: expect.stringContaining('drawing version 3') })
+    expect(change((lines) => (lines[0].drawing = DRAWING_VERSION + 1))).toMatchObject({ ok: false, problem: expect.stringContaining(`drawing version ${DRAWING_VERSION + 1}`) })
     expect(change((lines) => (lines[0].drawing = '1')).ok).toBe(false)
     expect(change((lines) => (lines[0].drawing = 0)).ok).toBe(false)
   })

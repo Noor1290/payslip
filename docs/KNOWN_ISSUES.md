@@ -305,3 +305,11 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 **To decide.** Whether Excel should set such a name smaller too, as it does for two lines. It changes the Excel sheet of payslips that are issued today, so it is a new drawing version (or part of drawing 2, if decided before any payslip is issued with it).
 
 **Fixed in drawing 2 (21 October 2026, before any payslip was issued with it).** Whenever the page sets the name smaller, on one line or two, the Excel cell is set smaller too: 11 x the page size / 10, rounded down to a whole point (whole points because that is what is read back; rounding down so it is never wider than the page). "LONGSURNAME-EXAMPLE Marie Anne" is 6 points in Excel and printed whole by Excel for Microsoft 365. Payslips issued with drawing 1 keep 11 points. The same Excel print showed that a two-line name at the normal size lost the bottom of its second line in a 30-point row; the row is now 36 points. Tests: `tests/longNames.test.ts`.
+
+## 41. A payslip issued before the address split shows as changed when the address has two commas or more
+
+**What happens.** From drawing 3 the company address is split at its last comma (`docs/ISSUED_PAYSLIP.md`). The drawing number alone never makes a payslip "Changed since revision N": drawings 1, 2 and 3 count as the same. But for a company whose address has two commas or more, the two address lines of a new payslip are different text from those of a payslip issued before, so the employee list says "Changed since revision N" for each payslip of that month issued before this change, and a new issue of it is not asked about as identical. Its stored copy keeps the old split. With one comma or none, nothing changes.
+
+**Evidence.** Found 21 October 2026 while building drawing 3. `sameLines` compares the stored text of every row; the address rows differ ("Impasse Fictive 2" / "Avenue Exemple Remy Sample, Bonne Terre, Vacoas" then, "Impasse Fictive 2, Avenue Exemple Remy Sample, Bonne Terre" / "Vacoas" now, fake).
+
+**To decide.** Whether the comparison should treat the address as the same when only its split differs.

@@ -10,7 +10,7 @@
 import ExcelJS from 'exceljs'
 import { KNOWN_DRAWINGS, unknownDrawing, type DocCell, type DocRow, type PayslipDocument } from '../lib/layoutModel'
 import { centsToNumber, isWholeRupees } from '../lib/money'
-import { nameOnPage } from './pageGeometry'
+import { addressOnPage, nameOnPage } from './pageGeometry'
 
 // Accounting-style formats, as in the reference: a zero shows as "-".
 export const FORMAT_WHOLE = '_-* #,##0_-;-* #,##0_-;_-* "-"??_-;_-@'
@@ -84,6 +84,9 @@ function addSheet(workbook: ExcelJS.Workbook, name: string, doc: PayslipDocument
   const printedName = nameOnPage(doc)
   const twoLines = printedName !== null && printedName.lines.length === 2
   const nameExcelSize = printedName && printedName.size < printedName.normal ? Math.floor((11 * printedName.size) / 10) : null
+  // Drawing 3: address lines the page sets smaller are set smaller here too, rounded down to a whole point.
+  const printedAddress = addressOnPage(doc)
+  const addressExcelSize = printedAddress && printedAddress.size < printedAddress.normal ? Math.floor((12 * printedAddress.size) / 11) : null
 
   doc.rows.forEach((row, index) => {
     const sheetRow = sheet.getRow(excelRow(index))
@@ -114,7 +117,9 @@ function addSheet(workbook: ExcelJS.Workbook, name: string, doc: PayslipDocument
       target.border = border
 
       const isName = row.id === 'employee-name' && cell?.col === 1
-      target.font = { name: doc.fonts.excel, size: isName && nameExcelSize ? nameExcelSize : (cell?.size ?? 11), bold: cell?.bold ?? false }
+      const isAddress = (row.id === 'address-1' || row.id === 'address-2') && cell !== undefined
+      const size = isName && nameExcelSize ? nameExcelSize : isAddress && addressExcelSize ? addressExcelSize : (cell?.size ?? 11)
+      target.font = { name: doc.fonts.excel, size, bold: cell?.bold ?? false }
       target.alignment = nameRow
         ? { horizontal: cell?.align ?? 'left', vertical: 'top', ...(isName ? { wrapText: true } : {}) }
         : { horizontal: cell?.align ?? 'left', vertical: 'middle' }

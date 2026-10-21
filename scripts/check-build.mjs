@@ -201,6 +201,23 @@ try {
   note(`long name in the preview: ${first && second ? 'two lines' : 'NOT two lines'}, ${touching.length} overlapping texts`)
   if (touching.length > 0) problems.push(`Texts overlap in the preview of the long name: ${touching.join(', ')}`)
 
+  // An address with three commas (fake): the preview splits it at the last comma, each line centred.
+  const address = longName.map((row) => ({ ...row, Address: 'Impasse Fictive 2, Avenue Exemple Remy Sample, Bonne Terre, Vacoas' }))
+  await page.locator('input[type="file"]').setInputFiles({ name: 'ABC Co Ltd-pdf-fill-2026-09.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(address)) })
+  await page.getByRole('dialog', { name: 'Import payroll data' }).getByRole('button', { name: 'Replace with 7 employees' }).click()
+  await page.getByRole('button', { name: 'PALMYRE JEAN MARC' }).click()
+  const header = await page.getByRole('img', { name: /Payslip of PALMYRE JEAN MARC/ }).evaluate(async (svg) => {
+    await document.fonts.ready
+    const width = Number(svg.getAttribute('viewBox').split(' ')[2])
+    return [...svg.querySelectorAll('text')].slice(2, 4).map((text) => {
+      const box = text.getBBox()
+      return { text: text.textContent, offCentre: Math.abs(box.x + box.width / 2 - width / 2) }
+    })
+  })
+  note(`address in the preview: ${header.map((line) => `"${line.text}"`).join(' / ')}`)
+  if (header.map((line) => line.text).join(' / ') !== 'Impasse Fictive 2, Avenue Exemple Remy Sample, Bonne Terre / Vacoas') problems.push('The preview does not split the address at its last comma.')
+  if (header.some((line) => line.offCentre > 0.5)) problems.push(`An address line is not centred in the preview: ${JSON.stringify(header)}`)
+
   await page.getByRole('button', { name: 'Template', exact: true }).click()
   await page.getByRole('heading', { name: 'Where each line comes from' }).waitFor()
   await page.getByRole('button', { name: 'Statutory rates', exact: true }).click()
