@@ -86,7 +86,7 @@ export function measureText(text: string, font: FontName, size: number): { width
 /** Draws a payslip with the rules of its own drawing version. */
 export function layoutPage(doc: PayslipDocument): DrawList {
   if (!KNOWN_DRAWINGS.includes(doc.drawing)) throw new Error(unknownDrawing(doc.drawing))
-  return doc.drawing === 1 ? layoutPageV1(doc) : doc.drawing === 2 ? layoutPageV2(doc) : layoutPageV3(doc)
+  return doc.drawing === 1 ? layoutPageV1(doc) : doc.drawing === 2 ? layoutPageV2(doc) : doc.drawing === 3 ? layoutPageV3(doc) : layoutPageV4(doc)
 }
 
 function layoutPageV1(doc: PayslipDocument): DrawList {
@@ -458,6 +458,141 @@ function layoutPageV3(doc: PayslipDocument): DrawList {
     const x = cell.align === 'left' ? cellLeft : cell.align === 'right' ? cellRight - width : (cellLeft + cellRight - width) / 2
     const capHeight = (FONT_METRICS[font].capHeight / FONT_METRICS[font].unitsPerEm) * size
     texts[at] = { x: round(x), y: round(top + ROW_HEIGHT / 2 + capHeight / 2), text: cell.text, font, size }
+  })
+  return { ...page, texts, overflow }
+}
+
+// DRAWING VERSION 4: version 3, and a wider place for a name that does not fit its column, at the
+// normal size or smaller down to 8 points. Such a name starts closer to "Name :", and "Date of
+// Employment :" with its date moves right on the same row, as far as the row allows, so the name
+// has the space between them. One line there, from the normal size down to 8 points; otherwise
+// two lines there (the row twice as tall, as in version 2), down to 8 points; otherwise the payslip
+// is refused. A name that fits its column at 8 points or more is drawn exactly as in version 3.
+// Frozen like versions 1 to 3 once payslips are issued with it.
+const NAME_MIN_SIZE = 8
+/** The space kept between two texts of the name row: the paddings of two neighbouring cells. */
+const NAME_GAP = 2 * PADDING_X
+
+/** The name row and its name cell, when the name is not empty. */
+function nameRowCells(doc: PayslipDocument): { index: number; row: DocRow; name: DocCell } | null {
+  const index = doc.rows.findIndex((found) => found.id === NAME_ROW_ID)
+  const name = index < 0 ? undefined : doc.rows[index].cells.find((found) => found.col === NAME_COL)
+  return name && name.text !== '' ? { index, row: doc.rows[index], name } : null
+}
+
+/** The width of a text of the name row other than the name, as version 3 prints it in its own column. */
+function widthInColumn(doc: PayslipDocument, cell: DocCell): number {
+  const font: FontName = cell.bold ? 'bold' : 'regular'
+  const size = sizeToFit([cell.text], font, PRINT_SIZE[cell.size], cellWidth(doc, cell)) ?? MIN_SIZE
+  return measureText(cell.text, font, size).width
+}
+
+/**
+ * The wide name area: from just after "Name :" to just before "Date of Employment :", which moves
+ * right with its date until the date ends where the row's last column ends. `moved` is where the
+ * date's label and the date then start. Every gap is NAME_GAP.
+ */
+function wideNameArea(doc: PayslipDocument, row: DocRow): { left: number; right: number; moved: Map<DocCell, number> } {
+  const colX = columnEdges(doc)
+  const label = row.cells.find((found) => found.col === 0 && found.text !== '')
+  const left = colX[0] + PADDING_X + (label ? widthInColumn(doc, label) + NAME_GAP : 0)
+  const moved = new Map<DocCell, number>()
+  let right = colX[4] - PADDING_X + NAME_GAP
+  for (const cell of row.cells.filter((found) => found.col > NAME_COL && found.text !== '').sort((a, b) => b.col - a.col)) {
+    right -= NAME_GAP + widthInColumn(doc, cell)
+    moved.set(cell, right)
+  }
+  return { left, right: right - NAME_GAP, moved }
+}
+
+/** The name of a drawing-4 payslip as the page prints it, and whether it is in the wide area. Null before drawing 4, or when it does not fit. */
+export function nameOnPageV4(doc: PayslipDocument): { lines: string[]; size: number; normal: number; wide: boolean } | null {
+  if (doc.drawing < 4) return null
+  const found = nameRowCells(doc)
+  if (!found) return null
+  const { row, name } = found
+  const lines = nameLinesOf(doc, row, name) ?? [name.text]
+  const font: FontName = name.bold ? 'bold' : 'regular'
+  const normal = PRINT_SIZE[name.size]
+  const usual = lines.length === 1 ? sizeToFitFrom(lines, font, normal, cellWidth(doc, name), NAME_MIN_SIZE) : null
+  if (usual !== null) return { lines, size: usual, normal, wide: false }
+  const area = wideNameArea(doc, row)
+  const size = sizeToFitFrom(lines, font, normal, area.right - area.left, NAME_MIN_SIZE)
+  return size === null ? null : { lines, size, normal, wide: true }
+}
+
+/**
+ * Drawing 4: a name that fits neither its column nor, on one line, the wide area (8 points or
+ * more) goes on two lines in the wide area, broken at a space after the surname, as in version 2:
+ * the break that allows the largest size wins (on a tie, the fullest first line). When two lines
+ * do not fit at 8 points either, the name is left on one line and the payslip reports it as too long.
+ */
+export function withNameInWideArea(doc: PayslipDocument, surname: string): PayslipDocument {
+  if (doc.drawing < 4) return doc
+  const found = nameRowCells(doc)
+  if (!found) return doc
+  const { index: rowIndex, row, name: cell } = found
+  if (cell.text !== doc.employeeName || cell.text.includes('\n') || !cell.text.startsWith(surname)) return doc
+  if (nameOnPageV4(doc) !== null) return doc
+  const name = cell.text
+  const font: FontName = cell.bold ? 'bold' : 'regular'
+  const area = wideNameArea(doc, row)
+
+  let best: { at: number; size: number } | null = null
+  for (let at = name.indexOf(' ', surname.length); at > 0; at = name.indexOf(' ', at + 1)) {
+    const size = sizeToFitFrom([name.slice(0, at), name.slice(at + 1)], font, PRINT_SIZE[cell.size], area.right - area.left, NAME_MIN_SIZE)
+    if (size !== null && (best === null || size >= best.size)) best = { at, size }
+  }
+  if (best === null) return doc
+  const text = `${name.slice(0, best.at)}\n${name.slice(best.at + 1)}`
+  const rows = doc.rows.map((found, index) =>
+    index === rowIndex ? { ...found, cells: found.cells.map((other) => (other === cell ? { ...other, text } : other)) } : found,
+  )
+  return { ...doc, rows }
+}
+
+/**
+ * The Excel sizes of a name in the wide area, in whole points. In Excel the name has the merged
+ * columns C and D, and the date's label and the date share column E; each is set at the largest
+ * whole size that fits there by the page's own measure (11 in Excel is 10 on the page), never
+ * above 11 nor above the page's size. Null when the name is not in the wide area.
+ */
+export function wideNameExcelSizes(doc: PayslipDocument): { name: number; date: number } | null {
+  const printed = nameOnPageV4(doc)
+  const found = nameRowCells(doc)
+  if (!printed?.wide || !found) return null
+  const colX = columnEdges(doc)
+  const font: FontName = found.name.bold ? 'bold' : 'regular'
+  const widest = Math.max(...printed.lines.map((line) => measureText(line, font, printed.normal).width))
+  const name = Math.min(Math.floor((11 * printed.size) / printed.normal), Math.floor((11 * (colX[3] - colX[1] - 2 * PADDING_X)) / widest))
+  // In column E the label and the date are one text, a space apart.
+  const together = found.row.cells.filter((cell) => cell.col > NAME_COL && cell.text !== '').map((cell) => cell.text).join(' ')
+  const date = Math.min(11, Math.floor((11 * (colX[4] - colX[3] - 2 * PADDING_X)) / measureText(together, 'regular', 10).width))
+  return { name, date }
+}
+
+function layoutPageV4(doc: PayslipDocument): DrawList {
+  const page = layoutPageV3(doc)
+  const printed = nameOnPageV4(doc)
+  const found = nameRowCells(doc)
+  if (!found || printed?.wide === false) return page
+  const { index, row, name } = found
+  const lines = nameLinesOf(doc, row, name) ?? [name.text]
+  const area = wideNameArea(doc, row)
+  const font: FontName = name.bold ? 'bold' : 'regular'
+  const size = printed?.size ?? NAME_MIN_SIZE
+  // The name row is below the address and above the only row version 2 makes taller: one row per row above it.
+  const top = TOP + index * ROW_HEIGHT
+  const height = lines.length === 2 ? 2 * ROW_HEIGHT : ROW_HEIGHT
+  const overflow = page.overflow.filter((text) => text !== lines.join(' '))
+  if (printed === null) overflow.push(lines.join(' '))
+  const capHeight = (FONT_METRICS[font].capHeight / FONT_METRICS[font].unitsPerEm) * size
+  const texts = page.texts.map((text) => {
+    if (text.y <= top || text.y >= top + height) return text
+    const lineIndex = lines.indexOf(text.text)
+    if (lineIndex >= 0) return { x: round(area.left), y: round(top + lineIndex * ROW_HEIGHT + ROW_HEIGHT / 2 + capHeight / 2), text: text.text, font, size }
+    const cell = [...area.moved.keys()].find((other) => other.text === text.text)
+    return cell ? { ...text, x: round(area.moved.get(cell)!) } : text
   })
   return { ...page, texts, overflow }
 }

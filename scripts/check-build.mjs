@@ -180,26 +180,42 @@ try {
   if (missing !== 1) problems.push('The missing Employee CSG was not shown as an error for that employee.')
   if ((await page.getByTestId('payslip-page').count()) !== 0) problems.push('A payslip with an error was still drawn.')
 
-  // A long name (fake): the preview draws it on two lines, one row apart, and nothing overlaps.
+  // Long names (fake, drawing 4): a 39-character name on one line in the wide place, closer to "Name :",
+  // with the date of employment moved right on the same row; a 60-character name on two lines there,
+  // one row apart. Nothing overlaps in the preview.
   const longName = JSON.parse(readFileSync(join(root, 'samples', 'ABC Co Ltd-pdf-fill-2026-09.json'), 'utf8'))
   Object.assign(longName[0], { Surname: 'BHAGWANSINGH', 'Other names': 'Marie Anne Josee Claudette' })
+  Object.assign(longName[2], { Surname: 'MOHAMMUDHAWAMBOO-WAHAB', 'Other names': 'MARIE MAGDALENA WILHELMINA MAXIMILIEN', 'Date of Employment': '2018-01-09' })
   await page.locator('input[type="file"]').setInputFiles({ name: 'ABC Co Ltd-pdf-fill-2026-09.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(longName)) })
   await page.getByRole('dialog', { name: 'Import payroll data' }).getByRole('button', { name: 'Replace with 7 employees' }).click()
-  await page.getByRole('button', { name: 'BHAGWANSINGH Marie Anne Josee Claudette' }).click()
-  const boxes = await page.getByRole('img', { name: /Payslip of BHAGWANSINGH Marie Anne Josee Claudette/ }).evaluate(async (svg) => {
-    await document.fonts.ready
-    return [...svg.querySelectorAll('text')].map((text) => {
-      const box = text.getBBox()
-      return { text: text.textContent, x: Number(text.getAttribute('x')), y: Number(text.getAttribute('y')), x1: box.x, x2: box.x + box.width, y1: box.y, y2: box.y + box.height }
+  const textBoxes = async (name) => {
+    await page.getByRole('button', { name }).click()
+    return page.getByRole('img', { name: new RegExp(`Payslip of ${name}`) }).evaluate(async (svg) => {
+      await document.fonts.ready
+      return [...svg.querySelectorAll('text')].map((text) => {
+        const box = text.getBBox()
+        return { text: text.textContent, x: Number(text.getAttribute('x')), y: Number(text.getAttribute('y')), x1: box.x, x2: box.x + box.width, y1: box.y, y2: box.y + box.height }
+      })
     })
-  })
-  const [first, second] = ['BHAGWANSINGH Marie', 'Anne Josee Claudette'].map((text) => boxes.find((box) => box.text === text))
-  if (!first || !second) problems.push('The long name was not drawn on two lines in the preview.')
-  else if (first.x !== second.x || Math.abs(second.y - first.y - 17) > 0.01) problems.push(`The two lines of the long name are not one row apart: ${JSON.stringify([first, second])}`)
+  }
   // The browser's boxes include the font's line gap, so a box may touch the next row's by a hair.
-  const touching = boxes.flatMap((a, i) => boxes.slice(i + 1).filter((b) => a.x1 < b.x2 - 0.5 && b.x1 < a.x2 - 0.5 && a.y1 < b.y2 - 0.5 && b.y1 < a.y2 - 0.5).map((b) => `"${a.text}" and "${b.text}"`))
-  note(`long name in the preview: ${first && second ? 'two lines' : 'NOT two lines'}, ${touching.length} overlapping texts`)
-  if (touching.length > 0) problems.push(`Texts overlap in the preview of the long name: ${touching.join(', ')}`)
+  const touchingIn = (boxes) =>
+    boxes.flatMap((a, i) => boxes.slice(i + 1).filter((b) => a.x1 < b.x2 - 0.5 && b.x1 < a.x2 - 0.5 && a.y1 < b.y2 - 0.5 && b.y1 < a.y2 - 0.5).map((b) => `"${a.text}" and "${b.text}"`))
+  const wide = await textBoxes('BHAGWANSINGH Marie Anne Josee Claudette')
+  const [wideName, nameLabel, dateLabel] = ['BHAGWANSINGH Marie Anne Josee Claudette', 'Name :', 'Date of Employment :'].map((text) => wide.find((box) => box.text === text))
+  if (!wideName || !nameLabel || !dateLabel) problems.push('The 39-character name was not drawn on one line in the preview.')
+  else {
+    if (!(wideName.x < 150 && wideName.x > nameLabel.x2)) problems.push(`The 39-character name does not start closer to "Name :": ${JSON.stringify(wideName)}`)
+    if (Math.abs(dateLabel.y - wideName.y) > 0.01 || dateLabel.x < 400) problems.push(`"Date of Employment :" is not moved right on the name's row: ${JSON.stringify(dateLabel)}`)
+    if (wideName.x2 > dateLabel.x1 - 4) problems.push('The 39-character name runs into "Date of Employment :" in the preview.')
+  }
+  const twoLines = await textBoxes('MOHAMMUDHAWAMBOO-WAHAB MARIE MAGDALENA WILHELMINA MAXIMILIEN')
+  const lines = twoLines.filter((box) => box.text.startsWith('MOHAMMUDHAWAMBOO-WAHAB') || box.text.endsWith('MAXIMILIEN'))
+  if (lines.length !== 2) problems.push('The 60-character name was not drawn on two lines in the preview.')
+  else if (lines[0].x !== lines[1].x || Math.abs(lines[1].y - lines[0].y - 17) > 0.01) problems.push(`The two lines of the long name are not one row apart: ${JSON.stringify(lines)}`)
+  const touching = [...touchingIn(wide), ...touchingIn(twoLines)]
+  note(`long names in the preview: 39 characters on ${wideName ? 'one line' : 'NOT one line'}, 60 characters on ${lines.length} lines, ${touching.length} overlapping texts`)
+  if (touching.length > 0) problems.push(`Texts overlap in the preview of a long name: ${touching.join(', ')}`)
 
   // An address with three commas (fake): the preview splits it at the last comma, each line centred.
   const address = longName.map((row) => ({ ...row, Address: 'Impasse Fictive 2, Avenue Exemple Remy Sample, Bonne Terre, Vacoas' }))

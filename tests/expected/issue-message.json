@@ -31,7 +31,7 @@
                   "id": "20000000-0000-4000-8000-000000000001",
                   "version": "v1"
                 },
-                "drawing": 3,
+                "drawing": 4,
                 "page": {
                   "size": "A4",
                   "orientation": "portrait"
@@ -662,7 +662,7 @@
                   "id": "20000000-0000-4000-8000-000000000001",
                   "version": "v1"
                 },
-                "drawing": 3,
+                "drawing": 4,
                 "page": {
                   "size": "A4",
                   "orientation": "portrait"

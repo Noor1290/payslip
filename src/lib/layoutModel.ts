@@ -50,20 +50,23 @@ export interface DocRow {
  * a sheet (page geometry, sizes, line weights, cell styles). Any change to them is a new version,
  * and the old rules are kept for the payslips issued with them (CLAUDE.md, hard rules).
  */
-export const DRAWING_VERSION = 3
+export const DRAWING_VERSION = 4
 /**
  * The drawing versions this app can draw. 2 is 1 with a name on two lines when it does not fit on
  * one, and a name set smaller in Excel when the page sets it smaller. 3 is 2 with the company
- * address split at its last comma (docs/ISSUED_PAYSLIP.md).
+ * address split at its last comma. 4 is 3 with a wider place on its row for a name that does not
+ * fit its column at 8 points (docs/ISSUED_PAYSLIP.md).
  */
-export const KNOWN_DRAWINGS: readonly number[] = [1, 2, 3]
+export const KNOWN_DRAWINGS: readonly number[] = [1, 2, 3, 4]
 /**
  * The drawing version whose look a version gives the same lines. Version 2 draws everything
  * version 1 could draw as 1 did, the same text in the same places; only Excel sets a name smaller
  * where the page does, so it is no longer cut off. Version 3 only adds where the address is split,
- * and that split is in the stored text itself. A payslip does not count as changed for these.
+ * and that split is in the stored text itself. Version 4 only moves the name and the date of
+ * employment along their row, and may break the name elsewhere or not at all (sameLines ignores
+ * where). A payslip does not count as changed for these.
  */
-export const sameLookAs = (drawing: number): number => (drawing === 2 || drawing === 3 ? 1 : drawing)
+export const sameLookAs = (drawing: number): number => (drawing === 2 || drawing === 3 || drawing === 4 ? 1 : drawing)
 /** Said instead of drawing a payslip with rules this app does not have. */
 export const unknownDrawing = (drawing: unknown) =>
   `This payslip was issued with drawing version ${String(drawing)}, which this version of the app cannot draw. It is not shown, rather than drawn another way.`

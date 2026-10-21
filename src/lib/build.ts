@@ -5,7 +5,7 @@ import type { ImportedPayroll } from './payrollFile'
 import { computePayslip, type PayslipComputation } from './payslip'
 import { ratesFor, type RatesVersion } from './statutoryRates'
 import type { PayslipTemplate, TemplateMapping } from './template'
-import { layoutPage, withAddressSplitAtLastComma, withNameOnTwoLines, type DrawList } from '../writers/pageGeometry'
+import { layoutPage, withAddressSplitAtLastComma, withNameInWideArea, type DrawList } from '../writers/pageGeometry'
 
 export interface BuildSettings {
   template: PayslipTemplate
@@ -44,9 +44,10 @@ export function documentFor(
 ): PayslipDocument {
   const row = data.rows[computation.rowIndex]
   const document = buildPayslipDocument({ template, computation, company: data.company, nic: String(row.ID), period, issueDate })
-  // A name too long for one line goes on two, the surname whole on the first (drawing 2), and the
-  // address is split at its last comma (drawing 3).
-  const named = withNameOnTwoLines(document, typeof row.Surname === 'string' ? row.Surname : '')
+  // A name too long for its column has a wider place on its row, and goes on two lines there when
+  // it does not fit on one, the surname whole on the first (drawing 4); the address is split at
+  // its last comma (drawing 3).
+  const named = withNameInWideArea(document, typeof row.Surname === 'string' ? row.Surname : '')
   return withAddressSplitAtLastComma(named, data.company.addressLines)
 }
 

@@ -223,11 +223,26 @@ function withLook(lines: unknown): unknown {
 }
 
 /**
+ * Stored lines with the name on one line. Drawings 2 and 3 break a long name where it fits their
+ * column, drawing 4 where it fits its wider place, or not at all; the name is the same.
+ */
+function withNameOnOneLine(lines: unknown): unknown {
+  if (!Array.isArray(lines)) return lines
+  return lines.map((line) => {
+    const row = line as { id?: unknown; cells?: { col?: unknown; text?: unknown }[] } | null
+    if (row?.id !== 'employee-name' || !Array.isArray(row.cells)) return line
+    return { ...row, cells: row.cells.map((cell) => (cell?.col === 1 && typeof cell.text === 'string' ? { ...cell, text: cell.text.replace(/\n/g, ' ') } : cell)) }
+  })
+}
+
+/**
  * Whether two lists of stored lines are the same payslip, whatever order the database gave their
- * keys. Two drawing versions that draw these lines the same way do not make them different.
+ * keys. Two drawing versions that draw these lines the same way do not make them different, nor
+ * does where the name is broken over two lines, or the address over lines 3 and 4.
  */
 export function sameLines(a: unknown, b: unknown): boolean {
-  const [first, second] = [withoutAddress(withLook(withDrawing(a))), withoutAddress(withLook(withDrawing(b)))]
+  const read = (lines: unknown) => withoutAddress(withNameOnOneLine(withLook(withDrawing(lines))))
+  const [first, second] = [read(a), read(b)]
   return canonicalJson(first.lines) === canonicalJson(second.lines) && sameAddress(first.address, second.address)
 }
 

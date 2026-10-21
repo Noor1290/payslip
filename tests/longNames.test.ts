@@ -12,10 +12,11 @@ import { baselineFromIssued, compareMonth } from '../src/lib/monthCompare'
 import type { ImportedPayroll } from '../src/lib/payrollFile'
 import { DEFAULT_TABLE_MAPPING, TABLE_TEMPLATE } from '../src/lib/template'
 import { writePayslipWorkbook } from '../src/writers/excelWriter'
-import { FONT_METRICS, layoutPage, measureText, type DrawList } from '../src/writers/pageGeometry'
+import { layoutPage, measureText, withNameOnTwoLines, type DrawList } from '../src/writers/pageGeometry'
 import { writePayslipPdf } from '../src/writers/pdfWriter'
 import { ISSUE_DATE, PERIOD } from './fixtureDocuments'
 import { expectFrozen, loadFixture, readFont, readFrozen } from './helpers'
+import { overlaps } from './overlaps'
 import { current, issuedAugust, LAST_PERIOD, september } from './monthFixtures'
 import { readWorkbook, type SheetRecord } from './readExcel'
 import { readPdf, type PdfRecord } from './readPdf'
@@ -45,41 +46,32 @@ function prepared(data: ImportedPayroll): PreparedPayslip[] {
   return preparePayslips(data, { template: TABLE_TEMPLATE, mapping: DEFAULT_TABLE_MAPPING, rateVersions: DEFAULT_STATUTORY_RATES, period: PERIOD }, ISSUE_DATE)
 }
 
-/** The first payslip, which must be ready. */
-function payslip([surname, other]: readonly [string, string]): { doc: PayslipDocument; page: DrawList; item: PreparedPayslip } {
+/**
+ * The first payslip as drawing 3 made it (drawing 2's name on two lines), before drawing 4 gave a
+ * long name a wider place (tests/wideName.test.ts). Null when drawing 3 refuses the name.
+ */
+function asDrawing3(surname: string, other: string): { doc: PayslipDocument; page: DrawList; item: PreparedPayslip } {
   const item = prepared(renamed(surname, other))[0]
   expect(item.computation.errors.map((error) => error.message)).toEqual([])
-  return { doc: item.document!, page: item.page!, item }
+  const today = item.document!
+  const oneLine = today.rows.map((row) =>
+    row.id === 'employee-name' ? { ...row, cells: row.cells.map((cell) => (cell.col === 1 ? { ...cell, text: today.employeeName } : cell)) } : row,
+  )
+  const doc = withNameOnTwoLines({ ...today, drawing: 3, rows: oneLine }, surname)
+  return { doc, page: layoutPage(doc), item }
+}
+
+/** The first payslip, drawn by drawing 3, which must be ready. */
+function payslip([surname, other]: readonly [string, string]): { doc: PayslipDocument; page: DrawList; item: PreparedPayslip } {
+  const made = asDrawing3(surname, other)
+  expect(made.page.overflow).toEqual([])
+  return made
 }
 
 const nameCellOf = (doc: PayslipDocument) => doc.rows.find((row) => row.id === 'employee-name')!.cells.find((cell) => cell.col === 1)!
 const textOf = (page: DrawList, text: string) => {
   const found = page.texts.find((t) => t.text === text)
   if (!found) throw new Error(`"${text}" is not on the page`)
-  return found
-}
-
-/** Every pair of things on the page that touch: two texts, or a text and a line. Empty when nothing overlaps. */
-function overlaps(page: DrawList): string[] {
-  const boxes = page.texts.map((t) => {
-    const { ascent, descent, unitsPerEm } = FONT_METRICS[t.font] as unknown as { ascent: number; descent: number; unitsPerEm: number }
-    const width = measureText(t.text, t.font, t.size).width
-    return { name: t.text, x1: t.x, x2: t.x + width, y1: t.y - (ascent * t.size) / unitsPerEm, y2: t.y - (descent * t.size) / unitsPerEm }
-  })
-  const found: string[] = []
-  boxes.forEach((a, i) => {
-    for (const b of boxes.slice(i + 1)) {
-      if (a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 && b.y1 < a.y2) found.push(`"${a.name}" and "${b.name}"`)
-    }
-    for (const line of page.lines) {
-      const half = line.width / 2
-      const lx1 = Math.min(line.x1, line.x2) - half
-      const lx2 = Math.max(line.x1, line.x2) + half
-      const ly1 = Math.min(line.y1, line.y2) - half
-      const ly2 = Math.max(line.y1, line.y2) + half
-      if (a.x1 < lx2 && lx1 < a.x2 && a.y1 < ly2 && ly1 < a.y2) found.push(`"${a.name}" and a line at ${line.x1},${line.y1}`)
-    }
-  })
   return found
 }
 
@@ -130,11 +122,8 @@ describe('a long name goes on two lines (drawing 2)', () => {
   it('a single very long word: never broken inside; on its own line when there is more, refused when it is the whole first line and still too wide', () => {
     const { doc } = payslip(NAMES.longWordSurname)
     expect(nameCellOf(doc).text).toBe('ABRACADABRALONGFAKESURNAME\nMarie Anne')
-    const [refused] = prepared(renamed(...NAMES.oneWordTooLong))
-    expect(refused.document).toBeNull()
-    expect(refused.computation.errors.map((error) => error.message)).toEqual([
-      `"${full(NAMES.oneWordTooLong)}" is too long to fit on the payslip, even at the smallest size.`,
-    ])
+    // Drawing 3 refuses it (drawing 4 has room for it on one line).
+    expect(asDrawing3(...NAMES.oneWordTooLong).page.overflow).toEqual([full(NAMES.oneWordTooLong)])
   })
 
   it('a hyphenated surname stays whole on the first line, and so does a surname of several words', () => {
@@ -252,7 +241,7 @@ describe('a long name goes on two lines (drawing 2)', () => {
   it('is stored as it is drawn: the line break is in the stored text, and the reopened payslip is identical', async () => {
     const { doc, item } = payslip(NAMES.fiveWords39)
     const lines = encodeLines(doc, figuresOf(item.computation))
-    expect(lines[0]).toMatchObject({ format: 1, drawing: DRAWING_VERSION, employeeName: full(NAMES.fiveWords39) })
+    expect(lines[0]).toMatchObject({ format: 1, drawing: 3, employeeName: full(NAMES.fiveWords39) })
     const read = decodeLines(JSON.parse(JSON.stringify(lines)))
     if (!read.ok) throw new Error(read.problem)
     expect(read.document).toEqual(doc)

@@ -105,8 +105,8 @@ describe('page geometry shared by the preview and the PDF (recorded)', () => {
     }
   })
 
-  it('sets a long name smaller instead of cutting it or running into the next column', () => {
-    const doc = structuredClone(docs[0])
+  it('sets a long name smaller instead of cutting it or running into the next column (drawings 1 to 3; drawing 4 gives it a wider place, tests/wideName.test.ts)', () => {
+    const doc = { ...structuredClone(docs[0]), drawing: 3 }
     const nameCell = doc.rows.find((r) => r.id === 'employee-name')!.cells[1]
     nameCell.text = 'LONGSURNAME-EXAMPLE Marie Anne'
     const page = layoutPage(doc)

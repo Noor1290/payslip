@@ -37,8 +37,9 @@ describe('a payslip stored in format 1 is always drawn the same way', () => {
     expect(doc.drawing).toBe(1)
     // The numbers of today. When one goes up, this fixture stays and a new one is added for it
     // (drawing 2: tests/frozen/format-1-drawing-2, in tests/longNames.test.ts; drawing 3:
-    // tests/frozen/format-1-drawing-3, in tests/addressSplit.test.ts).
-    expect([LINES_FORMAT, DRAWING_VERSION]).toEqual([1, 3])
+    // tests/frozen/format-1-drawing-3, in tests/addressSplit.test.ts; drawing 4:
+    // tests/frozen/format-1-drawing-4, in tests/wideName.test.ts).
+    expect([LINES_FORMAT, DRAWING_VERSION]).toEqual([1, 4])
   })
 
   it('the page: every rectangle, line and text where it was', () => {
@@ -62,14 +63,14 @@ describe('a payslip stored in format 1 is always drawn the same way', () => {
 
   it('a drawing version this app does not have is refused, never drawn another way', async () => {
     const later = stored()
-    later[0].drawing = 4
+    later[0].drawing = 5
     expect(decodeLines(later)).toEqual({
       ok: false,
-      problem: 'This payslip was issued with drawing version 4, which this version of the app cannot draw. It is not shown, rather than drawn another way.',
+      problem: 'This payslip was issued with drawing version 5, which this version of the app cannot draw. It is not shown, rather than drawn another way.',
     })
-    expect(() => layoutPage({ ...doc, drawing: 4 })).toThrow(/drawing version 4/)
-    await expect(writePayslipPdf({ ...doc, drawing: 4 }, fonts)).rejects.toThrow(/drawing version 4/)
-    await expect(writePayslipWorkbook([{ ...doc, drawing: 4 }])).rejects.toThrow(/drawing version 4/)
+    expect(() => layoutPage({ ...doc, drawing: 5 })).toThrow(/drawing version 5/)
+    await expect(writePayslipPdf({ ...doc, drawing: 5 }, fonts)).rejects.toThrow(/drawing version 5/)
+    await expect(writePayslipWorkbook([{ ...doc, drawing: 5 }])).rejects.toThrow(/drawing version 5/)
   })
 
   it('PROOF the frozen page can fail: one text half a point lower, or one size changed, no longer matches', () => {

@@ -10,7 +10,7 @@
 import ExcelJS from 'exceljs'
 import { KNOWN_DRAWINGS, unknownDrawing, type DocCell, type DocRow, type PayslipDocument } from '../lib/layoutModel'
 import { centsToNumber, isWholeRupees } from '../lib/money'
-import { addressOnPage, nameOnPage } from './pageGeometry'
+import { addressOnPage, nameOnPage, nameOnPageV4, wideNameExcelSizes } from './pageGeometry'
 
 // Accounting-style formats, as in the reference: a zero shows as "-".
 export const FORMAT_WHOLE = '_-* #,##0_-;-* #,##0_-;_-* "-"??_-;_-@'
@@ -43,6 +43,22 @@ export function sheetNames(names: readonly string[]): string[] {
     used.add(candidate.toLowerCase())
     return candidate
   })
+}
+
+/**
+ * Drawing 4: the name row of a name in the wide area. The name has the merged columns C and D; the
+ * date's label and the date share column E, on the right: the date stays a date, its label written
+ * before it by its number format (or the label alone when there is no date).
+ */
+function wideNameRow(row: DocRow): { cells: DocCell[]; dateFormat: string | null } {
+  const label = row.cells.find((cell) => cell.col === 2 && cell.text !== '')
+  const date = row.cells.find((cell) => cell.col === 3 && cell.text !== '')
+  const cells = row.cells.filter((cell) => cell.col < 2).map((cell) => (cell.col === 1 ? { ...cell, span: 2 as const } : cell))
+  const last = date ?? (label && { ...label, col: 3 as const })
+  if (last) cells.push({ ...last, align: 'right' })
+  // A quote inside the label ends the quoted text, is written escaped, and the quoted text goes on.
+  const dateFormat = date && label ? `"${label.text.replace(/"/g, '"\\""')} "${FORMAT_DATE}` : null
+  return { cells, dateFormat }
 }
 
 function utcDate(iso: string): Date {
@@ -81,9 +97,13 @@ function addSheet(workbook: ExcelJS.Workbook, name: string, doc: PayslipDocument
   // Drawing 2: a name the page sets smaller, on one line or two, is set smaller here too, rounded
   // down to a whole point so it is never cut off. A name on two lines wraps at its line break; its
   // row is twice as tall, and the other texts of that row sit on its first line.
-  const printedName = nameOnPage(doc)
+  // Drawing 4: a name in the wide area has columns C and D, and its own Excel sizes.
+  const printedName = doc.drawing >= 4 ? nameOnPageV4(doc) : nameOnPage(doc)
+  const wide = wideNameExcelSizes(doc)
   const twoLines = printedName !== null && printedName.lines.length === 2
-  const nameExcelSize = printedName && printedName.size < printedName.normal ? Math.floor((11 * printedName.size) / 10) : null
+  const nameExcelSize = wide
+    ? wide.name < 11 ? wide.name : null
+    : printedName && printedName.size < printedName.normal ? Math.floor((11 * printedName.size) / 10) : null
   // Drawing 3: address lines the page sets smaller are set smaller here too, rounded down to a whole point.
   const printedAddress = addressOnPage(doc)
   const addressExcelSize = printedAddress && printedAddress.size < printedAddress.normal ? Math.floor((12 * printedAddress.size) / 11) : null
@@ -95,8 +115,9 @@ function addSheet(workbook: ExcelJS.Workbook, name: string, doc: PayslipDocument
     const nameRow = twoLines && row.id === 'employee-name'
     if (nameRow) sheetRow.height = TWO_LINE_NAME_ROW_HEIGHT
 
+    const wideRow = wide !== null && row.id === 'employee-name' ? wideNameRow(row) : null
     const cellAt = new Map<number, DocCell>()
-    for (const cell of row.cells) {
+    for (const cell of wideRow?.cells ?? row.cells) {
       for (let offset = 0; offset < cell.span; offset++) cellAt.set(cell.col + offset, cell)
       if (cell.span > 1) sheet.mergeCells(`${address(cell.col, index)}:${address(cell.col + cell.span - 1, index)}`)
     }
@@ -118,7 +139,8 @@ function addSheet(workbook: ExcelJS.Workbook, name: string, doc: PayslipDocument
 
       const isName = row.id === 'employee-name' && cell?.col === 1
       const isAddress = (row.id === 'address-1' || row.id === 'address-2') && cell !== undefined
-      const size = isName && nameExcelSize ? nameExcelSize : isAddress && addressExcelSize ? addressExcelSize : (cell?.size ?? 11)
+      const isWideDate = wideRow !== null && col === 3 && cell !== undefined
+      const size = isName && nameExcelSize ? nameExcelSize : isWideDate && wide ? wide.date : isAddress && addressExcelSize ? addressExcelSize : (cell?.size ?? 11)
       target.font = { name: doc.fonts.excel, size, bold: cell?.bold ?? false }
       target.alignment = nameRow
         ? { horizontal: cell?.align ?? 'left', vertical: 'top', ...(isName ? { wrapText: true } : {}) }
@@ -154,7 +176,7 @@ function addSheet(workbook: ExcelJS.Workbook, name: string, doc: PayslipDocument
         }
       } else if (cell.kind === 'date' && cell.isoDate) {
         target.value = utcDate(cell.isoDate)
-        target.numFmt = FORMAT_DATE
+        target.numFmt = isWideDate && wideRow?.dateFormat ? wideRow.dateFormat : FORMAT_DATE
       } else {
         target.value = cell.text
       }

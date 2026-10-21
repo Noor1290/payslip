@@ -15,7 +15,7 @@ import { writePayslipWorkbook } from '../src/writers/excelWriter'
 import { layoutPage, measureText, PAGE, type DrawList } from '../src/writers/pageGeometry'
 import { writePayslipPdf } from '../src/writers/pdfWriter'
 import { ISSUE_DATE, PERIOD } from './fixtureDocuments'
-import { expectFrozen, FIXTURE_NAME, readFixtureText, readFont } from './helpers'
+import { expectFrozen, FIXTURE_NAME, readFixtureText, readFont, readFrozen } from './helpers'
 import { readWorkbook } from './readExcel'
 import { readPdf } from './readPdf'
 import { BRN } from './fakeHubPort'
@@ -65,7 +65,8 @@ const drawnAddress = (doc: PayslipDocument, page: DrawList) =>
 describe('the address is split at its last comma (drawing 3)', () => {
   it('3 commas: line 3 is everything before the last comma, commas kept; line 4 what comes after it', () => {
     const { doc, page } = payslip(ADDRESSES.threeCommas)
-    expect(doc.drawing).toBe(3)
+    // Drawing 4 keeps the address of drawing 3.
+    expect(doc.drawing).toBeGreaterThanOrEqual(3)
     expect(linesOf(doc)).toEqual(['Impasse Fictive 2, Avenue Exemple Remy Sample, Bonne Terre', 'Vacoas'])
     expect(drawnAddress(doc, page).map((line) => line.size)).toEqual([11, 11])
   })
@@ -168,7 +169,7 @@ describe('the address is split at its last comma (drawing 3)', () => {
 
   it('is stored as it is printed, and an issued payslip of drawing 2 is drawn as before', () => {
     const { doc, item } = payslip(ADDRESSES.threeCommas)
-    expect(doc.drawing).toBe(3)
+    expect(doc.drawing).toBeGreaterThanOrEqual(3)
     const lines = encodeLines(doc, figuresOf(item.computation))
     const read = decodeLines(JSON.parse(JSON.stringify(lines)))
     if (!read.ok) throw new Error(read.problem)
@@ -179,21 +180,23 @@ describe('the address is split at its last comma (drawing 3)', () => {
 
   it('drawings 1, 2 and 3 count as the same payslip when their lines are the same', () => {
     const { doc, item } = payslip(ADDRESSES.oneComma)
-    const lines = encodeLines(doc, figuresOf(item.computation)) as Record<string, unknown>[]
+    const lines = encodeLines({ ...doc, drawing: 3 }, figuresOf(item.computation)) as Record<string, unknown>[]
     expect(lines[0].drawing).toBe(3)
     const as = (drawing: number) => [{ ...lines[0], drawing }, ...lines.slice(1)]
     expect(sameLines(as(1), lines)).toBe(true)
     expect(sameLines(as(2), lines)).toBe(true)
-    expect(sameLines(as(4), lines)).toBe(false)
+    expect(sameLines(as(5), lines)).toBe(false)
   })
 })
 
 describe('drawing version 3, as stored (frozen)', () => {
-  // Like tests/format1.test.ts: written once, never re-recorded. The 3-comma fake address.
+  // Like tests/format1.test.ts: written once, never re-recorded. The 3-comma fake address, as it
+  // was stored when drawing 3 was the drawing of new payslips; it is drawn from that alone.
   it('the lines, the page, the PDF and the Excel sheet are the ones it was first written with', async () => {
     const { doc, item } = payslip(ADDRESSES.threeCommas)
-    expectFrozen('format-1-drawing-3/lines', encodeLines(doc, figuresOf(item.computation)))
-    const read = decodeLines(JSON.parse(JSON.stringify(encodeLines(doc, figuresOf(item.computation)))))
+    // Made with drawing 3, today's payslip still gives the stored lines.
+    expectFrozen('format-1-drawing-3/lines', encodeLines({ ...doc, drawing: 3 }, figuresOf(item.computation)))
+    const read = decodeLines(readFrozen<unknown>('format-1-drawing-3/lines'))
     if (!read.ok) throw new Error(read.problem)
     expect(read.document.drawing).toBe(3)
     expectFrozen('format-1-drawing-3/page', layoutPage(read.document))
@@ -239,7 +242,7 @@ describe('the employee list after the switch to drawing 3', () => {
     expect(stored[0].drawing).toBe(2)
     expect(stored.find((line) => line.id === 'address-1')!.cells![0].text).toBe('Impasse Fictive 2')
     const now = month(ADDRESSES.threeCommas)
-    expect(now.prepared[0].document!.drawing).toBe(3)
+    expect(now.prepared[0].document!.drawing).toBeGreaterThanOrEqual(3)
     expect(linesOf(now.prepared[0].document!)).toEqual(['Impasse Fictive 2, Avenue Exemple Remy Sample, Bonne Terre', 'Vacoas'])
     expect(statusesOf(now, issued)).toEqual(Array(7).fill('issued'))
   })
