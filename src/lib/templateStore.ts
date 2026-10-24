@@ -32,6 +32,8 @@ const summarySchema = z
     updated_by_you: z.boolean(),
     published_version: revision.nullable(),
     published_at: stamp.nullable(),
+    /** The version of this template the company's payslips use (dashboard migration 0018). Absent before it. */
+    in_use_version: revision.nullable().optional(),
   })
   .transform((row) => ({
     templateId: row.template_id,
@@ -41,6 +43,7 @@ const summarySchema = z
     updatedByYou: row.updated_by_you,
     publishedVersion: row.published_version,
     publishedAt: row.published_at,
+    inUseVersion: row.in_use_version ?? null,
   }))
 export type TemplateSummary = z.infer<typeof summarySchema>
 

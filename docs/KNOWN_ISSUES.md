@@ -108,6 +108,8 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **To decide.** Whether the hub should keep a "default template" per company.
 
+**Settled (24 October 2026, multi-company payslips, Stage 1; dashboard migration 0018).** The dashboard keeps, per company, the version used for the payslips. An admin's "Use version N", "Use the built-in template" and "Publish the built-in template as this company's template" save it there; publishing to several companies sets it in each company published to. When the app opens, the saved version is used first, even with several published templates; only when none is saved does the old rule apply. A member's choice still lasts for the tab only. A dashboard without 0018 sends no `in_use_version`, and the app then behaves as before. Tests: `tests/templateUse.test.ts`, `tests/publishMany.test.ts`, and `npm run check:bridge`, section 13b.
+
 ## 15. Only the latest published version of a template can be chosen
 
 **What happens.** The list from the dashboard gives the latest published version of each template. The app offers that one. An older version can still be loaded by its number through the bridge, but there is no control for it.
@@ -317,3 +319,11 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 **To decide.** Whether the comparison should treat the address as the same when only its split differs.
 
 **Decided and built (21 October 2026, owner: option b).** The comparison now ignores how the address is split over lines 3 and 4, as it ignores the drawing number: two payslips whose address is the same text, split at the first comma, at the last, or with words moved down, are the same. A payslip issued with drawing 2 for a 3-comma address stays "Issued, revision N" after the switch to drawing 3. A real change still shows: a figure, the name, or the address text itself. Tests: `tests/addressSplit.test.ts`, "the employee list after the switch to drawing 3".
+
+## 42. A dialog opened on a page is centred on the whole page, not on the window
+
+**What happens.** Each page (Payslips, Template, Statutory rates, Issued payslips) enters with the `rise-in` animation, which animates `transform` and keeps it applied (`animation: rise 220ms ease-out both`). In Chrome, an element with a transform animation in effect holds its `position: fixed` children to itself instead of to the window. So a dialog opened from inside a page is centred on the page's full height: on a long page, scrolled to the editor, "Use version N now?" can open off-screen, and a tall dialog is cut at the top and the bottom instead of scrolling inside itself.
+
+**Evidence.** Found 24 October 2026 while building "Publish to several companies": the first screenshot showed its dialog starting halfway down the frame and running past its bottom. Drawn in `document.body` (a React portal) it sits in the window and scrolls inside itself. `src/index.css`: `.rise-in`, `.overlay` (`position: fixed`), `.dialog` (`max-height: calc(100vh - 48px)`).
+
+**To decide.** Whether every dialog should be drawn in `document.body` as "Publish to several companies" now is (one change in `src/components/Dialog.tsx`), or the animation should stop keeping its transform. Not changed for the other dialogs: it is not part of this task.

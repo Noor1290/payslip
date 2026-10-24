@@ -45,14 +45,16 @@ Both existing apps are React + Vite, so the steps assume that.
        }): boolean;
        sendToDashboard(type: "send-data" | "request-data", payload: unknown): Promise<PayrollHubReply>;
        requestData(dataType: string, period?: string): Promise<PayrollHubReply>;
+       setUnsaved(unsaved: boolean): void;
        onStatus(listener: (connected: boolean) => void): () => void;
      };
    }
    ```
 
 3. **Start it once**, with the app's id from the dashboard registry (see the per-app sections).
-4. **Show the dashboard buttons only when embedded**: `window.PayrollHubBridge.isEmbedded()`. Standalone, the app must look and behave as it does now.
-5. **Never** change `HUB_ORIGIN`, never add a localhost origin, never use `"*"` as a target origin, and never write received payroll data to `localStorage` or the URL.
+4. **Say when there are unsaved changes**: call `window.PayrollHubBridge.setUnsaved(true)` when the app starts holding changes it has not saved yet, and `setUnsaved(false)` once they are saved or thrown away. When the company changes in the dashboard, every app frame reloads so it shows the new company; before that, the dashboard asks its user if an app said `true` ("Payroll System has unsaved changes." / "Switch anyway?"). Standalone it does nothing.
+5. **Show the dashboard buttons only when embedded**: `window.PayrollHubBridge.isEmbedded()`. Standalone, the app must look and behave as it does now.
+6. **Never** change `HUB_ORIGIN`, never add a localhost origin, never use `"*"` as a target origin, and never write received payroll data to `localStorage` or the URL.
 
 ## `payroll_sys` (app id: `payroll`)
 
@@ -88,6 +90,66 @@ What to build:
 Ready-to-paste task for Claude Code in the `payroll_sys` repo:
 
 > Read `docs/INTEGRATION.md` and `docs/bridge.js` from the payroll_hub repo (I will paste or copy them in). Copy bridge.js unchanged to `src/payrollHubBridge.js`, import it once in the entry file, and call `PayrollHubBridge.init({ appId: "payroll" })` once in the root component. Find where the "pdf-fill" JSON export array is built and add a "Send to dashboard" button beside the existing export button, shown only when `PayrollHubBridge.isEmbedded()`. It must send the exact same array with `dataType: "payroll-result"` and `meta.period` as `YYYY-MM`, and show the reply's success or error. Do not change the existing export, do not edit bridge.js, and make sure the app behaves exactly as before when opened on its own.
+
+### Payroll app: column setup (`payroll-setup`)
+
+Added in migration plan Phase 2 (`docs/MIGRATION_PLAN.md`), database side in `supabase/migrations/0013_payroll_setups.sql`. Inside the dashboard the app keeps its column setup in the database; opened on its own it keeps using the browser, as before. The months of employee data are the next data type, `payroll-month` (Phase 3). Still protocol version 1 and the same `bridge.js`. A dashboard that does not know this data type answers "not registered": the app then stays with the browser.
+
+There are two kinds of setup, each a JSON `body` the app defines (the dashboard stores and returns it exactly and never looks inside), 250 KB at most:
+
+- **The shared setup**: the identity fields, which one is the ID field, and the Global columns. Several companies are attached to it and a change reaches all of them. Any member of an attached company may read it; only someone who is an **admin of every attached company** may change it (before any is attached: only its creator).
+- **A company's own setup**: its own columns and its custom company details. Members read, admins save. Its name, address and BRN are the dashboard company's own and are not in it.
+
+No dialog and no password gate (nothing per employee). Every exchange is a row in the transfer log (never with content) and every save shows a toast. Companies are named by BRN. Each message carries `brn`, the company selected in the dashboard, which must match (`wrong-company` otherwise). A save may also name another of the user's companies (`company_brn`, or each entry of `companies`); the database decides whether the user may change it.
+
+| Kind | What the app sends | What comes back |
+| --- | --- | --- |
+| request | `params: { action: "load", brn? }` | nothing when the selected company has no setup yet; otherwise first `{ kind: "shared", shared_setup_id, name, body, revision, updated_at, updated_by_you, can_change, companies, admin_of }`, then one row per attached company the user is a member of: `{ kind: "company", brn, name, address, role, selected, shared_setup_id, body, revision, updated_at, updated_by_you }` |
+| request | `params: { action: "history", target: "shared" \| "company", company_brn?, brn? }` | a row per kept revision, newest first (200 at most): `{ revision, saved_at, saved_by_you }` |
+| request | `params: { action: "revision", target, revision, company_brn?, brn? }` | one kept revision: `{ revision, body, saved_at, saved_by_you }`, and for a company also `shared_setup_id` |
+| request | `params: { action: "companies", brn? }` | the companies the user is an ADMIN of: `{ brn, name, address, has_setup, shared_setup_id, selected }` (for the import) |
+| save | `{ action: "save-shared", brn, shared_setup_id, name, body, expected_revision, companies?: [{ company_brn, body, expected_revision }] }` | `result: { action, shared_setup_id, name, revision, updated_at, companies: [{ brn, revision }] }` |
+| save | `{ action: "save-company", brn, company_brn?, body, expected_revision }` | `result: { action, brn, company, shared_setup_id, revision, updated_at }` |
+| save | `{ action: "attach-company", brn, company_brn?, shared_setup_id, body }` | the same as `save-company` |
+
+- **The app chooses the shared setup's id** (a UUID) and creates it with `expected_revision: 0`, with no companies; then attaches each company. A save sent twice is refused as `stale`; so is attaching a company that already has a setup.
+- **`companies` on `save-shared`** saves those companies' own setups in the same step, all or nothing: a change of a Global column's key rewrites formulas in company columns too. Each must be attached to that shared setup.
+- **`expected_revision`** is the revision the app last saw. If someone else saved since, the save is refused as `stale` and nothing is overwritten. After `unavailable` or no answer: `load` and compare before saving again.
+- **`can_change`, `companies`, `admin_of`** on the shared row say whether the user may change it, how many companies use it and how many of those the user is an admin of: show the Global columns read-only from the start when `can_change` is false.
+- **Every revision is kept, none dropped**: a month records the revisions it was saved with (`payroll-month`, below).
+- **A change of a column's key** that moves values in saved months is not a `payroll-setup` save: it is `key-change` under `payroll-month`, so the setup and the months change together.
+- `forbidden`: the user may not make this change (not an admin of that company, or not of every company using the shared setup).
+
+### Payroll app: months (`payroll-month`)
+
+Added in migration plan Phase 3 (`docs/MIGRATION_PLAN.md`), database side in `supabase/migrations/0014_payroll_months.sql`. Inside the dashboard the app keeps its months there: each company's employees and the values typed for them, one month at a time, the whole month as one JSON list `[{ "id": "...", "values": { "<column key>": ... } }]`, stored and returned exactly as sent, 1 MB and 5,000 employees at most. Opened on its own the app keeps using the browser. A dashboard that does not know this data type answers "not registered": the app then keeps its months in the browser as in Phase 2.
+
+National IDs and salaries, so (decision D5):
+
+- **Admins only.** Anyone else is refused as `forbidden` without a question, and the database lets them read nothing, not even a count.
+- **The password gate must be open**, to read and to save, with **no dialog** on each read or save. While it is locked everything except `gate` and `unlock` is refused at once as `locked`, and nothing is read or stored.
+- **The dashboard tells the app when the gate opens or locks**: it sends the app one row, `send-data` with `{ dataType: "payroll-month", rows: [{ action: "gate", unlocked: true | false }] }`, only when that changes. Nothing else is in it. An app that does not listen answers that it cannot receive data; nothing depends on it.
+- Every exchange is a row in the transfer log, with counts and the month, never a value. A saved month has **no toast** (the app saves by itself a moment after typing stops and shows "Saved"); a refused save and a change of key do.
+
+Each message carries `brn`, the company selected in the dashboard (`wrong-company` otherwise). `company_brn` names another of the user's companies (the import of months); the user must be its admin too.
+
+| Kind | What the app sends | What comes back |
+| --- | --- | --- |
+| request | `params: { action: "gate", brn? }` | one row `{ unlocked }`. Answered to any member, gate open or not |
+| request | `params: { action: "unlock", brn }` | the dashboard shows its password prompt (nothing else: no "Send"); one row `{ unlocked: true }` once it is open, `denied` on "Not now", `locked` if nobody answers in 100 seconds. At once when already open |
+| request | `params: { action: "list", brn, company_brn? }` | a row per saved month, oldest first, without employees: `{ period, revision, shared_revision, company_revision, employee_count, value_keys, updated_at, updated_by_you }`. `value_keys` are the column keys the month holds values under: names only |
+| request | `params: { action: "load", brn, company_brn?, periods: ["YYYY-MM", ...] }` | 1 to 12 months; a row per month that exists: `{ period, revision, shared_revision, company_revision, employee_count, employees, updated_at, updated_by_you }`. A month that does not exist is left out |
+| request | `params: { action: "history", brn, company_brn?, period }` | a row per save of that month, newest first (200 at most): `{ revision, shared_revision, company_revision, employee_count, kept, saved_at, saved_by_you }` |
+| request | `params: { action: "revision", brn, company_brn?, period, revision }` | one revision with its employees, exactly as saved: `{ period, revision, shared_revision, company_revision, employee_count, employees, saved_at, saved_by_you }`. Answered for a revision whose content was `kept`, and for the revision in use now; otherwise `not-found`. Reading it changes nothing |
+| save | `{ action: "save", brn, company_brn?, period, employees, expected_revision, shared_revision, company_revision, keep_previous?, restored_from? }` | `result: { action, brn, company, period, revision, employee_count, updated_at, restored_from? }` |
+| save | `{ action: "key-change", brn, moves: [{ old_key, new_key, company_brn }], shared?: { shared_setup_id, name, body, expected_revision, companies? }, company?: { company_brn?, body, expected_revision } }` | `result: { action, setup: { shared_setup_id, revision, brn?, companies: [{ brn, revision }] }, months: [{ brn, period, revision }] }` |
+
+- **`expected_revision`** is the month's revision the app last saw, `0` for a month the dashboard does not have yet. If someone else saved since, the save is refused as `stale` and nothing is overwritten. After `unavailable` or no answer: `load` the month and compare before saving again. Only a month that was read can be saved.
+- **`shared_revision` and `company_revision`** are the column setup revisions the month was worked out with (`payroll-setup`). They must be kept revisions of that company's setups (`invalid` otherwise); they are recorded with the month.
+- **History.** Every save is recorded (who, when, the setup revisions, the number of employees). The month's content is kept with a record when it would otherwise be lost: the last revision of each day (UTC), a revision someone else saved when another person saves over it, and the one replaced by a save with `keep_previous: true` ("Save mine over it", an import that replaces a month). `kept` says which.
+- **Restoring a revision** ("Restore this version" in the app's History) is a `save` of that revision's employees with `keep_previous: true` and `restored_from`: a NEW revision, so nothing earlier is rewritten or deleted, and what it replaces is kept. Unlike a month saved as the user types, it shows a toast. The column setup's own history is `payroll-setup` `history` and `revision`; restoring one is an ordinary `save-shared` or `save-company` of that body.
+- **`key-change`**: a column's or an identity field's key changed. One step, all or nothing: the setup that carries the new key is saved exactly as `save-shared` (with `shared`) or `save-company` (with `company`) would save it, with every check they have, and the values move from `old_key` to `new_key` in every saved month the key reaches: every company attached to the shared setup when `company_brn` is `null` (a Global column, an identity field), only that company otherwise. Each month moved gets a new revision, listed in `months`. Exactly one of `shared` and `company`; with `company`, every move must name that company. At most 20 moves, applied in order.
+- `forbidden`: not an admin of that company (or, for a Global key, of every company using the shared setup). `not-found`: the company has no column setup in the dashboard yet, or a key is to move in a company not attached to the shared setup.
 
 ## `pdf-form-filler` (app id: `pdf-editor`)
 
@@ -136,6 +198,49 @@ Ready-to-paste task for Claude Code in the `pdf-form-filler` repo:
 
 > Read `docs/INTEGRATION.md` and `docs/bridge.js` from the payroll_hub repo (I will paste or copy them in). Copy bridge.js unchanged to `src/payrollHubBridge.js`, import it once in the entry file, and call `PayrollHubBridge.init({ appId: "pdf-editor", onData })` once in the root component. `onData` must pass `payload.rows` into the same code path the JSON file import uses after parsing (find it via the message "doesn't look like a valid JSON file"), and throw an Error with a clear message when the rows cannot be used. Add a "Get from dashboard" button shown only when `PayrollHubBridge.isEmbedded()`, using `requestData("payroll-result")`. Do not write the received data to localStorage, do not edit bridge.js, and make sure the app behaves exactly as before when opened on its own.
 
+### PDF form filler: templates in the dashboard (`pdf-template`, `pdf-file`)
+
+Added in migration plan Phase 1 (`docs/MIGRATION_PLAN.md`), database side in `supabase/migrations/0012_pdf_templates.sql`. Inside the dashboard the app keeps its templates in the database and its blank PDF forms in a private Storage bucket; opened on its own it keeps using the browser, as before. Still protocol version 1 and the same `bridge.js`.
+
+Both data types are answered and saved with **no dialog and no password gate**: a template is the fields drawn on a form and the company's own details, nothing per employee. Every exchange is a row in the transfer log (never with content) and every save shows a toast. Members of the company read; admins write. Everything is about the company selected in the dashboard: each answer carries `meta: { label, brn, role }`, each save must carry that company's `brn`, and a save for another company is refused as `wrong-company`.
+
+What is NOT sent to the dashboard: the values last typed into a form and the People list. They stay in the browser.
+
+**`pdf-file`: the blank PDF forms.** A file is named by the SHA-256 of its bytes (64 lowercase hex characters) and crosses the bridge as base64 text, one file per message, 5 MB at most.
+
+| Kind | What the app sends | What comes back |
+| --- | --- | --- |
+| request | `params: { action: "exists", sha256, brn? }` | one row `{ sha256, exists }` |
+| request | `params: { action: "download", sha256, brn? }` | one row `{ sha256, bytes, data }` (`data` is the file in base64), or `not-found` |
+| save | one row `{ action: "upload", brn, sha256, data }` | `result: { sha256, bytes, already_there }` |
+
+- Before storing, the dashboard checks that `data` is base64, that the file is 5 MB or less, that it starts as a PDF, and that its SHA-256 is the `sha256` stated. Otherwise `invalid` or `too-large`, and nothing is stored.
+- Uploading the same file twice is harmless: the second answer has `already_there: true`.
+- A slow upload may be answered `unavailable` after 8 seconds while it is still going. Ask `exists` before sending it again.
+
+**`pdf-template`: the templates.** `body` is a JSON object the app defines (the dashboard stores and returns it exactly, and never looks inside), 250 KB at most, and must not contain a `data:` file: the PDF goes through `pdf-file`.
+
+| Kind | What the app sends | What comes back |
+| --- | --- | --- |
+| request | `params: { action: "list", brn? }` | a row per template, no bodies: `{ template_id, name, revision, pdf_sha256, pdf_file_name, pdf_bytes, pdf_pages, updated_at, updated_by_you }`. May be none |
+| request | `params: { action: "load", template_id, brn? }` | one row: the same, plus `body` |
+| request | `params: { action: "load", template_id, revision, brn? }` | one kept revision as it was saved: `{ template_id, revision, name, body, pdf_sha256, pdf_file_name, pdf_bytes, pdf_pages, saved_at, saved_by_you }`, or `not-found`. Reading it changes nothing |
+| request | `params: { action: "history", template_id, brn? }` | a row per kept revision, newest first: `{ revision, name, saved_at, saved_by_you }` |
+| request | `params: { action: "companies", brn? }` | the user's OTHER companies they are an admin of: `{ brn, name }` |
+| save | `{ action: "save", brn, template_id, name, body, expected_revision, pdf_sha256, pdf_file_name, pdf_bytes, pdf_pages }` | `result: { action, template_id, name, revision, updated_at }` |
+| save | `{ action: "restore", brn, template_id, revision, expected_revision }` | `result: { action, template_id, name, revision, restored_from, updated_at }` |
+| save | `{ action: "copy-to-company", brn, template_id, to_brn, new_template_id, name }` | `result: { action, template_id, name, revision, to_company }` |
+| save | `{ action: "delete", brn, template_id, expected_revision }` | `result: { action, template_id, name }` |
+
+- **The app chooses a template's id** (a UUID), for a new template too, with `expected_revision: 0`. So a save that is sent twice cannot make two templates: the second is refused as `stale`.
+- **`expected_revision`** is the revision the app last saw. If someone else saved since, the save is refused as `stale` and nothing is overwritten.
+- **The file first.** A save, a restore or a copy whose PDF is not in the bucket for that company is refused as `not-found` ("Send the file first"). For a copy the dashboard copies the file to the other company itself.
+- **Every revision is kept** (the last 200 per template). `restore` makes an earlier one the newest.
+- **Copy** needs the user to be a member of the selected company and an admin of the one named by `to_brn`.
+- **Delete** removes the template and its history, and its file when no other template of that company uses it.
+- Limits: a name is 1 to 80 characters, unique in its company whatever the capitals (`invalid`, "already has one with that name"); 50 templates per company (`too-large`).
+- After `unavailable` or no answer to a save: `load` (or `list`) and compare the revision before saving again, as for payslip templates.
+
 ## Payslip app (app id: `payslip`)
 
 The dashboard's registry entry is active and loads the app from `https://noor1290.github.io/payslip/` (keep the trailing slash). It is registered for four data types:
@@ -155,7 +260,7 @@ Same as `pdf-form-filler`: copy the file, `init({ appId: "payslip", onData })`, 
 
 The payslip needs each employee's `Employee CSG` and `Employee NSF`. They are optional in the rows (see the note in the `pdf-form-filler` section): when a key is missing, show that employee's figure as missing; do not use `0`.
 
-A row from a saved run also has `Date of Employment` (text, `YYYY-MM-DD`) when the dashboard has that employee's date. The key is left out when it does not; it is never `""`. It is set from what the payroll app sends ("Send to dashboard", or a saved payroll file): since 20 Oct 2026 a different date already set is replaced when it is sent for the same or a newer month (a date typed in the Data explorer: only by a newer month), so a date changed in a later month reaches the payslip and an older month sent again never overwrites it. It can also be typed in the dashboard's Data explorer. The date is per employee, not per month. This app also reads the key whatever its capitals and spaces, and a `DD/MM/YYYY` value as in a PDF fill file; without a date the line is blank and the payslip says so.
+A row from a saved run also has `Date of Employment` (text, `YYYY-MM-DD`) when the dashboard has that employee's date. The key is left out when it does not; it is never `""`. The date is typed in the dashboard's Data explorer. Since 17 Oct 2026 (rehearsal fix F6) a saved payroll file (or "Send to dashboard") also sets it, from a valid `YYYY-MM-DD` value only. Since 20 Oct 2026 (the Date type in the payroll app, where the date is now kept; migration 0017) a different date already set is replaced only by one sent for the same or a newer month than the month it came from, so a date changed in a later month reaches the payslip and sending an older month again never overwrites it. A date typed in the Data explorer is replaced only by a month newer than the company's newest saved month when it was typed; a date stored before migration 0017 counts as typed. A date someone changed between the read and the save is kept. Until migration 0017 is run, a date already set is kept. The date is per employee, not per month: rows of any run read afterwards carry the newest date.
 
 ### Rates and templates: what is the same for both
 
@@ -212,7 +317,7 @@ Requests, by `params.action`:
 
 | `params`                                         | Answer rows                                                                                                                     |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `{ action: "list", brn? }`                       | One per template, by name, without bodies: `template_id`, `name`, `draft_revision`, `updated_at`, `updated_by_you`, `published_version` and `published_at` (both `null` when never published). |
+| `{ action: "list", brn? }`                       | One per template, by name, without bodies: `template_id`, `name`, `draft_revision`, `updated_at`, `updated_by_you`, `published_version` and `published_at` (both `null` when never published), and `in_use_version`: the version of this template used for the company's payslips, or `null` (see "The template used for the payslips" below). |
 | `{ action: "load", template_id, brn? }`          | One row, the draft: `template_id`, `name`, `draft_revision`, `body`, `updated_at`, `updated_by_you`.                            |
 | `{ action: "load", template_id, version, brn? }` | One row, that published version: `template_id`, `name` (as it was when published), `version`, `body`, `published_at`, `published_by_you`. |
 
@@ -223,6 +328,9 @@ Saves, by the row's `action`:
 | `{ action: "save-draft", brn, name, body, expected_revision: 0 }` (a new template; `template_id` absent or `null`) | `{ template_id, name, draft_revision: 1, updated_at }` |
 | `{ action: "save-draft", brn, template_id, name, body, expected_revision }`           | `{ template_id, name, draft_revision, updated_at }`         |
 | `{ action: "publish", brn, template_id, expected_revision }`                          | `{ template_id, version, draft_revision, published_at }`    |
+| `{ action: "use", brn, template_id, version }` (both `null` to clear the choice)      | `{ action: "use", template_id, version }`                   |
+| `{ action: "publish-copy", brn, company_brn, name, body, expected_revision }`         | `{ action: "publish-copy", brn, company, template_id, name, version, draft_revision, created, published, published_at }` |
+| `{ action: "publish-summary", brn, name, published, skipped, failed, unconfirmed }`  | `{ action: "publish-summary" }`                              |
 
 `expected_revision` is the `draft_revision` the app last saw. A save-draft always sends the whole draft (name and body); renaming is a save-draft with the new name. Publishing publishes exactly the draft revision named, or is refused as `stale`.
 
@@ -232,7 +340,36 @@ Limits:
 - A company has at most 50 templates (`too-large`).
 - A name is 1 to 80 characters after trimming, and unique in its company whatever the capitals (`invalid`).
 - No images or other embedded files: a body in which any text or key contains a `data:` URI is refused (`invalid`). A logo is not part of a template in this stage.
-- There is no action to delete or archive a template, and a published version can never be removed. Anything other than the four actions above is `invalid`. (Follow-up: docs/FUTURE_WORK.md, section 9c.)
+- There is no action to delete or archive a template, and a published version can never be removed. Anything other than the actions above is `invalid`. (Follow-up: docs/FUTURE_WORK.md, section 9c.)
+
+#### The template used for the payslips, and publishing to several companies
+
+Added with migration `supabase/migrations/0018_payslip_template_in_use.sql`. Until it is run, `list` gives `in_use_version: null` everywhere and the three messages below are refused as `unavailable`, naming that file.
+
+**The template used for the payslips.** A company may have one published version chosen for its payslips; nothing is chosen for any company at first. `list` says which (`in_use_version` on that template's row). `use` sets it, for the selected company, admins only; `template_id` and `version` must name one of its published versions (`not-found` otherwise), or both be `null` to clear it. Anyone may read it; when nothing is chosen the app keeps its own rule (one published template, or it asks).
+
+**The check before publishing to several companies.** A request:
+
+| `params`                                  | Answer rows |
+| ----------------------------------------- | ----------- |
+| `{ action: "check", brn, name, page? }`   | One per company the user is an ADMIN of and that has a BRN, the selected company first (`selected: true`), then by name: `{ brn, company, selected, templates, template, payroll }`. 50 companies per answer: `page` 0 (or absent) is the first 50, `page` 1 the next 50, and so on, up to 999; a page with fewer than 50 rows is the last. There is no limit on the number of companies. |
+
+- `brn` is required and must be the selected company's, and the user must be an admin of it (`forbidden`). The companies are read from the database at that moment; a company the user is only a member of, or not a member of, is never in the answer.
+- `templates`: how many templates the company has (at most 50).
+- `template`: its template with that `name`, capitals ignored, or `null`: `{ template_id, name, draft_revision, published_version, unpublished_changes, latest_is_same }`. `unpublished_changes` is `true` when the draft is not exactly its latest published version (or it was never published): publishing to it would replace that draft. `latest_is_same` is `true` when its latest published version already is exactly the selected company's saved draft with that name (the one being published): publishing to it then adds no version and only makes that version the one used for its payslips.
+- `payroll`: its newest saved run, or `null` when it has none: `{ period: "YYYY-MM", employees, columns }`. `columns` are the keys "Get from dashboard" gives that run's rows (the standard fields, "Employee CSG" and "Employee NSF" when some row has them, and the company's own columns), names only. "Date of Employment" is not listed: it belongs to the employee. The database function behind it (`payroll_run_columns`) returns key names only, never a value, and only to an admin of that company.
+- No prompt and no password gate, as for the other template messages: nothing in it is per employee.
+
+**Publishing to one company.** A save, one company per message, so that each company gets all of it or none and one failure does not stop the others:
+
+- `company_brn` names the company: the selected one, or another the user is an ADMIN of (`forbidden` otherwise, checked against the database, and again by the database function).
+- `name` and `body` are what is published, with the same limits as `save-draft`.
+- `expected_revision` is that company's `template.draft_revision` from the check, or `0` when it had no template with that name. If that is no longer so (someone saved there since, or made a template with that name), the save is refused as `stale` and nothing is stored there.
+- In one step: its template with that name gets the body as its draft and a new published version (unless its latest version already is exactly that: `published: false`), or a new template is made, published as version 1 (`created: true`); and that version becomes the one used for its payslips. Issued payslips are never touched.
+- The answer names the company (`brn`, `company`). Each company is a row in the Transfer log, but has NO toast of its own, published or refused: the batch has one toast (below).
+
+**The end of a batch.** After the last company, the app sends `publish-summary` with the counts of companies published to (`published`, including those that already had that version and now use it), not ticked (`skipped`), refused (`failed`) and not confirmed (`unconfirmed`), each 0 to 100,000, at least one of them above 0. The dashboard stores nothing and adds no Transfer log row; it shows ONE toast, a success when nothing failed and a warning otherwise, for example `Payslip template "Monthly payslip" published to 4 companies; 2 skipped, 1 not published.` A count of 0 is left out of it. Publishing to the selected company only (`publish`) keeps its own toast, as before.
+- After `unavailable` or no answer: run the check again and compare that company's template before sending it again (its `draft_revision` and `published_version` will have moved if it went through).
 
 Ready-to-paste example:
 
@@ -389,6 +526,7 @@ Every message is an envelope:
 | `ready`         | app → dashboard              | `{}`                                                                | a `ping`                         |
 | `ping`          | either                       | `{}`                                                                | `pong`, same id                  |
 | `activity`      | app → dashboard              | `{}`                                                                | none                             |
+| `unsaved`       | app → dashboard              | `{ unsaved: true }` or `{ unsaved: false }`, nothing else           | none                             |
 | `send-data`     | dashboard → app, or app → dashboard | `{ dataType, rows: [...], meta?: { period?: "YYYY-MM", label?, brn?, role? } }` | `received`, same id |
 | `received`      | reply to `send-data`         | `{ ok: true, result? }` or `{ ok: false, error, code?, index? }`    |                                  |
 | `request-data`  | app → dashboard              | `{ dataType, period?: "YYYY-MM", params? }`                         | `response-data`, same id         |
@@ -398,6 +536,8 @@ Still version 1. What the payslip app needed was added as optional parts, so an 
 
 `activity` (added 13 Oct 2026, also still version 1) is sent by `bridge.js` itself; an app has nothing to do for it. While the user clicks, types, scrolls or touches inside the app, `bridge.js` says so at most once every 30 seconds, at once if it has not said so lately and otherwise when its turn comes. The message has nothing in it: it says that something was done, never what. The dashboard treats it exactly like a key pressed in the dashboard itself, so neither its sign-out for inactivity nor its password gate happens in the middle of work in an app. It counts only from the app that is showing, in a visible tab, and at most once every 5 seconds per app whatever is sent. There is no reply. An app that still carries the older `bridge.js` keeps working and simply does not send it; its user can then be signed out while working in it, as before. A dashboard that does not know the message yet ignores it, so deploy the dashboard first and copy the new `bridge.js` into the apps after.
 
+`unsaved` (added 17 Oct 2026, rehearsal fix F1, also still version 1) is sent by `bridge.js` when the app calls `setUnsaved`, and only when the value changes. It says whether the app holds changes not saved yet, never what they are. The dashboard keeps it per app frame and forgets it when the frame loads a page again. When its user changes company (a switch, or Add company, which selects the new company), the dashboard first asks if any app said `true`, naming the apps, with "Stay on <the company shown>" as the default and "Switch anyway"; then it reloads every app frame. After a company is added or deleted it does not ask again. There is no reply. An app that still carries the older `bridge.js` never sends it and counts as having nothing unsaved: its frame simply reloads. A save stays protected exactly as before: by the BRN check, whatever is answered.
+
 Limits per data type, checked by the dashboard before anything else:
 
 | Data type          | Rows an app may send in one message | Size of those rows as JSON      | Rows in an answer |
@@ -406,6 +546,8 @@ Limits per data type, checked by the dashboard before anything else:
 | `statutory-rates`  | exactly 1                           | 4 KB                            | 0 to 1,000        |
 | `payslip-template` | exactly 1                           | 160 KB (the body itself: 150 KB) | 0 to 50          |
 | `payslip-issue`    | exactly 1, holding 1 to 1,000 payslips | 4 MB (each payslip: 16 KB)   | 0 to 5,000        |
+| `pdf-template`     | exactly 1                           | 270 KB (the body itself: 250 KB) | 0 to 200         |
+| `pdf-file`         | exactly 1, holding one file         | 7.1 MB (a 5 MB file as base64)  | exactly 1         |
 
 Rules both sides follow:
 

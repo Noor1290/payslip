@@ -28,6 +28,17 @@ export function createFakeHub() {
     issued: [],
     /** Saved payroll runs, by month ("2026-08"): the rows of the payroll export. */
     runs: {},
+    /** The selected company's template used for the payslips: { templateId, version } or null. */
+    inUse: null,
+    /**
+     * The user's OTHER companies (migration 0018 on the dashboard side): { name, brn, role,
+     * templates, versions, inUse, payroll: { period, employees, columns } | null }. Only those
+     * with role "admin" are ever listed or published to.
+     */
+    others: [],
+    /** A publish-copy to these BRNs is refused with the code given: { [brn]: code }. */
+    refuseCopy: {},
+    ids: 0,
     /** Every message handled, in order: { type, payload }. */
     log: [],
     /**
@@ -156,21 +167,73 @@ export function createFakeHub() {
 
   const latestVersion = (templateId) =>
     state.versions.filter((row) => row.templateId === templateId).reduce((best, row) => (!best || row.version > best.version ? row : best), null)
-  const nextId = () => `20000000-0000-4000-8000-${String(state.templates.length + 1).padStart(12, '0')}`
+  const nextId = () => `20000000-0000-4000-8000-${String(++state.ids).padStart(12, '0')}`
+  /** One company's templates, versions and choice, the selected one's or another's. */
+  const storeOf = (company) =>
+    company === null
+      ? { templates: state.templates, versions: state.versions, getInUse: () => state.inUse, setInUse: (value) => (state.inUse = value) }
+      : { templates: company.templates, versions: company.versions, getInUse: () => company.inUse, setInUse: (value) => (company.inUse = value) }
+  const latestIn = (versions, templateId) =>
+    versions.filter((row) => row.templateId === templateId).reduce((best, row) => (!best || row.version > best.version ? row : best), null)
+  /** The selected company's newest saved run, as its column names: the keys of its rows. */
+  const ownPayroll = () => {
+    const month = Object.keys(state.runs).sort().at(-1)
+    if (!month) return null
+    const rows = state.runs[month]
+    return { period: month, employees: rows.length, columns: [...new Set(rows.flatMap((row) => Object.keys(row)))].filter((key) => key !== 'Date of Employment') }
+  }
+  const checkRow = (company, wanted, published) => {
+    const store = storeOf(company)
+    const template = store.templates.find((row) => row.name.toLowerCase() === wanted)
+    const latest = template ? latestIn(store.versions, template.id) : null
+    return {
+      brn: company === null ? state.company.brn : company.brn,
+      company: company === null ? state.company.name : company.name,
+      selected: company === null,
+      templates: store.templates.length,
+      template: template
+        ? {
+            template_id: template.id,
+            name: template.name,
+            draft_revision: template.revision,
+            published_version: latest?.version ?? null,
+            unpublished_changes: !latest || latest.name !== template.name || !same(latest.body, template.body),
+            latest_is_same: published !== null && latest !== null && latest.name === template.name && same(latest.body, published),
+          }
+        : null,
+      payroll: company === null ? ownPayroll() : (company.payroll ? copy(company.payroll) : null),
+    }
+  }
 
   const answerTemplates = (params) => {
     if (!isObject(params)) return field('action')
-    if (params.action !== 'list' && params.action !== 'load') return field('action')
-    const allowed = params.action === 'list' ? ['action', 'brn'] : ['action', 'brn', 'template_id', 'version']
+    if (params.action !== 'list' && params.action !== 'load' && params.action !== 'check') return field('action')
+    const allowed = params.action === 'list' ? ['action', 'brn'] : params.action === 'check' ? ['action', 'brn', 'name', 'page'] : ['action', 'brn', 'template_id', 'version']
     if (unknownKey(params, allowed)) return refuse('invalid', 'Unexpected field in the data.')
     if (brnProblem(params.brn, false)) return field('brn')
     if (params.action === 'load') {
       if (typeof params.template_id !== 'string' || !UUID.test(params.template_id)) return field('template_id')
       if (params.version !== undefined && (!Number.isInteger(params.version) || params.version < 1)) return field('version')
     }
+    if (params.action === 'check') {
+      if (brnProblem(params.brn, true)) return field('brn')
+      if (typeof params.name !== 'string' || params.name.trim().length < 1 || params.name.trim().length > 80) return field('name')
+      if (params.page !== undefined && (!Number.isInteger(params.page) || params.page < 0 || params.page > 999)) return field('page')
+    }
     const refusal = context(params.brn)
     if (refusal) return refusal
     const answer = (rows) => ({ ok: true, dataType: 'payslip-template', rows, meta: meta() })
+
+    if (params.action === 'check') {
+      if (state.role !== 'admin') return refuse('forbidden', 'Only an admin of this company can publish a template.')
+      const wanted = params.name.trim().toLowerCase()
+      const admin = state.others.filter((company) => company.role === 'admin').sort((a, b) => a.name.localeCompare(b.name))
+      // What is published is the selected company's saved draft of that name.
+      const published = state.templates.find((row) => row.name.toLowerCase() === wanted)?.body ?? null
+      const page = params.page ?? 0
+      // 50 companies per answer, this company first; a shorter page is the last.
+      return answer([checkRow(null, wanted, published), ...admin.map((company) => checkRow(company, wanted, published))].slice(page * 50, page * 50 + 50))
+    }
 
     if (params.action === 'list') {
       return answer(
@@ -186,6 +249,7 @@ export function createFakeHub() {
               updated_by_you: template.by === 'you',
               published_version: latest?.version ?? null,
               published_at: latest?.publishedAt ?? null,
+              in_use_version: state.inUse?.templateId === template.id ? state.inUse.version : null,
             }
           }),
       )
@@ -219,8 +283,100 @@ export function createFakeHub() {
     ])
   }
 
+  const checkUse = (row) => {
+    if (unknownKey(row, ['action', 'brn', 'template_id', 'version'])) return refuse('invalid', 'Unexpected field in the data.')
+    if (brnProblem(row.brn, true)) return field('brn')
+    if (row.template_id !== null && (typeof row.template_id !== 'string' || !UUID.test(row.template_id))) return field('template_id')
+    if (row.version !== null && (!Number.isInteger(row.version) || row.version < 1)) return field('version')
+    if ((row.template_id === null) !== (row.version === null)) {
+      return refuse('invalid', "The template choice couldn't be saved because the request was incomplete. Nothing was changed.")
+    }
+    const refusal = context(row.brn)
+    if (refusal) return refusal
+    if (state.role !== 'admin') return refuse('forbidden', 'Only an admin of this company can save or publish a template.')
+    if (row.template_id !== null && !state.versions.some((version) => version.templateId === row.template_id && version.version === row.version)) {
+      return refuse('not-found')
+    }
+    return {
+      store: () => {
+        state.inUse = row.template_id === null ? null : { templateId: row.template_id, version: row.version }
+        return { action: 'use', template_id: row.template_id, version: row.version }
+      },
+    }
+  }
+
+  const checkCopy = (row) => {
+    if (unknownKey(row, ['action', 'brn', 'company_brn', 'name', 'body', 'expected_revision'])) return refuse('invalid', 'Unexpected field in the data.')
+    if (brnProblem(row.brn, true)) return field('brn')
+    if (brnProblem(row.company_brn, true)) return field('company_brn')
+    if (typeof row.name !== 'string' || row.name.trim().length < 1 || row.name.trim().length > 80) return field('name')
+    if (!isObject(row.body)) return field('body')
+    if (!Number.isInteger(row.expected_revision) || row.expected_revision < 0) return field('expected_revision')
+    const refusal = context(row.brn)
+    if (refusal) return refusal
+    if (state.role !== 'admin') return refuse('forbidden', 'Only an admin of this company can save or publish a template.')
+    if (bytes(row.body) > 150_000) return refuse('too-large', 'The template is larger than the dashboard accepts (150 KB).')
+    if (hasFile(row.body)) return refuse('invalid', 'A template cannot contain images or other embedded files.')
+    const own = norm(row.company_brn) === norm(state.company.brn)
+    const other = own ? null : state.others.find((company) => norm(company.brn) === norm(row.company_brn) && company.role === 'admin')
+    if (!own && !other) return refuse('forbidden', 'Only an admin of that company can publish a template to it.')
+    const forced = state.refuseCopy[norm(row.company_brn)]
+    if (forced) return refuse(forced)
+    const store = storeOf(own ? null : other)
+    const name = row.name.trim()
+    const found = store.templates.find((template) => template.name.toLowerCase() === name.toLowerCase())
+    if (!found && row.expected_revision !== 0) return refuse('stale', "That company's template was changed since it was checked. Nothing was published there. Check again.")
+    if (found && found.revision !== row.expected_revision) return refuse('stale', "That company's template was changed since it was checked. Nothing was published there. Check again.")
+    if (!found && store.templates.length >= 50) return refuse('too-large', 'The company has reached the limit for this kind of data.')
+    return {
+      store: () => {
+        let template = found
+        if (!template) {
+          template = { id: nextId(), name, body: copy(row.body), revision: 1, updatedAt: stamp(), by: 'you' }
+          store.templates.push(template)
+        } else if (!same(template.body, row.body)) {
+          Object.assign(template, { body: copy(row.body), revision: template.revision + 1, updatedAt: stamp(), by: 'you' })
+        }
+        let latest = latestIn(store.versions, template.id)
+        const published = !latest || latest.name !== template.name || !same(latest.body, template.body)
+        if (published) {
+          latest = { templateId: template.id, version: (latest?.version ?? 0) + 1, name: template.name, body: copy(template.body), publishedAt: stamp(), by: 'you' }
+          store.versions.push(latest)
+        }
+        store.setInUse({ templateId: template.id, version: latest.version })
+        return {
+          action: 'publish-copy',
+          brn: own ? state.company.brn : other.brn,
+          company: own ? state.company.name : other.name,
+          template_id: template.id,
+          name: template.name,
+          version: latest.version,
+          draft_revision: template.revision,
+          created: !found,
+          published,
+          published_at: latest.publishedAt,
+        }
+      },
+    }
+  }
+
+  const checkSummary = (row) => {
+    if (unknownKey(row, ['action', 'brn', 'name', 'published', 'skipped', 'failed', 'unconfirmed'])) return refuse('invalid', 'Unexpected field in the data.')
+    if (brnProblem(row.brn, true)) return field('brn')
+    for (const key of ['published', 'skipped', 'failed', 'unconfirmed']) {
+      if (!Number.isInteger(row[key]) || row[key] < 0 || row[key] > 100_000) return field(key)
+    }
+    const refusal = context(row.brn)
+    if (refusal) return refusal
+    // Stores nothing: the dashboard only shows one toast for the batch.
+    return { store: () => ({ action: 'publish-summary' }) }
+  }
+
   const checkTemplateSave = (row) => {
     if (!isObject(row)) return field('row')
+    if (row.action === 'publish-summary') return checkSummary(row)
+    if (row.action === 'use') return checkUse(row)
+    if (row.action === 'publish-copy') return checkCopy(row)
     if (row.action !== 'save-draft' && row.action !== 'publish') return field('action')
     const publishing = row.action === 'publish'
     const allowed = publishing ? ['action', 'brn', 'template_id', 'expected_revision'] : ['action', 'brn', 'template_id', 'name', 'body', 'expected_revision']

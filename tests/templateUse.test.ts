@@ -10,7 +10,7 @@ const ID = '20000000-0000-4000-8000-000000000001'
 const edited: TemplateBody = { ...BUILT_IN_BODY, labels: { ...BUILT_IN_BODY.labels, title: 'Pay advice' } }
 const builtIn: TemplateChoice = { kind: 'built-in' }
 const published: TemplateChoice = { kind: 'published', templateId: ID, name: 'Monthly payslip', version: 3, body: edited }
-const summary = (name: string, publishedVersion: number | null): TemplateSummary => ({
+const summary = (name: string, publishedVersion: number | null, inUseVersion: number | null = null): TemplateSummary => ({
   templateId: ID.replace(/1$/, String(name.length % 9)),
   name,
   draftRevision: 2,
@@ -18,6 +18,7 @@ const summary = (name: string, publishedVersion: number | null): TemplateSummary
   updatedByYou: true,
   publishedVersion,
   publishedAt: publishedVersion === null ? null : '2026-10-07T09:05:00+04:00',
+  inUseVersion,
 })
 
 describe('opened on its own', () => {
@@ -69,5 +70,12 @@ describe('the preselection rule', () => {
     const one = summary('Monthly payslip', 2)
     expect(preselection([summary('Draft only', null), one])).toEqual({ kind: 'one', item: one })
     expect(preselection([one, summary('Weekly', 1), summary('Draft only', null)])).toEqual({ kind: 'choose', count: 2 })
+  })
+
+  it('takes the version saved in the dashboard as the one used for the payslips first, even an older one', () => {
+    const weekly = summary('Weekly', 4, 2)
+    expect(preselection([summary('Monthly payslip', 2), weekly])).toEqual({ kind: 'saved', item: weekly, version: 2 })
+    // A company with one published template that someone chose there: that choice, not the rule.
+    expect(preselection([summary('Only one', 3, 3)])).toMatchObject({ kind: 'saved', version: 3 })
   })
 })

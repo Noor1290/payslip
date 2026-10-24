@@ -20,6 +20,17 @@ import {
   type TemplateSummary,
 } from './templateStore'
 import { activeTemplate, preselection, type ActiveTemplate, type TemplateChoice } from './templateUse'
+import {
+  checkCompanies,
+  initialTicks,
+  planCompanies,
+  publishToCompanies,
+  saveTemplateInUse,
+  sendPublishSummary,
+  type CompanyPlan,
+  type CompanyResult,
+  type PublishTarget,
+} from './publishMany'
 
 export type TemplatesList =
   | { status: 'standalone' | 'waiting' | 'loading' }
@@ -42,11 +53,27 @@ export interface EditorState {
 
 export type TemplateNotice =
   | { kind: 'ok'; text: string }
-  | { kind: 'failure'; failure: Failure; end: SaveEnd | 'load'; action: 'save' | 'publish' | 'load' }
+  | { kind: 'failure'; failure: Failure; end: SaveEnd | 'load'; action: 'save' | 'publish' | 'load' | 'use' }
   /** A body from the dashboard that this app refuses to use, and why. */
   | { kind: 'refused-body'; name: string; problems: string[] }
 
 type Pending = { action: 'save'; save: PendingDraftSave } | { action: 'publish'; publish: PendingPublish }
+
+/** Publishing the saved draft to several companies: the check, the ticks, the run, the outcome. */
+export type ManyPublish =
+  | { step: 'checking' }
+  | { step: 'failed'; failure: Failure }
+  | { step: 'review'; plans: CompanyPlan[]; ticked: ReadonlySet<string> }
+  | { step: 'publishing'; plans: CompanyPlan[]; ticked: ReadonlySet<string>; done: number; total: number; company: string }
+  | { step: 'done'; results: CompanyResult[] }
+
+/** Shown when a choice of template could not be kept in the dashboard. */
+const NOT_REMEMBERED = 'The choice was not saved in the dashboard'
+const notRemembered = (found: Failure): Failure => ({
+  ...found,
+  title: NOT_REMEMBERED,
+  detail: `${found.title}. The payslips use it in this tab only; choose it again to try once more.`,
+})
 export type TemplatesBusy = 'loading' | 'saving' | 'publishing' | 'checking' | null
 
 const STANDALONE_EDITOR: EditorState = {
@@ -86,6 +113,9 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
   const [justPublished, setJustPublished] = useState<{ templateId: string; name: string; version: number } | null>(null)
   /** The company the current choice was made for: a choice is never carried to another company. */
   const chosenFor = useRef<string | null>(null)
+  /** Where "Publish" sends the saved draft: this company only (as before), or several. */
+  const [publishTarget, setPublishTarget] = useState<PublishTarget>('this')
+  const [many, setMany] = useState<ManyPublish | null>(null)
 
   /** Loads one published version and, when its body can be used, makes it the payslips' template. */
   const choosePublished = useCallback(
@@ -127,8 +157,10 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
       setPreviewDraft(false)
       const found = preselection(result.value)
       setChoiceNeeded(found.kind === 'choose')
-      if (found.kind === 'one') {
-        const chosen = await choosePublished(found.item.templateId, found.item.publishedVersion!, () => current)
+      if (found.kind === 'saved' || found.kind === 'one') {
+        // The version saved in the dashboard for the payslips, or the company's one published template.
+        const version = found.kind === 'saved' ? found.version : found.item.publishedVersion!
+        const chosen = await choosePublished(found.item.templateId, version, () => current)
         // The company's one published template could not be used: the user decides, not the app.
         if (current && !chosen) setChoiceNeeded(true)
       }
@@ -170,15 +202,30 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
             ? 'The last save has not been confirmed yet. Check again first.'
             : null
 
-  const fail = (found: Failure, end: SaveEnd | 'load', action: 'save' | 'publish' | 'load') => {
+  const fail = (found: Failure, end: SaveEnd | 'load', action: 'save' | 'publish' | 'load' | 'use') => {
     setNotice({ kind: 'failure', failure: found, end, action })
     if (found.kind === 'forbidden') onForbidden()
+  }
+
+  /**
+   * An admin's choice is saved in the dashboard for the company, so it is the one used next time
+   * too. A member's stays in this tab. Nothing is saved for the app's own preselection.
+   */
+  const mayRemember = embedded && brn !== null && !readOnly && !forOtherCompany && list.status === 'loaded' && list.role !== 'member'
+  const remember = async (templateId: string | null, version: number | null) => {
+    if (!mayRemember || brn === null) return
+    const saved = await saveTemplateInUse(port, brn, templateId, version)
+    if (!saved.ok) {
+      fail(notRemembered(saved.failure), 'refused', 'use')
+      return
+    }
+    reload()
   }
 
   const pickPublished = async (templateId: string, version: number) => {
     setBusy('loading')
     setNotice(null)
-    await choosePublished(templateId, version)
+    if (await choosePublished(templateId, version)) await remember(templateId, version)
     setBusy(null)
   }
 
@@ -191,10 +238,14 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
   /** Answered "Not now": the payslips keep the template they use; the notice says how to choose it later. */
   const declineJustPublished = () => setJustPublished(null)
 
-  const pickBuiltIn = () => {
+  const pickBuiltIn = async () => {
     setChoice({ kind: 'built-in' })
     setChoiceNeeded(false)
     setPreviewDraft(false)
+    setNotice(null)
+    setBusy('loading')
+    await remember(null, null)
+    setBusy(null)
   }
 
   /** Opens a draft from the dashboard in the editor. Whatever was in the editor is replaced. */
@@ -356,6 +407,7 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     await afterPublish(published, publication)
     if (published.end === 'saved' && published.version !== null && (await choosePublished(templateId, published.version))) {
       setNotice({ kind: 'ok', text: `The built-in template is now this company's template "${name}", version ${published.version}, and is used for the payslips.` })
+      await remember(templateId, published.version)
     }
   }
 
@@ -376,6 +428,58 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
       'send',
     )
   }
+
+  /** "Check the companies": the dashboard checks every company the user is an admin of. */
+  const startPublishMany = async () => {
+    if (!editor?.saved || editor.templateId === null || brn === null || cannotSave !== null || dirty || busy !== null) return
+    const { name, body, draftRevision } = editor.saved
+    const { publishedVersion } = editor
+    setNotice(null)
+    setMany({ step: 'checking' })
+    const checked = await checkCompanies(port, brn, name)
+    if (!checked.ok) {
+      setMany({ step: 'failed', failure: checked.failure })
+      if (checked.failure.kind === 'forbidden') onForbidden()
+      return
+    }
+    const plans = planCompanies(checked.companies, { name, body, draftRevision, publishedVersion })
+    setMany({ step: 'review', plans, ticked: initialTicks(plans, publishTarget) })
+  }
+
+  const tickCompany = (companyBrn: string, on: boolean) =>
+    setMany((previous) => {
+      if (previous?.step !== 'review') return previous
+      const plan = previous.plans.find((item) => item.brn === companyBrn)
+      if (!plan || plan.thisCompany || plan.blocked !== null) return previous
+      const ticked = new Set(previous.ticked)
+      if (on) ticked.add(companyBrn)
+      else ticked.delete(companyBrn)
+      return { ...previous, ticked }
+    })
+
+  /** Publishes to the ticked companies one after the other; one that fails does not stop the others. */
+  const publishMany = async () => {
+    if (many?.step !== 'review' || !editor?.saved || editor.templateId === null || brn === null) return
+    const { plans, ticked } = many
+    const { name, body } = editor.saved
+    setBusy('publishing')
+    const results = await publishToCompanies(port, { brn, name, body }, plans, ticked, (done, total, company) =>
+      setMany({ step: 'publishing', plans, ticked, done, total, company }),
+    )
+    setMany({ step: 'done', results })
+    setBusy(null)
+    // One toast in the dashboard for the whole batch.
+    await sendPublishSummary(port, brn, name, results)
+    const own = results.find((result) => result.thisCompany)
+    if (own?.outcome === 'updated') {
+      setEditor((previous) => (previous ? { ...previous, publishedVersion: own.version } : previous))
+      // Already saved there as the one used for the payslips: no "Use version N now?" question.
+      await choosePublished(editor.templateId, own.version)
+    }
+    reload()
+  }
+
+  const closeMany = () => setMany((previous) => (previous?.step === 'checking' || previous?.step === 'publishing' ? previous : null))
 
   /** After "not confirmed": ask the dashboard again and compare. Never sends the save itself. */
   const checkAgain = () => {
@@ -405,6 +509,13 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     declineJustPublished,
     pickBuiltIn,
     publishBuiltIn,
+    publishTarget,
+    setPublishTarget,
+    many,
+    startPublishMany,
+    tickCompany,
+    publishMany,
+    closeMany,
     editor,
     dirty,
     unsaved,

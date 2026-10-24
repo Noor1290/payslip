@@ -2,7 +2,9 @@ import { ArrowDown, ArrowUp, Clock3, Eye, FilePlus2, Info, Lock, Pencil, Plus, R
 import { useState } from 'react'
 import { Dialog } from '../components/Dialog'
 import { FailurePanel, SavedPanel } from '../components/FailurePanel'
+import { PublishManyDialog } from '../components/PublishManyDialog'
 import { formatShortDate, isIsoDate } from '../lib/dates'
+import type { PublishTarget } from '../lib/publishMany'
 import type { ImportedPayroll } from '../lib/payrollFile'
 import { DEFAULT_TABLE_MAPPING, EMPLOYER_CONTRIBUTION_SUFFIX, FIXED_LINES, mappableKeys, NEVER_MAP } from '../lib/template'
 import { bodyChanges, bodyRows, LABEL_MAX, MAX_BODY_ROWS, NAME_MAX, type BodyLine, type TemplateBody } from '../lib/templateBody'
@@ -57,6 +59,12 @@ const when = (stamp: string | null) => {
   return isIsoDate(day) ? formatShortDate(day) : ''
 }
 const by = (you: boolean) => (you ? 'you' : 'another admin')
+
+const PUBLISH_TARGETS: [PublishTarget, string][] = [
+  ['this', 'This company only'],
+  ['selected', 'Selected companies'],
+  ['all', 'All my companies'],
+]
 
 /** What the user is about to do while the editor holds something that would be lost. */
 type Leaving = { title: string; go: () => void }
@@ -288,7 +296,7 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
               )}
               <span className="mt-2 flex flex-wrap gap-2">
                 {embedded && (t.choice.kind !== 'built-in' || t.choiceNeeded) && (
-                  <button type="button" className="btn btn-sm" onClick={t.pickBuiltIn} disabled={working}>
+                  <button type="button" className="btn btn-sm" onClick={() => void t.pickBuiltIn()} disabled={working}>
                     Use the built-in template
                   </button>
                 )}
@@ -323,7 +331,7 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
         </div>
         <p className="m-0 border-t border-line px-5 py-3 text-xs text-subtle">
           {embedded
-            ? 'Payslips are exported from a published version or from the built-in template. A draft can be previewed, never exported.'
+            ? "Payslips are exported from a published version or from the built-in template. A draft can be previewed, never exported. An admin's choice is kept in the dashboard for this company; a member's lasts for this tab."
             : 'Opened on its own, the app uses the built-in template. Changes you make below are used for this session only.'}
         </p>
       </section>
@@ -639,6 +647,32 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
               </p>
             )}
 
+            {embedded && (
+              <fieldset className="m-0 border-0 p-0" data-testid="publish-target">
+                <legend className="mb-1 p-0 text-sm font-semibold">Publish to</legend>
+                <div className="flex flex-wrap gap-x-5 gap-y-1">
+                  {PUBLISH_TARGETS.map(([value, text]) => (
+                    <label key={value} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="radio"
+                        name="publish-target"
+                        value={value}
+                        checked={t.publishTarget === value}
+                        disabled={working || t.cannotSave !== null}
+                        onChange={() => t.setPublishTarget(value)}
+                      />
+                      {text}
+                    </label>
+                  ))}
+                </div>
+                {t.publishTarget !== 'this' && (
+                  <p className="m-0 mt-1 text-sm text-muted">
+                    Only companies where you are an admin are listed. Each one is checked first, and you choose before anything is published.
+                  </p>
+                )}
+              </fieldset>
+            )}
+
             <div className="flex flex-wrap items-center justify-end gap-2">
               {embedded ? (
                 <>
@@ -665,9 +699,13 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
                     disabled={working || t.cannotSave !== null || t.dirty || !editor.saved}
                     aria-describedby={t.cannotSave ? 'template-cannot-save' : undefined}
                     title={t.dirty ? 'Save the draft first: publishing publishes exactly the saved draft.' : undefined}
-                    onClick={t.publish}
+                    onClick={t.publishTarget === 'this' ? t.publish : () => void t.startPublishMany()}
                   >
-                    {t.busy === 'publishing' ? 'Publishing' : `Publish as version ${(editor.publishedVersion ?? 0) + 1}`}
+                    {t.publishTarget !== 'this'
+                      ? 'Check the companies'
+                      : t.busy === 'publishing'
+                        ? 'Publishing'
+                        : `Publish as version ${(editor.publishedVersion ?? 0) + 1}`}
                   </button>
                 </>
               ) : (
@@ -678,6 +716,10 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
             </div>
           </div>
         </section>
+      )}
+
+      {t.many && editor?.saved && (
+        <PublishManyDialog many={t.many} name={editor.saved.name} onTick={t.tickCompany} onPublish={() => void t.publishMany()} onClose={t.closeMany} />
       )}
 
       {t.justPublished && (

@@ -78,6 +78,14 @@ The month review needs nothing new from the hub. It uses two requests the hub al
 
 13. **A record of the month review (later).** NOT STARTED, to design. The app keeps "reviewed", "approved" and "acknowledged" marks in memory only, because an issued payslip accepts no other key. If an audit trail is wanted (who reviewed which employee against which revision of last month, and when), the hub needs a place for it: for example an optional, strictly checked key on each payslip of an issue, or one row per issue. Nothing in it would be a payroll figure. Until then the review leaves no trace once the tab is closed.
 
+## Multi-company payslips, Stage 1 (24 October 2026)
+
+14. **The template used for the payslips, and publishing a template to several companies.** BUILT on the hub's branch `multi-company`, not merged. Migration `0018_payslip_template_in_use.sql`, NOT run yet; its undo is `supabase/undo/0018_payslip_template_in_use_undo.sql`.
+   - `payslip_template_in_use`: per company, the published version its payslips use. Members read; written only through `set_payslip_template_in_use` (admins of that company) and `publish_payslip_template_copy`.
+   - `payslip-template` `list` rows carry `in_use_version`. New: request `check` (every company the user is an admin of, read from the database: its template with that name, whether its draft holds unpublished changes, whether its latest version already is the draft being published, its number of templates, and the month, size and column NAMES of its newest saved run, from `payroll_run_columns`, never a value); saves `publish-copy` (one company per message, all or nothing, then used for its payslips; refused as `stale` when that company changed since the check; no toast of its own) and `use`. The check comes 50 companies per answer (`page`), so there is no limit on the number of companies. After the last company the app sends `publish-summary` (counts only), and the dashboard shows ONE toast for the batch.
+   - `delete_company` is replaced to delete the new table's row (newest definition now in 0018).
+   - The contract is in `docs/INTEGRATION.md`, payslip-template, "The template used for the payslips, and publishing to several companies".
+
 ## Later change to the bridge file (13 October 2026)
 
 Not one of the items above, and not asked for by this app. The hub added one message to `bridge.js`, `activity`: while someone works in an app, the bridge says so at most once every 30 seconds, with nothing in it, so the dashboard neither signs its user out nor locks its password gate in the middle of that work. Still protocol version 1, and the app has nothing to do for it.

@@ -76,10 +76,16 @@ export function activeTemplate(input: {
 }
 
 /**
- * What to do when a company's templates arrive and nothing was chosen yet: with exactly ONE
- * published template it is preselected; with more, the user must pick; with none, the built-in.
+ * What to do when a company's templates arrive and nothing was chosen yet in this tab: the
+ * version saved in the dashboard as the one used for the payslips, when there is one; otherwise,
+ * with exactly ONE published template it is preselected; with more, the user must pick; with
+ * none, the built-in.
  */
-export function preselection(items: readonly TemplateSummary[]): { kind: 'none' } | { kind: 'one'; item: TemplateSummary } | { kind: 'choose'; count: number } {
+export function preselection(
+  items: readonly TemplateSummary[],
+): { kind: 'none' } | { kind: 'saved'; item: TemplateSummary; version: number } | { kind: 'one'; item: TemplateSummary } | { kind: 'choose'; count: number } {
+  const saved = items.find((item) => item.inUseVersion !== null)
+  if (saved) return { kind: 'saved', item: saved, version: saved.inUseVersion! }
   const published = items.filter((item) => item.publishedVersion !== null)
   if (published.length === 0) return { kind: 'none' }
   if (published.length === 1) return { kind: 'one', item: published[0] }

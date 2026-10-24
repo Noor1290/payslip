@@ -1,11 +1,30 @@
 // Types for fake-hub.mjs, so the tests can use the same stand-in dashboard as the bridge check.
+type FakeTemplate = { id: string; name: string; body: object; revision: number; updatedAt: string; by: 'you' | 'other' }
+type FakeVersion = { templateId: string; version: number; name: string; body: object; publishedAt: string; by: 'you' | 'other' }
+type FakeInUse = { templateId: string; version: number } | null
 export interface FakeHubState {
   signedIn: boolean
   role: 'admin' | 'viewer'
   company: { name: string; brn: string | null } | null
   rates: Record<string, unknown>[]
-  templates: { id: string; name: string; body: Record<string, unknown>; revision: number; updatedAt: string; by: 'you' | 'other' }[]
-  versions: { templateId: string; version: number; name: string; body: Record<string, unknown>; publishedAt: string; by: 'you' | 'other' }[]
+  templates: FakeTemplate[]
+  versions: FakeVersion[]
+  /** The selected company's template used for the payslips. */
+  inUse: FakeInUse
+  /** The user's other companies; only those with role "admin" are listed or published to. */
+  others: {
+    name: string
+    brn: string
+    role: 'admin' | 'member'
+    templates: FakeTemplate[]
+    versions: FakeVersion[]
+    inUse: FakeInUse
+    payroll: { period: string; employees: number; columns: string[] } | null
+  }[]
+  /** A publish-copy to these BRNs is refused with that code. */
+  refuseCopy: Record<string, string>
+  /** The last template id handed out. */
+  ids: number
   log: { type: 'send-data' | 'request-data'; payload: { dataType: string; period?: string; params?: Record<string, unknown>; rows?: Record<string, unknown>[] } }[]
   /** Saved payroll runs by month, as the rows of the payroll export. */
   runs: Record<string, Record<string, unknown>[]>

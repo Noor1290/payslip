@@ -836,7 +836,16 @@ try {
   await fresh.frame.getByTestId('template-in-use').filter({ hasText: 'Table, version 1 (published)' }).waitFor()
   const steps = await fresh.seededPage.evaluate(() => window.hub.state.log.filter((m) => m.type === 'send-data').map((m) => m.payload.rows[0]))
   check(
-    steps.length === 2 && steps[0].action === 'save-draft' && steps[0].expected_revision === 0 && !('template_id' in steps[0]) && steps[0].name === 'Table' && steps[1].action === 'publish' && steps[1].expected_revision === 1,
+    steps.length === 3 &&
+      steps[0].action === 'save-draft' &&
+      steps[0].expected_revision === 0 &&
+      !('template_id' in steps[0]) &&
+      steps[0].name === 'Table' &&
+      steps[1].action === 'publish' &&
+      steps[1].expected_revision === 1 &&
+      // An admin's choice is saved in the dashboard (migration 0018), so it is used next time too.
+      steps[2].action === 'use' &&
+      steps[2].version === 1,
     `Publishing the built-in template did not go through the normal flow: ${JSON.stringify(steps.map((step) => ({ ...step, body: undefined })))}`,
   )
   check(JSON.stringify(steps[0].body) === JSON.stringify(body), 'The template published is not the built-in one.')
@@ -847,6 +856,219 @@ try {
   check(!(await fresh.frame.getByTestId('issue-panel').textContent()).includes('published template version'), 'After publishing the built-in template the month still cannot be issued.')
   await fresh.seededPage.close()
   console.log('  roles and the built-in template: a member is read-only from the start; the built-in is published through draft then publish')
+
+  // 13b. Publishing a template to several companies (dashboard migration 0018). The dashboard
+  // lists only the companies where the user is an admin; each is checked first; the ones with a
+  // reason are unticked; publishing goes company by company and one refusal stops nothing.
+  const COMPANY_COLUMNS = Object.keys(fixture[0]).filter((key) => key !== 'Date of Employment')
+  const manyPage = await context.newPage()
+  await manyPage.addInitScript(
+    ([templateBody, rows, columns]) => {
+      window.seedHub = (fake) => {
+        const id = '20000000-0000-4000-8000-000000000010'
+        fake.state.templates.push({ id, name: 'Monthly payslip', body: templateBody, revision: 1, updatedAt: '2026-10-07T09:00:00+04:00', by: 'you' })
+        // The draft was changed and saved since version 1: publishing it makes version 2 here.
+        fake.state.versions.push({ templateId: id, version: 1, name: 'Monthly payslip', body: { ...templateBody, labels: { ...templateBody.labels, title: 'Pay slip' } }, publishedAt: '2026-10-07T09:05:00+04:00', by: 'you' })
+        fake.state.ids = 20
+        fake.state.runs['2026-09'] = rows
+        const company = (name, brn, more = {}) => ({ name, brn, role: 'admin', templates: [], versions: [], inUse: null, payroll: { period: '2026-09', employees: 5, columns }, ...more })
+        const other = '20000000-0000-4000-8000-000000000101'
+        const edited = '20000000-0000-4000-8000-000000000102'
+        fake.state.others = [
+          company('AQUAVILLE WONDER LTD', 'C4444444'),
+          company('Blue Lagoon Trading Ltd', 'C5555555', {
+            templates: [{ id: other, name: 'Monthly payslip', body: templateBody, revision: 2, updatedAt: '', by: 'other' }],
+            versions: [{ templateId: other, version: 2, name: 'Monthly payslip', body: { ...templateBody, labels: { ...templateBody.labels, title: 'Old' } }, publishedAt: '', by: 'other' },
+              { templateId: other, version: 3, name: 'Monthly payslip', body: templateBody, publishedAt: '', by: 'other' }],
+          }),
+          company('Coral Bay Ltd', 'C6666666', { payroll: { period: '2026-08', employees: 3, columns: columns.filter((key) => key !== 'Employee NSF') } }),
+          company('Dodo Holdings Ltd', 'C7777777', { payroll: null }),
+          company('Eden Gardens Ltd', 'C8888888', {
+            templates: [{ id: edited, name: 'MONTHLY PAYSLIP', body: { ...templateBody, labels: { ...templateBody.labels, title: 'Work in progress' } }, revision: 5, updatedAt: '', by: 'other' }],
+            versions: [{ templateId: edited, version: 1, name: 'MONTHLY PAYSLIP', body: templateBody, publishedAt: '', by: 'other' }],
+          }),
+          company('Flic en Flac Ltd', 'C9999999'),
+          company('XYZ Trading Ltd', 'C2222222', { role: 'member' }),
+        ]
+        // Flic en Flac's publication is refused: the others must still go through.
+        fake.state.refuseCopy = { C9999999: 'forbidden' }
+      }
+    },
+    [body, fixture, COMPANY_COLUMNS],
+  )
+  await manyPage.goto(`${HUB}/payroll-hub/`)
+  const mf = manyPage.frameLocator('#app')
+  const manyAccessibleOf = async (onPage, name) => {
+    const frame = onPage.frame({ url: `${HUB}/payslip/` })
+    for (const html of await frame.evaluate(unnamedControls)) check(false, `${name}: control without a name: ${html}`)
+    for (const item of await frame.evaluate(lowContrast)) check(false, `${name}: low contrast ${item}`)
+  }
+  const manyAccessible = (name) => manyAccessibleOf(manyPage, name)
+  await mf.getByText('Dashboard connected').waitFor()
+  await manyPage.evaluate((rows) => window.send('delivery-many-01', rows), payload(fixture, '2026-09'))
+  await mf.getByRole('dialog', { name: 'Import payroll data' }).getByRole('button', { name: 'Import 7 employees' }).click()
+  await mf.getByTestId('template-chip').filter({ hasText: 'Monthly payslip, version 1 (published)' }).waitFor()
+  await mf.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Template', exact: true }).click()
+  await mf.getByRole('button', { name: 'Open the draft of Monthly payslip' }).click()
+  const target = mf.getByTestId('publish-target')
+  check((await target.getByRole('radio', { name: 'This company only' }).isChecked()) === true, 'Publish to: "This company only" is not the default.')
+  check((await mf.getByRole('button', { name: 'Publish as version 2' }).count()) === 1, 'Publish to "This company only": the button is not the one-company publish.')
+  await target.getByRole('radio', { name: 'All my companies' }).check()
+  check((await target.textContent()).includes('Only companies where you are an admin are listed.'), 'Publish to: the admin-only note is missing.')
+  if (shots) {
+    await mf.getByRole('button', { name: 'Check the companies' }).scrollIntoViewIfNeeded()
+    await manyPage.locator('#app').screenshot({ path: join(shots, 'publish-to.png') })
+  }
+  await mf.getByRole('button', { name: 'Check the companies' }).click()
+  const manyDialog = mf.getByRole('dialog', { name: 'Publish "Monthly payslip" to several companies' })
+  await manyDialog.getByRole('table', { name: 'Companies to publish to' }).waitFor()
+  const rowOf = (company) => manyDialog.getByRole('row').filter({ has: mf.getByRole('rowheader', { name: new RegExp(`^${company}`) }) })
+  const tick = (company) => manyDialog.getByRole('checkbox', { name: `Publish to ${company}` })
+  check((await manyDialog.getByRole('checkbox').count()) === 7, 'Several companies: not every admin company is listed, or a member company is.')
+  check((await manyDialog.textContent()).includes('XYZ Trading Ltd') === false, 'Several companies: a company where the user is only a member is listed.')
+  check((await tick('ABC Co Ltd').isChecked()) && (await tick('ABC Co Ltd').isDisabled()), 'Several companies: this company can be unticked.')
+  for (const ready of ['AQUAVILLE WONDER LTD', 'Blue Lagoon Trading Ltd', 'Flic en Flac Ltd']) check(await tick(ready).isChecked(), `Several companies: ${ready} is ready but not ticked.`)
+  for (const unready of ['Coral Bay Ltd', 'Dodo Holdings Ltd', 'Eden Gardens Ltd']) check(!(await tick(unready).isChecked()), `Several companies: ${unready} has a reason but is ticked.`)
+  check((await rowOf('Coral Bay Ltd').textContent()).includes('Its payroll of August 2026 has no column "Employee NSF"'), 'Several companies: the missing column is not named.')
+  check((await rowOf('Dodo Holdings Ltd').textContent()).includes('No saved payroll yet to check the columns against'), 'Several companies: "no saved payroll" is not said.')
+  check((await rowOf('Eden Gardens Ltd').textContent()).includes('Its draft of "MONTHLY PAYSLIP" has changes that were never published; publishing replaces them'), 'Several companies: the unpublished draft is not said.')
+  check((await rowOf('AQUAVILLE WONDER LTD').textContent()).includes('New template "Monthly payslip", version 1'), 'Several companies: a new template is not announced.')
+  check((await rowOf('ABC Co Ltd').textContent()).includes('New version 2 of "Monthly payslip"'), 'Several companies: the next version is not announced.')
+  check((await rowOf('Blue Lagoon Trading Ltd').textContent()).includes('Already has this as version 3; it becomes the one used for the payslips'), 'Several companies: a company that already has this version is not told so.')
+  // A company with a reason can be ticked back on.
+  await tick('Dodo Holdings Ltd').check()
+  check((await manyDialog.getByRole('button', { name: 'Publish to 5 companies' }).count()) === 1, 'Several companies: the count on the button is wrong.')
+  await manyAccessible('publish to several companies, check')
+  if (shots) await manyPage.locator('#app').screenshot({ path: join(shots, 'publish-many-check.png') })
+  await manyDialog.getByRole('button', { name: 'Publish to 5 companies' }).click()
+  await manyDialog.getByTestId('many-results').waitFor()
+  const outcome = async (company) => (await manyDialog.getByTestId('many-results').getByRole('row').filter({ hasText: company }).getAttribute('data-outcome')) ?? ''
+  check((await outcome('ABC Co Ltd')) === 'updated' && (await outcome('AQUAVILLE')) === 'updated' && (await outcome('Blue Lagoon')) === 'updated' && (await outcome('Dodo')) === 'updated', 'Several companies: a ticked company was not updated.')
+  check((await outcome('Flic en Flac')) === 'failed', 'Several companies: the refused company is not reported as not published.')
+  check((await outcome('Coral Bay')) === 'skipped' && (await outcome('Eden Gardens')) === 'skipped', 'Several companies: an unticked company was not skipped.')
+  check((await manyDialog.textContent()).includes('4 updated, 2 skipped, 1 not published.'), 'Several companies: the summary is wrong.')
+  await manyAccessible('publish to several companies, results')
+  if (shots) await manyPage.locator('#app').screenshot({ path: join(shots, 'publish-many-done.png') })
+  const manyState = await manyPage.evaluate(() => ({ state: window.hub.state, sends: window.hub.state.log.filter((m) => m.type === 'send-data').map((m) => m.payload.rows[0]) }))
+  check(
+    manyState.sends.length === 6 && manyState.sends.slice(0, 5).every((row) => row.action === 'publish-copy' && row.name === 'Monthly payslip'),
+    `Several companies: not one publish-copy per ticked company, then the summary: ${JSON.stringify(manyState.sends.map((row) => [row.action, row.company_brn]))}`,
+  )
+  // One summary for ONE toast in the dashboard: the counts of the outcome shown.
+  check(
+    JSON.stringify(manyState.sends[5]) === JSON.stringify({ action: 'publish-summary', brn: 'C1234567', name: 'Monthly payslip', published: 4, skipped: 2, failed: 1, unconfirmed: 0 }),
+    `Several companies: the summary for the one toast is wrong: ${JSON.stringify(manyState.sends[5])}`,
+  )
+  check(manyState.sends[0].company_brn === 'C1234567' && manyState.sends[0].expected_revision === 1, 'Several companies: this company is not first, or not with its own draft revision.')
+  const others = Object.fromEntries(manyState.state.others.map((company) => [company.name, company]))
+  check(others['AQUAVILLE WONDER LTD'].inUse?.version === 1 && others['Blue Lagoon Trading Ltd'].inUse?.version === 3 && others['Blue Lagoon Trading Ltd'].versions.length === 2 && others['Dodo Holdings Ltd'].inUse?.version === 1, 'Several companies: an updated company does not use the new version for its payslips.')
+  check(others['Coral Bay Ltd'].templates.length === 0 && others['Eden Gardens Ltd'].templates[0].revision === 5 && others['Flic en Flac Ltd'].templates.length === 0, 'Several companies: a skipped or refused company was changed.')
+  check(manyState.state.inUse?.version === 2 && manyState.state.issued.length === 0, 'Several companies: this company does not use version 2, or an issued payslip changed.')
+  await manyDialog.getByRole('button', { name: 'Close' }).click()
+  await manyDialog.waitFor({ state: 'detached' })
+  await mf.getByTestId('template-in-use').filter({ hasText: 'Monthly payslip, version 2 (published)' }).waitFor()
+  check((await mf.getByRole('dialog', { name: 'Use version 2 now?' }).count()) === 0, 'Several companies: "Use version 2 now?" is asked although it is already in use.')
+  await manyPage.close()
+
+  // Many companies: the check is asked page by page, the list can be searched, and the dialog
+  // stays inside the window, scrolling within itself.
+  const bigPage = await context.newPage()
+  await bigPage.addInitScript(
+    ([templateBody, columns]) => {
+      window.seedHub = (fake) => {
+        const id = '20000000-0000-4000-8000-000000000010'
+        fake.state.templates.push({ id, name: 'Monthly payslip', body: templateBody, revision: 2, updatedAt: '', by: 'you' })
+        fake.state.versions.push({ templateId: id, version: 1, name: 'Monthly payslip', body: { ...templateBody, labels: { ...templateBody.labels, title: 'Old' } }, publishedAt: '', by: 'you' })
+        fake.state.ids = 20
+        for (let n = 0; n < 61; n++) {
+          fake.state.others.push({ name: `Sample Company ${String(n + 1).padStart(2, '0')} Ltd`, brn: `S${String(n + 1).padStart(6, '0')}`, role: 'admin', templates: [], versions: [], inUse: null, payroll: { period: '2026-09', employees: 3, columns } })
+        }
+      }
+    },
+    [body, COMPANY_COLUMNS],
+  )
+  await bigPage.goto(`${HUB}/payroll-hub/`)
+  const bf = bigPage.frameLocator('#app')
+  await bf.getByText('Dashboard connected').waitFor()
+  await bigPage.evaluate((rows) => window.send('delivery-big-01', rows), payload(fixture, '2026-09'))
+  await bf.getByRole('dialog', { name: 'Import payroll data' }).getByRole('button', { name: 'Import 7 employees' }).click()
+  await bf.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Template', exact: true }).click()
+  await bf.getByRole('button', { name: 'Open the draft of Monthly payslip' }).click()
+  await bf.getByTestId('publish-target').getByRole('radio', { name: 'All my companies' }).check()
+  await bf.getByRole('button', { name: 'Check the companies' }).click()
+  const bigDialog = bf.getByRole('dialog', { name: 'Publish "Monthly payslip" to several companies' })
+  await bigDialog.getByRole('table', { name: 'Companies to publish to' }).waitFor()
+  const pages = await bigPage.evaluate(() => window.hub.state.log.filter((m) => m.payload.params?.action === 'check').map((m) => m.payload.params.page))
+  check(JSON.stringify(pages) === '[0,1]', `Many companies: the check was not asked page by page: ${JSON.stringify(pages)}`)
+  check((await bigDialog.getByRole('checkbox').count()) === 62, 'Many companies: not every company is listed.')
+  const inWindow = async () => {
+    const box = await bigDialog.boundingBox()
+    const frame = await bigPage.locator('#app').boundingBox()
+    return box !== null && frame !== null && box.y >= frame.y && box.y + box.height <= frame.y + frame.height
+  }
+  check(await inWindow(), 'Many companies: the dialog does not fit in the window.')
+  const search = bigDialog.getByRole('searchbox', { name: 'Search companies' })
+  await search.fill('company 42')
+  check((await bigDialog.getByRole('checkbox').count()) === 1, 'Many companies: the search does not narrow the list.')
+  check((await bigDialog.getByTestId('many-shown').textContent()) === 'Showing 1 of 62 companies.', 'Many companies: the search does not say how many are shown.')
+  if (shots) await bigPage.locator('#app').screenshot({ path: join(shots, 'publish-many-search.png') })
+  await bigDialog.getByRole('checkbox', { name: 'Publish to Sample Company 42 Ltd' }).uncheck()
+  await search.fill('S000099')
+  check((await bigDialog.textContent()).includes('No company matches "S000099".'), 'Many companies: an empty search does not say so.')
+  await search.fill('')
+  check((await bigDialog.getByRole('checkbox').count()) === 62, 'Many companies: clearing the search does not show everyone again.')
+  check(!(await bigDialog.getByRole('checkbox', { name: 'Publish to Sample Company 42 Ltd' }).isChecked()), 'Many companies: a tick changed by the search was lost.')
+  await manyAccessibleOf(bigPage, 'publish to many companies, with search')
+  await bigDialog.getByRole('button', { name: 'Publish to 61 companies' }).click()
+  await bigDialog.getByTestId('many-results').waitFor()
+  check(await inWindow(), 'Many companies: the results do not fit in the window.')
+  check((await bigDialog.textContent()).includes('61 updated, 1 skipped, 0 not published.'), 'Many companies: the results are wrong.')
+  const bigSends = await bigPage.evaluate(() => window.hub.state.log.filter((m) => m.type === 'send-data').map((m) => m.payload.rows[0].action))
+  check(bigSends.length === 62 && bigSends.at(-1) === 'publish-summary', 'Many companies: not 61 company saves and one summary.')
+  await bigPage.close()
+
+  // The choice saved in the dashboard is the one used when the app opens, even with two published
+  // templates; "Use version N" saves it for an admin and never for a member.
+  const remembered = await seeded(['Monthly payslip', 'Weekly payslip'])
+  await remembered.seededPage.evaluate(() => {
+    window.hub.state.inUse = { templateId: '20000000-0000-4000-8000-000000000011', version: 1 }
+  })
+  await remembered.frame.getByRole('button', { name: 'Change the template' }).click()
+  await remembered.frame.getByRole('button', { name: 'Reload' }).click()
+  await remembered.frame.getByRole('button', { name: 'Use version 1 of Monthly payslip' }).click()
+  await remembered.frame.getByTestId('template-in-use').filter({ hasText: 'Monthly payslip, version 1 (published)' }).waitFor()
+  const used = await remembered.seededPage.evaluate(() => window.hub.state.log.filter((m) => m.type === 'send-data').map((m) => m.payload.rows[0]))
+  check(used.length === 1 && used[0].action === 'use' && used[0].template_id === '20000000-0000-4000-8000-000000000010' && used[0].version === 1, `"Use version 1" was not saved in the dashboard: ${JSON.stringify(used)}`)
+  await remembered.seededPage.close()
+  const savedChoice = await context.newPage()
+  await savedChoice.addInitScript(
+    ([templateBody]) => {
+      window.seedHub = (fake) => {
+        ;['Monthly payslip', 'Weekly payslip'].forEach((name, index) => {
+          const id = `20000000-0000-4000-8000-00000000001${index}`
+          fake.state.templates.push({ id, name, body: { ...templateBody, labels: { ...templateBody.labels, title: `${name} title` } }, revision: 1, updatedAt: '', by: 'other' })
+          fake.state.versions.push({ templateId: id, version: 1, name, body: { ...templateBody, labels: { ...templateBody.labels, title: `${name} title` } }, publishedAt: '', by: 'other' })
+        })
+        fake.state.inUse = { templateId: '20000000-0000-4000-8000-000000000011', version: 1 }
+      }
+    },
+    [body],
+  )
+  await savedChoice.goto(`${HUB}/payroll-hub/`)
+  const rf2 = savedChoice.frameLocator('#app')
+  await rf2.getByText('Dashboard connected').waitFor()
+  await savedChoice.evaluate((rows) => window.send('delivery-seed-02', rows), payload(fixture, '2026-09'))
+  await rf2.getByRole('dialog', { name: 'Import payroll data' }).getByRole('button', { name: 'Import 7 employees' }).click()
+  await rf2.getByTestId('template-chip').filter({ hasText: 'Weekly payslip, version 1 (published)' }).waitFor()
+  check((await rf2.getByText('This company has more than one published template.').count()) === 0, 'The choice saved in the dashboard is not used: the app asks again.')
+  await savedChoice.close()
+  const memberChoice = await seeded(['Monthly payslip', 'Weekly payslip'], 'viewer')
+  await memberChoice.frame.getByRole('button', { name: 'Change the template' }).click()
+  await memberChoice.frame.getByRole('button', { name: 'Use version 1 of Weekly payslip' }).click()
+  await memberChoice.frame.getByTestId('template-in-use').filter({ hasText: 'Weekly payslip, version 1 (published)' }).waitFor()
+  check(await memberChoice.seededPage.evaluate(() => window.hub.state.log.every((m) => m.type !== 'send-data')), "A member's choice of template was sent to the dashboard.")
+  await memberChoice.seededPage.close()
+  console.log('  several companies: admin companies only, checked, reasons unticked, ticked back, company by company, one refusal stops nothing; the saved choice is used next time, a member\'s is not saved')
 
   // 14. Month review: August 2026 is issued, then September 2026 is compared with it. Statuses,
   // changed lines, bulk-approve for Unchanged rows only, what blocks the issue, a template version
