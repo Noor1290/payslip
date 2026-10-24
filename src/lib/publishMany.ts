@@ -7,6 +7,7 @@
 
 import { z } from 'zod'
 import { formatPeriod } from './dates'
+import { normaliseKey } from './payrollFile'
 import { ask, failure, normaliseBrn, PAYSLIP_TEMPLATE, sendSave, type Failure, type HubPort, type SaveEnd } from './hubWire'
 import { FIXED_LINES } from './template'
 import type { TemplateBody } from './templateBody'
@@ -157,8 +158,10 @@ export function planCompanies(
     if (!check.payroll) {
       reasons.push('No saved payroll yet to check the columns against')
     } else {
-      const present = new Set(check.payroll.columns)
-      const missing = [...new Set(used.filter((line) => !present.has(line.key) && !line.aliases.some((alias) => present.has(alias))).map((line) => line.key))]
+      // Matched as the payslip itself matches them: capitals and extra spaces ignored.
+      const present = new Set(check.payroll.columns.map(normaliseKey))
+      const has = (key: string) => present.has(normaliseKey(key))
+      const missing = [...new Set(used.filter((line) => !has(line.key) && !line.aliases.some(has)).map((line) => line.key))]
       if (missing.length > 0) {
         reasons.push(`Its payroll of ${formatPeriod(check.payroll.period)} has no ${missing.length === 1 ? 'column' : 'columns'} ${quoted(missing)}`)
       }

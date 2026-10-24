@@ -141,6 +141,13 @@ describe('the check and what is ticked at first', () => {
     expect(def.reasons).toEqual(['Its payroll of August 2026 has no columns "Presence Bonus", "PAYE"'])
   })
 
+  it('matches column names as the payslip does: capitals and extra spaces ignored', async () => {
+    const columns = COLUMNS.map((key) => (key === 'PAYE' ? ' paye ' : key)).concat('presence  BONUS')
+    hub.state.others.push(other('DEF Ltd', 'C3333333', { payroll: { period: '2026-09', employees: 4, columns } }))
+    const [, def] = await plansFor()
+    expect(def.reasons).toEqual([])
+  })
+
   it('a company with no saved payroll yet is unticked, with the reason', async () => {
     hub.state.others.push(other('DEF Ltd', 'C3333333', { payroll: null }))
     const [, def] = await plansFor()
