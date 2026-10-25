@@ -38,6 +38,8 @@ export function createFakeHub() {
     others: [],
     /** A publish-copy to these BRNs is refused with the code given: { [brn]: code }. */
     refuseCopy: {},
+    /** What the user allowed for payslip-batch: { period, brns } or null. */
+    batchAllowed: null,
     ids: 0,
     /** Every message handled, in order: { type, payload }. */
     log: [],
@@ -572,6 +574,91 @@ export function createFakeHub() {
     return { ok: true, dataType: 'payroll-result', rows: copy(rows), meta: { period: wanted, label: state.company.name } }
   }
 
+  // ---------- payslip-batch: payslips for several companies ----------
+  // As the dashboard does it: only the user's ADMIN companies; `ask` asks its user once (the
+  // prompt and the gate as for issued payslips); `load` answers one allowed company. Another
+  // company keeps its saved runs in `runs` ({ "2026-09": rows }) and its rates in `rates`.
+
+  const adminOthers = () => state.others.filter((company) => company.role === 'admin').sort((a, b) => a.name.localeCompare(b.name))
+  const batchMeta = (period) => ({ ...meta(), ...(period ? { period } : {}) })
+
+  const batchTemplate = (store) => {
+    const inUse = store.getInUse()
+    const chosen = inUse && store.versions.find((row) => row.templateId === inUse.templateId && row.version === inUse.version)
+    if (chosen) return { template: chosen, reason: null }
+    const published = store.templates.filter((template) => latestIn(store.versions, template.id))
+    if (published.length !== 1) return { template: null, reason: published.length === 0 ? 'none' : 'several' }
+    return { template: latestIn(store.versions, published[0].id), reason: null }
+  }
+
+  const answerBatch = (params) => {
+    if (!isObject(params)) return field('action')
+    const keys = { companies: ['action', 'brn'], ask: ['action', 'brn', 'period', 'companies', 'all'], load: ['action', 'brn', 'period', 'company_brn'] }[params.action]
+    if (!keys) return field('action')
+    if (unknownKey(params, keys)) return refuse('invalid', 'Unexpected field in the data.')
+    if (brnProblem(params.brn, params.action !== 'companies')) return field('brn')
+    if (params.action !== 'companies' && (typeof params.period !== 'string' || !MONTH.test(params.period))) return field('period')
+    const refusal = context(params.brn)
+    if (refusal) return refusal
+    const own = { brn: state.company.brn, name: state.company.name }
+    const mine = state.role === 'admin' ? [own, ...adminOthers()] : adminOthers()
+
+    if (params.action === 'companies') {
+      return { ok: true, dataType: 'payslip-batch', rows: mine.map((company) => ({ brn: company.brn, name: company.name, selected: company === own })), meta: batchMeta() }
+    }
+    if (params.action === 'ask') {
+      if ((params.companies === undefined) === (params.all === undefined)) return field('companies')
+      if (params.all !== undefined && params.all !== true) return field('all')
+      if (params.companies !== undefined && (!Array.isArray(params.companies) || params.companies.length < 1 || params.companies.length > 100)) return field('companies')
+      const chosen = params.all ? mine : params.companies.map((brn) => mine.find((company) => norm(company.brn) === norm(brn)) ?? null)
+      if (chosen.some((company) => company === null)) return refuse('forbidden', 'Only companies where you are an admin can be chosen.')
+      if (state.prompt === 'deny') return refuse('denied')
+      if (state.prompt === 'timeout') return refuse('timeout')
+      if (!state.gateOpen) return refuse('locked', 'The dashboard is locked. Confirm your password there to unlock it, then ask again.')
+      state.batchAllowed = { period: params.period, brns: chosen.map((company) => norm(company.brn)) }
+      return { ok: true, dataType: 'payslip-batch', rows: chosen.map((company) => ({ brn: company.brn, name: company.name })), meta: batchMeta(params.period) }
+    }
+    if (brnProblem(params.company_brn, true)) return field('company_brn')
+    const allowed = state.batchAllowed
+    if (!allowed || allowed.period !== params.period || !allowed.brns.includes(norm(params.company_brn))) {
+      return refuse('denied', 'That company and month were not allowed in the dashboard for this app. Ask again.')
+    }
+    if (!state.gateOpen) return refuse('locked', 'The dashboard is locked. Confirm your password there to unlock it, then ask again.')
+    const target = mine.find((company) => norm(company.brn) === norm(params.company_brn))
+    if (!target) return refuse('forbidden', 'Only an admin of that company can make its payslips.')
+    const isOwn = target === own
+    const store = storeOf(isOwn ? null : target)
+    const rows = isOwn ? state.runs[params.period] : target.runs?.[params.period]
+    const chosen = batchTemplate(store)
+    const rates = (isOwn ? state.rates : (target.rates ?? [])).map(({ by, ...row }) => ({ ...row, created_by_you: by === 'you' }))
+    // The payslips issued for the month, the latest revision of each, as payslip-issue gives them.
+    const everIssued = (isOwn ? state.issued : (target.issued ?? [])).filter((row) => row.period === params.period)
+    const latestOf = (id) => everIssued.filter((row) => row.national_id === id).reduce((best, row) => (!best || row.revision > best.revision ? row : best), null)
+    const issued = [...new Set(everIssued.map((row) => row.national_id))].sort().map((id) => {
+      const { period: _period, by, ...row } = latestOf(id)
+      void _period
+      return { ...copy(row), issued_by_you: by === 'you' }
+    })
+    return {
+      ok: true,
+      dataType: 'payslip-batch',
+      rows: [
+        {
+          brn: target.brn,
+          company: target.name,
+          period: params.period,
+          run: rows !== undefined,
+          employees: copy(rows ?? []),
+          template: chosen.template && { template_id: chosen.template.templateId, name: chosen.template.name, version: chosen.template.version, body: sortKeys(copy(chosen.template.body)) },
+          template_reason: chosen.reason,
+          rates,
+          issued,
+        },
+      ],
+      meta: batchMeta(params.period),
+    }
+  }
+
   // ---------- one message in, one answer out (or none: `undefined` is a lost answer) ----------
 
   function handle(type, payload) {
@@ -579,6 +666,14 @@ export function createFakeHub() {
     const dataType = payload?.dataType
     // The app may ask for a payroll run; it may never save one.
     if (dataType === 'payroll-result' && type === 'request-data') return answerPayroll(payload)
+    // Read only: the app may ask, never send.
+    if (dataType === 'payslip-batch' && type === 'request-data') {
+      const next = state.nextRequest
+      state.nextRequest = null
+      if (next?.mode === 'lost') return undefined
+      if (next?.mode === 'refuse') return refuse(next.code)
+      return answerBatch(payload.params ?? {})
+    }
     if (dataType !== 'statutory-rates' && dataType !== 'payslip-template' && dataType !== 'payslip-issue') {
       return { ok: false, error: 'This app is not registered for that kind of data.' }
     }

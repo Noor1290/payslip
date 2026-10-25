@@ -6,6 +6,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, extname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { strFromU8, unzipSync } from 'fflate'
 import { chromium } from 'playwright'
 import { lowContrast, unnamedControls } from './lib/a11y-page.mjs'
 import { createFakeHub } from './lib/fake-hub.mjs'
@@ -414,6 +415,17 @@ try {
   // Rehearsal fix F7: the version just published is offered once, "Use version 1" first.
   const useNow = app.getByRole('dialog', { name: 'Use version 1 now?' })
   await useNow.waitFor()
+  // Known issue 42: opened from the bottom of the long editor, the dialog is still in the window.
+  {
+    const box = await useNow.boundingBox()
+    const frame = await page.locator('#app').boundingBox()
+    const scrolled = await appFrame().evaluate(() => document.querySelector('main')?.scrollTop ?? 0)
+    check(scrolled > 200, `Issue 42: the editor was not scrolled down before the dialog opened (${scrolled}).`)
+    check(
+      box !== null && frame !== null && box.y >= frame.y && box.y + box.height <= frame.y + frame.height,
+      `Issue 42: the dialog opened from the bottom of a long page is not inside the window: ${JSON.stringify({ box, frame })}`,
+    )
+  }
   check((await useNow.textContent()).includes('The payslips are then made with "Monthly payslip", version 1.'), 'F7: the "use it now" question does not name the version.')
   check(await app.getByRole('button', { name: 'Use version 1', exact: true }).evaluate((b) => b === document.activeElement), 'F7: "Use version 1" is not the default answer.')
   await accessible('template, use the published version now')
@@ -834,6 +846,7 @@ try {
   await fresh.frame.getByRole('button', { name: 'Change the template' }).click()
   await fresh.frame.getByRole('button', { name: "Publish the built-in template as this company's template" }).click()
   await fresh.frame.getByTestId('template-in-use').filter({ hasText: 'Table, version 1 (published)' }).waitFor()
+  check((await fresh.frame.getByRole('dialog').count()) === 0, 'The built-in template is already used for the payslips, yet "Use version 1 now?" is asked.')
   const steps = await fresh.seededPage.evaluate(() => window.hub.state.log.filter((m) => m.type === 'send-data').map((m) => m.payload.rows[0]))
   check(
     steps.length === 3 &&
@@ -1069,6 +1082,111 @@ try {
   check(await memberChoice.seededPage.evaluate(() => window.hub.state.log.every((m) => m.type !== 'send-data')), "A member's choice of template was sent to the dashboard.")
   await memberChoice.seededPage.close()
   console.log('  several companies: admin companies only, checked, reasons unticked, ticked back, company by company, one refusal stops nothing; the saved choice is used next time, a member\'s is not saved')
+
+  // 13c. Payslips for several companies at once (Stage 2): only admin companies are listed, the
+  // dashboard is asked once, each company is made with its own template and rates through the
+  // same checks, a company with a problem is skipped with the reason, and one zip comes out with
+  // a folder per company and the report.
+  const severalPage = await context.newPage()
+  await severalPage.addInitScript(
+    ([templateBody, rows]) => {
+      window.seedHub = (fake) => {
+        const titled = (title) => ({ ...templateBody, labels: { ...templateBody.labels, title } })
+        const rowsOf = (name, brn, change = (row) => row) =>
+          rows.map((row) => change({ ...row, 'Company Name': name, BRN: brn, Address: `${name} House, Fake Road, Port Louis` }))
+        const template = (id, name, body, version = 1) => ({
+          templates: [{ id, name, body, revision: 1, updatedAt: '', by: 'other' }],
+          versions: [{ templateId: id, version, name, body, publishedAt: '', by: 'other' }],
+        })
+        const company = (name, brn, more = {}) => ({ name, brn, role: 'admin', templates: [], versions: [], inUse: null, payroll: null, runs: { '2026-09': rowsOf(name, brn) }, rates: [], ...more })
+        fake.state.runs['2026-09'] = rows
+        fake.state.templates.push({ id: '20000000-0000-4000-8000-000000000010', name: 'Monthly payslip', body: titled('Payslip'), revision: 1, updatedAt: '', by: 'you' })
+        fake.state.versions.push({ templateId: '20000000-0000-4000-8000-000000000010', version: 1, name: 'Monthly payslip', body: titled('Payslip'), publishedAt: '', by: 'you' })
+        fake.state.ids = 20
+        fake.state.others = [
+          company('AQUAVILLE WONDER LTD', 'C4444444', template('20000000-0000-4000-8000-000000000101', 'Aquaville payslip', titled('Pay advice'), 3)),
+          company('Blue Lagoon Trading Ltd', 'C5555555', {
+            ...template('20000000-0000-4000-8000-000000000102', 'Blue payslip', titled('Payslip')),
+            // One payslip does not add up: it is left out, the others go through.
+            runs: { '2026-09': rowsOf('Blue Lagoon Trading Ltd', 'C5555555', (row) => (row.Surname === 'TESTER' ? { ...row, 'Net Pay': Number(row['Net Pay']) + 5 } : row)) },
+          }),
+          company('Coral Bay Ltd', 'C6666666', { ...template('20000000-0000-4000-8000-000000000103', 'Coral payslip', titled('Payslip')), runs: {} }),
+          company('Dodo Holdings Ltd', 'C7777777'),
+          company('XYZ Trading Ltd', 'C2222222', { role: 'member', ...template('20000000-0000-4000-8000-000000000104', 'XYZ', titled('XYZ')) }),
+        ]
+      }
+    },
+    [body, fixture],
+  )
+  await severalPage.goto(`${HUB}/payroll-hub/`)
+  const sf = severalPage.frameLocator('#app')
+  await sf.getByText('Dashboard connected').waitFor()
+  await sf.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Several companies', exact: true }).click()
+  const companyList = sf.getByRole('list', { name: 'Your companies' })
+  await companyList.waitFor()
+  check((await companyList.getByRole('checkbox').count()) === 5, 'Several companies: not exactly the five admin companies are listed.')
+  check(!(await companyList.textContent()).includes('XYZ Trading Ltd'), 'Several companies: a company where the user is only a member is listed.')
+  check((await sf.getByTestId('many-cannot').textContent()) === 'Tick at least one company.', 'Several companies: the reason the download is off is not said.')
+  check(await sf.getByLabel('Include payslips whose only difference is a 0.01 rounding').isChecked(), 'Several companies: 0.01 roundings are not included by default.')
+  await sf.getByRole('button', { name: 'Select all', exact: true }).click()
+  await sf.getByLabel('Pay month').fill('2026-09')
+  check(await sf.getByRole('button', { name: 'Download payslips (zip)' }).isEnabled(), 'Several companies: the download is off with companies ticked.')
+  await sf.getByRole('button', { name: 'Clear', exact: true }).click()
+  check(await sf.getByRole('button', { name: 'Download payslips (zip)' }).isDisabled(), 'Several companies: Clear does not untick everyone.')
+  await sf.getByRole('button', { name: 'Select all', exact: true }).click()
+  const severalFrame = () => severalPage.frame({ url: `${HUB}/payslip/` })
+  for (const html of await severalFrame().evaluate(unnamedControls)) check(false, `several companies: control without a name: ${html}`)
+  for (const item of await severalFrame().evaluate(lowContrast)) check(false, `several companies: low contrast ${item}`)
+  if (shots) await severalPage.locator('#app').screenshot({ path: join(shots, 'several-companies.png') })
+  const downloading = severalPage.waitForEvent('download')
+  await sf.getByRole('button', { name: 'Download payslips (zip)' }).click()
+  const zipDownload = await downloading
+  const report = sf.getByTestId('many-report')
+  await report.waitFor()
+  check(zipDownload.suggestedFilename() === 'Payslips - several companies - 2026-09.zip', `Several companies: the zip is named ${zipDownload.suggestedFilename()}.`)
+  const zipFiles = unzipSync(new Uint8Array(readFileSync(await zipDownload.path())))
+  const zipNames = Object.keys(zipFiles)
+  const severalLog = await severalPage.evaluate(() => window.hub.state.log.filter((m) => m.payload.dataType === 'payslip-batch').map((m) => m.payload.params))
+  check(severalLog.filter((params) => params.action === 'ask').length === 1, 'Several companies: the dashboard was not asked exactly once.')
+  check(
+    JSON.stringify(severalLog.filter((params) => params.action === 'load').map((params) => params.company_brn)) ===
+      JSON.stringify(['C1234567', 'C4444444', 'C5555555', 'C6666666', 'C7777777']),
+    `Several companies: not one load per company, in order: ${JSON.stringify(severalLog)}`,
+  )
+  for (const folder of ['ABC Co Ltd', 'AQUAVILLE WONDER LTD', 'Blue Lagoon Trading Ltd']) {
+    check(zipNames.includes(`${folder}/${folder} - all payslips - 2026-09.pdf`), `Several companies: ${folder} has no combined PDF in the zip.`)
+    check(zipNames.includes(`${folder}/${folder} - payslips - 2026-09.xlsx`), `Several companies: ${folder} has no Excel file in the zip.`)
+  }
+  check(!zipNames.some((name) => name.startsWith('Coral Bay') || name.startsWith('Dodo')), 'Several companies: a skipped company has a folder in the zip.')
+  check(!zipNames.some((name) => name.startsWith('Blue Lagoon Trading Ltd/TESTER')), 'Several companies: the payslip that does not add up is in the zip.')
+  const zipReport = strFromU8(zipFiles['Report - 2026-09.txt'] ?? new Uint8Array())
+  check(zipReport.includes('Coral Bay Ltd (BRN C6666666): skipped. No saved payroll for September 2026.'), 'Several companies: the report does not say why a company without a run was skipped.')
+  check(zipReport.includes('Dodo Holdings Ltd (BRN C7777777): skipped. No template chosen: it has no published template.'), 'Several companies: the report does not say "no template chosen".')
+  check(/ {2}- TESTER SAM: .*Net Pay differs from the payroll's "Net Pay" by 5\./.test(zipReport), 'Several companies: the report does not say who was left out and why.')
+  check(zipReport.includes('with Aquaville payslip, version 3'), 'Several companies: a company did not use its own template.')
+  check(zipReport.includes('  Accepted a 0.01 rounding difference: DOE JANE, Total Deductions'), 'Several companies: an accepted 0.01 rounding is not listed in the report.')
+  check(zipNames.includes('ABC Co Ltd/DOE JANE - 2026-09.pdf'), 'Several companies: a payslip whose only difference is 0.01 is not in the zip with the box ticked.')
+  const onScreen = await report.textContent()
+  check(onScreen.includes('Downloaded: Payslips - several companies - 2026-09.zip') && onScreen.includes('No saved payroll for September 2026.') && onScreen.includes('TESTER SAM'), 'Several companies: the report on screen is incomplete.')
+  for (const html of await severalFrame().evaluate(unnamedControls)) check(false, `several companies, report: control without a name: ${html}`)
+  for (const item of await severalFrame().evaluate(lowContrast)) check(false, `several companies, report: low contrast ${item}`)
+  if (shots) {
+    await report.scrollIntoViewIfNeeded()
+    await severalPage.locator('#app').screenshot({ path: join(shots, 'several-companies-report.png') })
+  }
+  const severalStorage = await severalFrame().evaluate(async () => localStorage.length + sessionStorage.length + (indexedDB.databases ? (await indexedDB.databases()).length : 0) + document.cookie.length)
+  check(severalStorage === 0, 'Several companies: something was written to browser storage.')
+
+  // Declined in the dashboard: nothing is loaded and nothing is downloaded.
+  await severalPage.evaluate(() => {
+    window.hub.state.prompt = 'deny'
+  })
+  await sf.getByRole('button', { name: 'Download payslips (zip)' }).click()
+  await sf.getByTestId('many-run-refused').waitFor()
+  const loadsAfter = await severalPage.evaluate(() => window.hub.state.log.filter((m) => m.payload.dataType === 'payslip-batch' && m.payload.params?.action === 'load').length)
+  check(loadsAfter === 5, 'Several companies: a company was loaded after the dashboard declined.')
+  await severalPage.close()
+  console.log('  several companies: admin companies only, asked once, one load per company, own templates, skipped and left-out reasons, one zip with folders, combined PDFs, Excel and the report; declined sends nothing')
 
   // 14. Month review: August 2026 is issued, then September 2026 is compared with it. Statuses,
   // changed lines, bulk-approve for Unchanged rows only, what blocks the issue, a template version

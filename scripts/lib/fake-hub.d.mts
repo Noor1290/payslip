@@ -20,11 +20,19 @@ export interface FakeHubState {
     versions: FakeVersion[]
     inUse: FakeInUse
     payroll: { period: string; employees: number; columns: string[] } | null
+    /** Its saved runs by month, for payslip-batch: the rows of the payroll export. */
+    runs?: Record<string, Record<string, unknown>[]>
+    /** Its statutory rates versions, as the dashboard sends them, plus `by`. */
+    rates?: Record<string, unknown>[]
+    /** Its issued payslips, as for the selected company (`issued`). */
+    issued?: (Record<string, unknown> & { national_id: string; period: string; revision: number; by: 'you' | 'other' })[]
   }[]
   /** A publish-copy to these BRNs is refused with that code. */
   refuseCopy: Record<string, string>
   /** The last template id handed out. */
   ids: number
+  /** What the user allowed for payslip-batch. */
+  batchAllowed: { period: string; brns: string[] } | null
   log: { type: 'send-data' | 'request-data'; payload: { dataType: string; period?: string; params?: Record<string, unknown>; rows?: Record<string, unknown>[] } }[]
   /** Saved payroll runs by month, as the rows of the payroll export. */
   runs: Record<string, Record<string, unknown>[]>

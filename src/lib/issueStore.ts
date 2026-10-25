@@ -62,7 +62,7 @@ export function ratesSnapshot(version: RatesVersion | null): RatesSnapshot | nul
 const differenceSchema = z.object({ what: z.string().max(80), payroll: z.number(), payslip: z.number(), reason: z.string().max(300) })
 
 /** One issued payslip as the dashboard returns it. Keys this app does not know are ignored. */
-const issuedSchema = z
+export const issuedSchema = z
   .object({
     national_id: z.string().min(1).max(50),
     revision,

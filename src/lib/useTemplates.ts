@@ -407,6 +407,8 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     await afterPublish(published, publication)
     if (published.end === 'saved' && published.version !== null && (await choosePublished(templateId, published.version))) {
       setNotice({ kind: 'ok', text: `The built-in template is now this company's template "${name}", version ${published.version}, and is used for the payslips.` })
+      // Already the one used: "Use version 1 now?" has nothing left to ask.
+      setJustPublished(null)
       await remember(templateId, published.version)
     }
   }

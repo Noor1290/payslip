@@ -320,10 +320,22 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **Decided and built (21 October 2026, owner: option b).** The comparison now ignores how the address is split over lines 3 and 4, as it ignores the drawing number: two payslips whose address is the same text, split at the first comma, at the last, or with words moved down, are the same. A payslip issued with drawing 2 for a 3-comma address stays "Issued, revision N" after the switch to drawing 3. A real change still shows: a figure, the name, or the address text itself. Tests: `tests/addressSplit.test.ts`, "the employee list after the switch to drawing 3".
 
-## 42. A dialog opened on a page is centred on the whole page, not on the window
+## 42. (Fixed) A dialog opened on a page is centred on the whole page, not on the window
 
 **What happens.** Each page (Payslips, Template, Statutory rates, Issued payslips) enters with the `rise-in` animation, which animates `transform` and keeps it applied (`animation: rise 220ms ease-out both`). In Chrome, an element with a transform animation in effect holds its `position: fixed` children to itself instead of to the window. So a dialog opened from inside a page is centred on the page's full height: on a long page, scrolled to the editor, "Use version N now?" can open off-screen, and a tall dialog is cut at the top and the bottom instead of scrolling inside itself.
 
 **Evidence.** Found 24 October 2026 while building "Publish to several companies": the first screenshot showed its dialog starting halfway down the frame and running past its bottom. Drawn in `document.body` (a React portal) it sits in the window and scrolls inside itself. `src/index.css`: `.rise-in`, `.overlay` (`position: fixed`), `.dialog` (`max-height: calc(100vh - 48px)`).
 
 **To decide.** Whether every dialog should be drawn in `document.body` as "Publish to several companies" now is (one change in `src/components/Dialog.tsx`), or the animation should stop keeping its transform. Not changed for the other dialogs: it is not part of this task.
+
+**Fixed (25 October 2026, owner's request, multi-company Stage 2).** `src/components/Dialog.tsx` draws every dialog in `document.body`, so each is centred in the window and scrolls inside itself. Test: `npm run check:bridge`, section 13b ("Many companies: the dialog does not fit in the window" fails with the old `Dialog`); "Use version 1 now?" opened from the bottom of the long editor is checked to be inside the window too. Found while fixing it: the overlay now covers the whole window, as a dialog should, and "Publish the built-in template as this company's template" used to leave "Use version 1 now?" open behind the page although that version was already in use; it no longer asks.
+
+## 43. (Fixed) Several companies: an issued payslip is drawn again, not taken from what was stored
+
+**What happens.** On one company's Payslips page, a payslip identical to the one issued is downloaded from what was stored when it was issued (`docs/ISSUED_PAYSLIP.md`), so it keeps its drawing version. "Several companies" does not read issued payslips (that would ask the dashboard once per company), so every payslip in its zip is drawn with today's drawing, issued or not. The figures and labels are the same; only an older drawing's layout (for example a long name before drawing 4) can differ.
+
+**Evidence.** `src/lib/manyPayslips.ts` builds every payslip with `preparePayslips`; `src/screens/PayslipsScreen.tsx`, `runExport`, swaps in the stored document of an identical issued payslip.
+
+**To decide.** Whether that is acceptable for a download-only batch, or the batch should also load each company's issued payslips for the month (one more dashboard answer per company, behind the same single question).
+
+**Fixed (25 October 2026, owner's request).** The dashboard adds each company's issued payslips for the month to its `load` answer, behind the same single question and gate (no extra question). A payslip issued and unchanged is taken from its stored copy, exactly as on the Payslips page (`issueStatuses`, `decodeLines`), so it keeps the drawing it was issued with; the report lists each one ("Taken from the issued copy (revision N): NAME"). One that changed since it was issued is drawn from this month's figures. Tests: `tests/manyCompanies.test.ts`, "a payslip already issued for the month".

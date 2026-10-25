@@ -86,6 +86,14 @@ The month review needs nothing new from the hub. It uses two requests the hub al
    - `delete_company` is replaced to delete the new table's row (newest definition now in 0018).
    - The contract is in `docs/INTEGRATION.md`, payslip-template, "The template used for the payslips, and publishing to several companies".
 
+## Multi-company payslips, Stage 2 (25 October 2026)
+
+15. **Payslips for several companies at once (`payslip-batch`).** BUILT on the hub's branch `multi-company`, not merged. No migration. Request only (download only):
+   - `companies` (no prompt): the user's admin companies, read from the database, with the selected one marked.
+   - `ask` (ONE prompt, password gate open): a month and 1 to 100 companies, or `all: true`. A company the user is not an admin of is refused as `forbidden` without asking. Agreeing allows `load` for those companies and that month only, for 15 minutes, in the dashboard's memory; locking the gate or signing out forgets it.
+   - `load`: one company: its saved run of the month (the rows `payroll-result` gives), the template its payslips use (chosen version; else its one published template; else none, with the reason), its rates, and the payslips already issued for that month (latest revisions, as `payslip-issue` gives them).
+   - The contract is in `docs/INTEGRATION.md`, "`payslip-batch`".
+
 ## Later change to the bridge file (13 October 2026)
 
 Not one of the items above, and not asked for by this app. The hub added one message to `bridge.js`, `activity`: while someone works in an app, the bridge says so at most once every 30 seconds, with nothing in it, so the dashboard neither signs its user out nor locks its password gate in the middle of that work. Still protocol version 1, and the app has nothing to do for it.

@@ -1,4 +1,4 @@
-import { CircleAlert, Download, FileCheck2, Inbox, LayoutTemplate, Moon, Percent, ReceiptText, Sun } from 'lucide-react'
+import { Building2, CircleAlert, Download, FileCheck2, Inbox, LayoutTemplate, Moon, Percent, ReceiptText, Sun } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ImportDialog, type IncomingPayroll } from './components/ImportDialog'
 import { preparePayslips } from './lib/build'
@@ -15,11 +15,12 @@ import { useIssuing } from './lib/useIssuing'
 import { useMonthReview } from './lib/useMonthReview'
 import { useTemplates } from './lib/useTemplates'
 import { IssuedScreen } from './screens/IssuedScreen'
+import { ManyScreen } from './screens/ManyScreen'
 import { PayslipsScreen } from './screens/PayslipsScreen'
 import { RatesScreen } from './screens/RatesScreen'
 import { TemplateScreen } from './screens/TemplateScreen'
 
-type Screen = 'payslips' | 'issued' | 'template' | 'rates'
+type Screen = 'payslips' | 'issued' | 'template' | 'rates' | 'many'
 type Theme = 'dark' | 'light'
 
 const SCREENS: { id: Screen; label: string; icon: typeof ReceiptText }[] = [
@@ -27,6 +28,7 @@ const SCREENS: { id: Screen; label: string; icon: typeof ReceiptText }[] = [
   { id: 'issued', label: 'Issued payslips', icon: FileCheck2 },
   { id: 'template', label: 'Template', icon: LayoutTemplate },
   { id: 'rates', label: 'Statutory rates', icon: Percent },
+  { id: 'many', label: 'Several companies', icon: Building2 },
 ]
 
 function initialTheme(): Theme {
@@ -181,7 +183,9 @@ export default function App() {
   // reloads this app on a change of company (rehearsal fix F1): unsaved template changes, an issue
   // not finished, or review marks. On its own, nothing is sent.
   const issueUnfinished = issuing.run !== null && issuing.run.status !== 'done'
-  const holdsUnsaved = templates.unsaved || issueUnfinished || review.marked
+  // A run for several companies would be lost too.
+  const [manyRunning, setManyRunning] = useState(false)
+  const holdsUnsaved = templates.unsaved || issueUnfinished || review.marked || manyRunning
   useEffect(() => {
     window.PayrollHubBridge.setUnsaved(holdsUnsaved)
   }, [holdsUnsaved])
@@ -236,7 +240,7 @@ export default function App() {
           </div>
         </div>
         <nav aria-label="Sections" className="flex gap-1">
-          {SCREENS.filter(({ id }) => id !== 'issued' || insideDashboard).map(({ id, label, icon: Icon }) => (
+          {SCREENS.filter(({ id }) => (id !== 'issued' && id !== 'many') || insideDashboard).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"
@@ -383,6 +387,7 @@ export default function App() {
         {screen === 'issued' && insideDashboard && (
           <IssuedScreen issuing={issuing} port={bridgePort} company={issuedCompany} readOnly={readOnly} period={period} />
         )}
+        {screen === 'many' && insideDashboard && <ManyScreen port={bridgePort} onRunning={setManyRunning} />}
         {screen === 'template' && (
           <TemplateScreen
             data={data}

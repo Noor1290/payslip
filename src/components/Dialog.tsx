@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -64,11 +65,17 @@ interface DialogProps {
   actions: ReactNode
 }
 
+/**
+ * Drawn in document.body, so that it is centred in the window and scrolls inside itself whatever
+ * page opened it: each page enters with an animated transform, which would otherwise hold the
+ * fixed overlay to the page, so a dialog opened low on a long page could be off the screen
+ * (docs/KNOWN_ISSUES.md, 42).
+ */
 export function Dialog({ title, description, icon, tone = 'accent', width, onClose, children, actions }: DialogProps) {
   const ref = useFocusTrap(onClose)
   const titleId = useId()
   const descriptionId = useId()
-  return (
+  return createPortal(
     <div
       className="overlay"
       onMouseDown={(event) => {
@@ -101,6 +108,7 @@ export function Dialog({ title, description, icon, tone = 'accent', width, onClo
         {children && <div className="min-h-0 overflow-auto px-5 pt-4">{children}</div>}
         <div className="flex justify-end gap-2 px-5 py-4">{actions}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

@@ -1,6 +1,5 @@
 import { Building2, Search, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
-import { createPortal } from 'react-dom'
 import type { CompanyResult } from '../lib/publishMany'
 import type { ManyPublish } from '../lib/useTemplates'
 import { Dialog } from './Dialog'
@@ -36,14 +35,8 @@ function outcomeBadge(result: CompanyResult) {
 /**
  * Publishing a template to several companies: the dashboard's check of each company where the
  * user is an admin, the ticks, the progress company by company, and what happened to each.
- * Drawn in document.body: inside a screen, the screen's entry animation would hold the overlay to
- * the page instead of the window, and this dialog is taller than most (docs/KNOWN_ISSUES.md, 42).
  */
-export function PublishManyDialog(props: Props) {
-  return createPortal(<PublishMany {...props} />, document.body)
-}
-
-function PublishMany({ many, name, onTick, onPublish, onClose }: Props) {
+export function PublishManyDialog({ many, name, onTick, onPublish, onClose }: Props) {
   const title = `Publish "${name}" to several companies`
   const [query, setQuery] = useState('')
 

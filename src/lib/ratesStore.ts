@@ -22,7 +22,7 @@ const rate = z.number().min(0).max(100)
 const amount = z.number().min(0)
 
 /** One version as the dashboard sends it. Keys this app does not know are ignored, never used. */
-const ratesRowSchema = z
+export const ratesRowSchema = z
   .object({
     effective_from: month,
     revision: z.number().int().min(1),
