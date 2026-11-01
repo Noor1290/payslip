@@ -7,7 +7,7 @@ import vm from 'node:vm'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { DEFAULT_STATUTORY_RATES } from '../src/data/defaultStatutoryRates'
-import { ask, canonicalJson, failure, REFUSAL_CODES, sendSave, STATUTORY_RATES, type HubPort } from '../src/lib/hubWire'
+import { ask, canonicalJson, failure, REFUSAL_CODES, sendSave, STATUTORY_RATES, type HubPort, refusalOf } from '../src/lib/hubWire'
 import {
   checkRatesSave,
   judgeRatesSave,
@@ -172,7 +172,13 @@ describe('statutory rates', () => {
 })
 
 describe('every refusal code has its own clear message', () => {
-  it('the eight codes give eight different titles and say what to do', () => {
+  it('an account with no company is told so, in the one sentence every app shows, once', () => {
+    const refused = refusalOf({ ok: false, code: 'no-company', error: 'The dashboard sentence' })
+    expect(refused).toMatchObject({ kind: 'no-company', hubError: null })
+    expect(`${refused!.title} ${refused!.detail}`).toBe("Your account isn't a member of any company in the dashboard yet. Ask an admin to add you.")
+  })
+
+  it('the codes give different titles and say what to do', () => {
     const titles = REFUSAL_CODES.map((code) => failure(code).title)
     expect(new Set(titles).size).toBe(REFUSAL_CODES.length)
     for (const code of REFUSAL_CODES) expect(failure(code).detail.length).toBeGreaterThan(20)

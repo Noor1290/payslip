@@ -34,6 +34,7 @@ export const REFUSAL_CODES = [
   'not-found',
   'too-large',
   'unavailable',
+  'no-company',
 ] as const
 export type RefusalCode = (typeof REFUSAL_CODES)[number]
 
@@ -105,6 +106,10 @@ const TEXT: Record<FailureKind, { title: string; detail: string }> = {
     title: 'Too large, or the company has reached its limit',
     detail: 'Trying again cannot help. Make it smaller, or stay within the limit of 50 templates and 1,000 rates versions.',
   },
+  'no-company': {
+    title: "Your account isn't a member of any company in the dashboard yet.",
+    detail: 'Ask an admin to add you.',
+  },
   unavailable: {
     title: 'The dashboard could not do this',
     detail: 'Check that you are signed in to the dashboard with a company selected, and that it is online.',
@@ -155,7 +160,8 @@ const isRefusalCode = (code: string | undefined): code is RefusalCode | GateCode
 
 /** A refusal with no code (the bridge's own time-out, "not registered") counts as no answer. */
 function failureOfRefusal(refusal: z.infer<typeof refusalSchema>): Failure {
-  const hubError = refusal.error?.trim() || null
+  // The app's own words say it all for an account with no company.
+  const hubError = refusal.code === 'no-company' ? null : refusal.error?.trim() || null
   return failure(isRefusalCode(refusal.code) ? refusal.code : 'no-answer', hubError, refusal.index ?? null)
 }
 
