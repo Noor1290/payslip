@@ -339,3 +339,7 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 **To decide.** Whether that is acceptable for a download-only batch, or the batch should also load each company's issued payslips for the month (one more dashboard answer per company, behind the same single question).
 
 **Fixed (25 October 2026, owner's request).** The dashboard adds each company's issued payslips for the month to its `load` answer, behind the same single question and gate (no extra question). A payslip issued and unchanged is taken from its stored copy, exactly as on the Payslips page (`issueStatuses`, `decodeLines`), so it keeps the drawing it was issued with; the report lists each one ("Taken from the issued copy (revision N): NAME"). One that changed since it was issued is drawn from this month's figures. Tests: `tests/manyCompanies.test.ts`, "a payslip already issued for the month".
+
+## Three entries of the proof no longer apply
+
+`scripts/prove-tests-can-fail.mjs` reports "3 of 175 changes were not caught" (1 Nov 2026). All three are SKIPPED, not missed: the text they look for is no longer in the source, so those breaks are never tried. "A stored template may map an employer column" (src/lib/templateBody.ts), "A date of employment that is not a date is shown anyway" (src/lib/payslip.ts), "Long name: Excel keeps the usual row height" (src/writers/excelWriter.ts). The same on main. Their entries need the current text.
