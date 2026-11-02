@@ -1,11 +1,14 @@
-import { ArrowDown, ArrowUp, Clock3, Eye, FilePlus2, Info, Lock, Pencil, Plus, RefreshCw, Table2, TextSearch, Trash2, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowDown, ArrowUp, Clock3, Eye, FilePlus2, FileSpreadsheet, Info, Lock, Pencil, Plus, RefreshCw, Table2, TextSearch, Trash2, TriangleAlert, Upload } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { Dialog } from '../components/Dialog'
 import { FailurePanel, SavedPanel } from '../components/FailurePanel'
 import { PublishManyDialog } from '../components/PublishManyDialog'
+import { SheetEditor } from '../components/SheetEditor'
 import { formatShortDate, isIsoDate } from '../lib/dates'
 import type { PublishTarget } from '../lib/publishMany'
 import type { ImportedPayroll } from '../lib/payrollFile'
+import { isSheetBody } from '../lib/sheetBody'
+import { readSheetFile, SheetProblem } from '../lib/sheetRead'
 import { DEFAULT_TABLE_MAPPING, EMPLOYER_CONTRIBUTION_SUFFIX, FIXED_LINES, mappableKeys, NEVER_MAP } from '../lib/template'
 import { bodyChanges, bodyRows, LABEL_MAX, MAX_BODY_ROWS, NAME_MAX, type BodyLine, type TemplateBody } from '../lib/templateBody'
 import {
@@ -30,6 +33,8 @@ interface Props {
   templates: Templates
   /** Inside the dashboard. Opened on its own, the built-in template is edited in memory only. */
   embedded: boolean
+  /** The date on the payslip, for the grid's preview of Today's date. */
+  issueDate: string
 }
 
 const HEADER_LABELS: [LabelKey, string][] = [
@@ -69,14 +74,34 @@ const PUBLISH_TARGETS: [PublishTarget, string][] = [
 /** What the user is about to do while the editor holds something that would be lost. */
 type Leaving = { title: string; go: () => void }
 
-export function TemplateScreen({ data, templates: t, embedded }: Props) {
+export function TemplateScreen({ data, templates: t, embedded, issueDate }: Props) {
   const [leaving, setLeaving] = useState<Leaving | null>(null)
+  const [uploadProblem, setUploadProblem] = useState<string | null>(null)
+  const [reading, setReading] = useState(false)
+  const fileInput = useRef<HTMLInputElement>(null)
   const { editor, list } = t
+  const tableBody = editor && !isSheetBody(editor.body) ? editor.body : null
   const working = t.busy !== null
   const keys = data ? mappableKeys(data.keys, data.rows, DEFAULT_TABLE_MAPPING) : []
 
   /** Runs `go` at once, or asks first when unsaved changes would be lost. */
   const guarded = (title: string, go: () => void) => (t.unsaved ? setLeaving({ title, go }) : go())
+
+  const readUpload = async (file: File | undefined) => {
+    if (fileInput.current) fileInput.current.value = ''
+    if (!file) return
+    setUploadProblem(null)
+    if (!/\.xlsx$/i.test(file.name)) return setUploadProblem('Choose an Excel file ending in .xlsx.')
+    setReading(true)
+    try {
+      const upload = await readSheetFile(file.name, new Uint8Array(await file.arrayBuffer()))
+      guarded('Start from this file?', () => t.startFromFile(upload))
+    } catch (problem) {
+      setUploadProblem(problem instanceof SheetProblem ? problem.message : 'The file could not be read. Choose it again.')
+    } finally {
+      setReading(false)
+    }
+  }
 
   const options = (current: string | null) => {
     const all = current && !keys.includes(current) ? [current, ...keys] : keys
@@ -215,11 +240,12 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
     </div>
   )
 
-  const conflictChanges = editor?.conflict && editor.saved ? bodyChanges(editor.saved.body, editor.conflict.body) : []
+  const conflictChanges =
+    editor?.conflict && editor.saved && !isSheetBody(editor.saved.body) && !isSheetBody(editor.conflict.body) ? bodyChanges(editor.saved.body, editor.conflict.body) : []
   const used = t.active
 
   return (
-    <div className="rise-in mx-auto flex max-w-5xl flex-col gap-4">
+    <div className={`rise-in mx-auto flex ${tableBody ? 'max-w-5xl' : 'max-w-[1500px]'} flex-col gap-4`}>
       <div>
         <h2 className="m-0 text-2xl font-semibold tracking-tight">Template</h2>
         <p className="m-0 text-muted">How the payslip looks, and which payroll column fills each line.</p>
@@ -279,7 +305,7 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
             </p>
           </div>
         )}
-        <div className="grid gap-4 p-4 md:grid-cols-2">
+        <div className="grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-3">
           <div className="card flex items-start gap-3 p-4" aria-current={used.kind === 'built-in' || used.kind === 'built-in-edited' ? 'true' : undefined}>
             <span className="icon-tile" aria-hidden="true">
               <Table2 />
@@ -311,6 +337,39 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
                   </button>
                 )}
               </span>
+            </div>
+          </div>
+          <div className="card flex items-start gap-3 p-4" aria-current={used.sheet ? 'true' : undefined} data-testid="from-your-file">
+            <span className="icon-tile" aria-hidden="true">
+              <FileSpreadsheet />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="m-0 flex flex-wrap items-center gap-2 font-semibold">
+                From your file
+                {used.sheet && <span className="badge tone-accent">In use</span>}
+              </p>
+              <p className="m-0 text-sm text-muted">Upload your own payslip layout as an Excel file, and choose what goes in every cell.</p>
+              <input
+                ref={fileInput}
+                type="file"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                className="sr-only"
+                tabIndex={-1}
+                aria-hidden="true"
+                data-testid="layout-file"
+                onChange={(event) => void readUpload(event.target.files?.[0])}
+              />
+              <span className="mt-2 flex flex-wrap gap-2">
+                <button type="button" className="btn btn-sm" disabled={working || reading || (embedded && list.status !== 'loaded')} onClick={() => fileInput.current?.click()}>
+                  <Upload aria-hidden="true" />
+                  {reading ? 'Reading the file' : 'Upload an Excel file'}
+                </button>
+              </span>
+              {uploadProblem && (
+                <p className="field-error m-0 mt-2" role="alert" data-testid="layout-file-problem">
+                  {uploadProblem}
+                </p>
+              )}
             </div>
           </div>
           <div className="card flex items-start gap-3 p-4 opacity-70" aria-disabled="true">
@@ -468,7 +527,7 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
       {editor && (
         <section className="card" aria-label="Template editor" data-testid="template-editor">
           <div className="card-header">
-            <h3 className="card-title">{embedded ? (editor.templateId === null ? 'New template' : `Draft of "${editor.saved?.name ?? editor.name}"`) : 'Built-in Table template'}</h3>
+            <h3 className="card-title">{embedded ? (editor.templateId === null ? 'New template' : `Draft of "${editor.saved?.name ?? editor.name}"`) : tableBody ? 'Built-in Table template' : 'From your file'}</h3>
             <p className="m-0 flex flex-wrap items-center gap-1.5" data-testid="editor-status">
               {embedded && <span className="badge tone-warn">{editor.saved ? `Draft, revision ${editor.saved.draftRevision}` : 'Draft, never saved'}</span>}
               {embedded && <span className="badge">{editor.publishedVersion === null ? 'Never published' : `Published: version ${editor.publishedVersion}`}</span>}
@@ -525,9 +584,11 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
               </div>
             )}
 
+            {tableBody ? (
+              <>
             <fieldset className="m-0 border-0 p-0">
               <legend className="mb-2 p-0 text-sm font-semibold">Block: title, company and employee</legend>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{HEADER_LABELS.map((entry) => labelField(editor.body, entry))}</div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{HEADER_LABELS.map((entry) => labelField(tableBody, entry))}</div>
             </fieldset>
 
             <div>
@@ -535,7 +596,7 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
               <p className="m-0 mb-3 text-sm text-muted">
                 {data ? `${keys.length} columns found in the payroll data.` : 'Import payroll data on the Payslips page to choose from the columns found in it.'}{' '}
                 <span data-testid="rows-used">
-                  The lines take {bodyRows(editor.body)} of the {MAX_BODY_ROWS} rows that fit on the page.
+                  The lines take {bodyRows(tableBody)} of the {MAX_BODY_ROWS} rows that fit on the page.
                 </span>
               </p>
               {!data && (
@@ -545,8 +606,8 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
                 </div>
               )}
               <p className="m-0 mb-1 text-xs uppercase tracking-wider text-subtle">Block: earnings</p>
-              {linesTable(editor.body, editor.body.earnings, { side: 'earnings' }, 'Earnings')}
-              {editor.body.deductionGroups.map((group, index) => (
+              {linesTable(tableBody, tableBody.earnings, { side: 'earnings' }, 'Earnings')}
+              {tableBody.deductionGroups.map((group, index) => (
                 <div key={index} className="mt-4">
                   <div className="field mb-2 max-w-sm">
                     <label className="field-label" htmlFor={`group-${index}`}>
@@ -562,14 +623,14 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
                       onChange={(event) => t.edit((current) => setGroupLabel(current, index, event.target.value))}
                     />
                   </div>
-                  {linesTable(editor.body, group.lines, { side: 'deductions', group: index }, `Deductions, ${group.label.trim() || `group ${index + 1}`}`)}
+                  {linesTable(tableBody, group.lines, { side: 'deductions', group: index }, `Deductions, ${group.label.trim() || `group ${index + 1}`}`)}
                 </div>
               ))}
             </div>
 
             <fieldset className="m-0 border-0 p-0">
               <legend className="mb-2 p-0 text-sm font-semibold">Block: totals, net pay and sign-off</legend>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{FOOTER_LABELS.map((entry) => labelField(editor.body, entry))}</div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{FOOTER_LABELS.map((entry) => labelField(tableBody, entry))}</div>
               <p className="m-0 mt-2 flex items-start gap-2 text-sm text-muted">
                 <Lock aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
                 Only the labels can be changed here. Total Earnings, Total Deductions and Net Pay are always the plain addition of the lines
@@ -596,25 +657,25 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
                     <select
                       id="csg-base"
                       className="input input-sm"
-                      value={editor.body.mapping.crossCheck.csgBase}
+                      value={tableBody.mapping.crossCheck.csgBase}
                       disabled={!data || working}
                       onChange={(event) => t.edit((current) => setCrossCheckBase(current, 'csgBase', event.target.value))}
                     >
-                      {options(editor.body.mapping.crossCheck.csgBase)}
+                      {options(tableBody.mapping.crossCheck.csgBase)}
                     </select>
                   </div>
                   <div className="field">
                     <label className="field-label" htmlFor="nsf-base">
-                      NSF cross-check base {editor.body.mapping.crossCheck.nsfBaseToConfirm && <span className="badge tone-sky ml-1">To confirm</span>}
+                      NSF cross-check base {tableBody.mapping.crossCheck.nsfBaseToConfirm && <span className="badge tone-sky ml-1">To confirm</span>}
                     </label>
                     <select
                       id="nsf-base"
                       className="input input-sm"
-                      value={editor.body.mapping.crossCheck.nsfBase}
+                      value={tableBody.mapping.crossCheck.nsfBase}
                       disabled={!data || working}
                       onChange={(event) => t.edit((current) => setCrossCheckBase(current, 'nsfBase', event.target.value))}
                     >
-                      {options(editor.body.mapping.crossCheck.nsfBase)}
+                      {options(tableBody.mapping.crossCheck.nsfBase)}
                     </select>
                   </div>
                 </div>
@@ -625,6 +686,11 @@ export function TemplateScreen({ data, templates: t, embedded }: Props) {
                 </p>
               </div>
             </fieldset>
+
+              </>
+            ) : (
+              editor.body && isSheetBody(editor.body) && <SheetEditor body={editor.body} data={data} templates={t} issueDate={issueDate} />
+            )}
 
             {t.problems.length > 0 && (
               <div className="panel tone-danger" role="alert" data-testid="template-problems">

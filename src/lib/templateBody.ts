@@ -9,6 +9,7 @@
 import { z } from 'zod'
 import { canonicalJson, jsonBytes } from './hubWire'
 import { normaliseKey } from './payrollFile'
+import { isSheetBody, readSheetBody as readLayout, sheetProblems as layoutProblems, type SheetBody } from './sheetBody'
 import {
   DEFAULT_TABLE_MAPPING,
   FIXED_LINES,
@@ -282,6 +283,16 @@ export function readBody(raw: unknown): BodyRead {
   const body = parsed.data as TemplateBody
   const problems = bodyProblems(body)
   return problems.length > 0 ? { ok: false, problems } : { ok: true, body }
+}
+
+/** A body from the dashboard, of either kind: the Table form, or a layout from a file. */
+export function readAnyBody(raw: unknown): { ok: true; body: TemplateBody | SheetBody } | { ok: false; problems: string[] } {
+  return isSheetBody(raw) ? readLayout(raw) : readBody(raw)
+}
+
+/** What is wrong with a body of either kind. */
+export function anyBodyProblems(body: TemplateBody | SheetBody): string[] {
+  return isSheetBody(body) ? layoutProblems(body) : bodyProblems(body)
 }
 
 /** True when two bodies say the same thing, whatever order their keys are stored in. */

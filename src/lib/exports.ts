@@ -1,10 +1,13 @@
 // Building the downloadable files. Everything happens in memory in the browser; the heavy
 // libraries (PDF, Excel, zip) are loaded only when a download is asked for.
 
+import boldItalicFontUrl from '../assets/fonts/texgyrepagella-bolditalic.otf?url'
 import boldFontUrl from '../assets/fonts/texgyrepagella-bold.otf?url'
+import italicFontUrl from '../assets/fonts/texgyrepagella-italic.otf?url'
 import regularFontUrl from '../assets/fonts/texgyrepagella-regular.otf?url'
 import { payslipFileNames } from './build'
 import type { PayslipDocument } from './layoutModel'
+import { isSheetDocument, type SheetDocument } from './sheetDocument'
 
 async function fontBytes(url: string): Promise<Uint8Array> {
   // The fonts ship with the app, so this request stays on the app's own origin.
@@ -14,27 +17,32 @@ async function fontBytes(url: string): Promise<Uint8Array> {
 }
 
 /** One PDF per employee, zipped. */
-export async function buildPdfZip(docs: readonly PayslipDocument[], period: string): Promise<Uint8Array> {
+export async function buildPdfZip(docs: readonly (PayslipDocument | SheetDocument)[], period: string): Promise<Uint8Array> {
   const [{ writePayslipPdf }, { zipSync }, regular, bold] = await Promise.all([
     import('../writers/pdfWriter'),
     import('fflate'),
     fontBytes(regularFontUrl),
     fontBytes(boldFontUrl),
   ])
+  // Only a layout from a file can print italics.
+  const italics = docs.some(isSheetDocument) ? { italic: await fontBytes(italicFontUrl), boldItalic: await fontBytes(boldItalicFontUrl) } : {}
   const names = payslipFileNames(
     docs.map((doc) => doc.employeeName),
     period,
   )
   const files: Record<string, Uint8Array> = {}
   for (let index = 0; index < docs.length; index++) {
-    files[names[index]] = await writePayslipPdf(docs[index], { regular, bold })
+    const doc = docs[index]
+    files[names[index]] = isSheetDocument(doc)
+      ? await writePayslipPdf(doc, { regular, bold, ...italics }, new Date(`${doc.period}-01T00:00:00Z`))
+      : await writePayslipPdf(doc, { regular, bold })
   }
   // PDFs are already compressed; storing them keeps the zip fast.
   return zipSync(files, { level: 0 })
 }
 
 /** One workbook with a sheet per employee. */
-export async function buildWorkbook(docs: readonly PayslipDocument[]): Promise<Uint8Array> {
+export async function buildWorkbook(docs: readonly (PayslipDocument | SheetDocument)[]): Promise<Uint8Array> {
   const { writePayslipWorkbook } = await import('../writers/excelWriter')
   return writePayslipWorkbook(docs)
 }

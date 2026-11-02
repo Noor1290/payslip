@@ -9,7 +9,7 @@
 // or a line that has no partner. A name, a date, a renamed label, the template or the rates are
 // shown as notes and never change a status. Amounts are whole cents, so nothing is rounded.
 
-import type { PreparedPayslip } from './build'
+import type { AnyPayslip } from './build'
 import { formatPeriod, formatShortDate } from './dates'
 import { canonicalJson } from './hubWire'
 import { decodeLines, type IssuedFigure, type IssuedFigures } from './issuedLines'
@@ -132,7 +132,7 @@ const HAS_ERROR = "This month's payslip has a figure to fix first, so there is n
 /** This month's payslips, as built from this month's payroll figures, reduced to what is compared. */
 export function currentPayslips(
   data: ImportedPayroll,
-  prepared: readonly PreparedPayslip[],
+  prepared: readonly AnyPayslip[],
   template: TemplateRef,
   rates: RatesSnapshot | null,
 ): CurrentPayslip[] {

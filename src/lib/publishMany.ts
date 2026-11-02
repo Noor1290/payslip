@@ -10,7 +10,8 @@ import { formatPeriod } from './dates'
 import { normaliseKey } from './payrollFile'
 import { ask, failure, normaliseBrn, PAYSLIP_TEMPLATE, sendSave, type Failure, type HubPort, type SaveEnd } from './hubWire'
 import { FIXED_LINES } from './template'
-import type { TemplateBody } from './templateBody'
+import { columnsRead, isSheetBody } from './sheetBody'
+import type { AnyBody } from './templateUse'
 
 const id = z.uuid()
 const revision = z.number().int().min(1)
@@ -113,7 +114,8 @@ export async function checkCompanies(port: HubPort, brn: string, templateName: s
 }
 
 /** The payroll columns the template's lines are filled from, each with the old names it also accepts. */
-export function columnsUsed(body: TemplateBody): { label: string; key: string; aliases: string[] }[] {
+export function columnsUsed(body: AnyBody): { label: string; key: string; aliases: string[] }[] {
+  if (isSheetBody(body)) return columnsRead(body).map((key) => ({ label: key, key, aliases: [] }))
   const lines = [...body.earnings, ...body.deductionGroups.flatMap((group) => group.lines)]
   return lines.flatMap((line) => {
     const key = body.mapping.lines[line.id]?.key
@@ -149,7 +151,7 @@ const quoted = (names: string[]) => names.map((key) => `"${key}"`).join(', ')
  */
 export function planCompanies(
   companies: readonly CompanyCheck[],
-  input: { name: string; body: TemplateBody; draftRevision: number; publishedVersion: number | null },
+  input: { name: string; body: AnyBody; draftRevision: number; publishedVersion: number | null },
 ): CompanyPlan[] {
   const used = columnsUsed(input.body)
   const templateName = input.name.trim()
@@ -222,7 +224,7 @@ export interface PendingCopy {
   brn: string
   companyBrn: string
   name: string
-  body: TemplateBody
+  body: AnyBody
   expectedRevision: number
   publishedBefore: number | null
 }
@@ -335,7 +337,7 @@ function updatedText(outcome: Extract<CopyOutcome, { end: 'saved' }>): string {
  */
 export async function publishToCompanies(
   port: HubPort,
-  input: { brn: string; name: string; body: TemplateBody },
+  input: { brn: string; name: string; body: AnyBody },
   plans: readonly CompanyPlan[],
   ticked: ReadonlySet<string>,
   onProgress: (done: number, total: number, company: string) => void = () => {},

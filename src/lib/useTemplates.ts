@@ -4,22 +4,29 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { failure, normaliseBrn, type Failure, type HubCompany, type HubPort, type HubRole, type SaveEnd } from './hubWire'
-import { bodyProblems, BUILT_IN_BODY, nameProblem, readBody, sameBody, type TemplateBody } from './templateBody'
+import { isSheetBody, sameOwnValues, type OwnValues, type SheetBody } from './sheetBody'
+import { calculationProblems } from './sheetEvaluate'
+import type { SheetUpload } from './sheetRead'
+import { anyBodyProblems, BUILT_IN_BODY, nameProblem, readAnyBody, sameBody, type TemplateBody } from './templateBody'
 import {
   checkDraftSave,
   checkPublish,
   listTemplates,
   loadDraft,
+  loadHistory,
+  loadOwnValues,
   loadVersion,
   publishDraft,
   saveDraft,
+  saveOwnValues,
   type DraftOutcome,
   type PendingDraftSave,
   type PendingPublish,
   type PublishOutcome,
   type TemplateSummary,
+  type TemplateVersion,
 } from './templateStore'
-import { activeTemplate, preselection, type ActiveTemplate, type TemplateChoice } from './templateUse'
+import { activeTemplate, preselection, type ActiveTemplate, type AnyBody, type TemplateChoice } from './templateUse'
 import {
   checkCompanies,
   initialTicks,
@@ -43,12 +50,17 @@ export interface EditorState {
   /** Null for a template that has never been saved. */
   templateId: string | null
   name: string
-  body: TemplateBody
+  body: AnyBody
   /** The draft as the dashboard has it. Null while it has never been saved. */
-  saved: { name: string; body: TemplateBody; draftRevision: number } | null
+  saved: { name: string; body: AnyBody; draftRevision: number } | null
   publishedVersion: number | null
   /** After a stale save: my changes that were NOT saved, kept until I say I am done with them. */
-  conflict: { name: string; body: TemplateBody } | null
+  conflict: { name: string; body: AnyBody } | null
+  /** A layout from a file: this company's own values, and the same as the dashboard has them. */
+  own?: OwnValues
+  savedOwn?: { own: OwnValues; revision: number } | null
+  /** While a new upload is set up, never saved: what Empty cells showed, and what was left out. */
+  upload?: Pick<SheetUpload, 'hints' | 'notes'>
 }
 
 export type TemplateNotice =
@@ -74,6 +86,9 @@ const notRemembered = (found: Failure): Failure => ({
   title: NOT_REMEMBERED,
   detail: `${found.title}. The payslips use it in this tab only; choose it again to try once more.`,
 })
+/** History of a layout from a file, while it is open. */
+export type HistoryState = { status: 'loading' } | { status: 'failed'; failure: Failure } | { status: 'loaded'; versions: TemplateVersion[] }
+
 export type TemplatesBusy = 'loading' | 'saving' | 'publishing' | 'checking' | null
 
 const STANDALONE_EDITOR: EditorState = {
@@ -116,6 +131,7 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
   /** Where "Publish" sends the saved draft: this company only (as before), or several. */
   const [publishTarget, setPublishTarget] = useState<PublishTarget>('this')
   const [many, setMany] = useState<ManyPublish | null>(null)
+  const [history, setHistory] = useState<HistoryState | null>(null)
 
   /** Loads one published version and, when its body can be used, makes it the payslips' template. */
   const choosePublished = useCallback(
@@ -126,12 +142,15 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
         setNotice({ kind: 'failure', failure: loaded.failure, end: 'load', action: 'load' })
         return false
       }
-      const read = readBody(loaded.value.body)
+      const read = readAnyBody(loaded.value.body)
       if (!read.ok) {
         setNotice({ kind: 'refused-body', name: `${loaded.value.name}, version ${version}`, problems: read.problems })
         return false
       }
-      setChoice({ kind: 'published', templateId, name: loaded.value.name, version, body: read.body })
+      // The company's own values of a layout from a file. A dashboard without them has none.
+      const values = isSheetBody(read.body) ? await loadOwnValues(port, brn, templateId) : null
+      if (!isCurrent()) return false
+      setChoice({ kind: 'published', templateId, name: loaded.value.name, version, body: read.body, ...(values?.ok ? { own: values.value.own } : {}) })
       setChoiceNeeded(false)
       setPreviewDraft(false)
       return true
@@ -176,7 +195,10 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
   const dirty =
     editor !== null &&
     (embedded
-      ? editor.saved === null || editor.name.trim() !== editor.saved.name || !sameBody(editor.body, editor.saved.body)
+      ? editor.saved === null ||
+        editor.name.trim() !== editor.saved.name ||
+        !sameBody(editor.body, editor.saved.body) ||
+        !sameOwnValues(editor.own ?? {}, editor.savedOwn?.own ?? {})
       : !sameBody(editor.body, BUILT_IN_BODY))
   /** True while leaving the editor would lose something: unsaved edits, or changes set aside after a stale save. */
   const unsaved = embedded && editor !== null && (dirty || editor.conflict !== null)
@@ -186,7 +208,7 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     if (!editor) return []
     const taken = items.filter((item) => item.templateId !== editor.templateId).map((item) => item.name)
     const name = embedded ? nameProblem(editor.name, taken) : null
-    return [...(name ? [name] : []), ...bodyProblems(editor.body)]
+    return [...(name ? [name] : []), ...anyBodyProblems(editor.body), ...(isSheetBody(editor.body) ? calculationProblems(editor.body) : [])]
   }, [editor, items, embedded])
 
   // Why a save is not possible right now, in words. Null when it is.
@@ -258,13 +280,16 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
       fail(loaded.failure, 'load', 'load')
       return false
     }
-    const read = readBody(loaded.value.body)
+    const read = readAnyBody(loaded.value.body)
     if (!read.ok) {
       setNotice({ kind: 'refused-body', name: `${loaded.value.name} (draft)`, problems: read.problems })
       return false
     }
     const { name, draftRevision } = loaded.value
+    const values = isSheetBody(read.body) ? await loadOwnValues(port, brn, templateId) : null
+    setHistory(null)
     setEditor({
+      ...(isSheetBody(read.body) ? { own: values?.ok ? values.value.own : {}, savedOwn: values?.ok ? values.value : null } : {}),
       brn: brn ?? loaded.company.brn,
       templateId,
       name,
@@ -275,6 +300,43 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     })
     setPending(null)
     return true
+  }
+
+  /** Starts a new template from an uploaded layout. Nothing reaches the dashboard until it is saved. */
+  const startFromFile = (upload: SheetUpload) => {
+    setNotice(null)
+    setPending(null)
+    setHistory(null)
+    setEditor({
+      brn: brn ?? (list.status === 'loaded' ? list.company.brn : null),
+      templateId: null,
+      name: upload.name,
+      body: upload.body,
+      saved: null,
+      publishedVersion: null,
+      conflict: null,
+      own: {},
+      savedOwn: null,
+      upload: { hints: upload.hints, notes: upload.notes },
+    })
+  }
+
+  /** History of the open layout: every version, newest first. */
+  const openHistory = async () => {
+    if (!editor?.templateId || editor.publishedVersion === null) return setHistory({ status: 'loaded', versions: [] })
+    setHistory({ status: 'loading' })
+    const loaded = await loadHistory(port, brn, editor.templateId, editor.publishedVersion)
+    if (!loaded.ok) return setHistory({ status: 'failed', failure: loaded.failure })
+    setHistory({ status: 'loaded', versions: loaded.value })
+  }
+
+  /** Restore: the version's body comes into the editor as unsaved changes; the draft is saved by hand. */
+  const restoreVersion = (version: TemplateVersion) => {
+    const read = readAnyBody(version.body)
+    if (!read.ok) return setNotice({ kind: 'refused-body', name: `${version.name}, version ${version.version}`, problems: read.problems })
+    setEditor((previous) => (previous ? { ...previous, body: read.body } : previous))
+    setHistory(null)
+    setNotice({ kind: 'ok', text: `Version ${version.version} is in the editor. Save the draft to keep it, then publish it as a new version.` })
   }
 
   /** Starts a new template from what the payslips use now. Nothing reaches the dashboard until it is saved. */
@@ -299,7 +361,16 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     setNotice(null)
   }
 
-  const edit = (change: (body: TemplateBody) => TemplateBody) => setEditor((previous) => (previous ? { ...previous, body: change(previous.body) } : previous))
+  const edit = (change: (body: TemplateBody) => TemplateBody) =>
+    setEditor((previous) => (previous && !isSheetBody(previous.body) ? { ...previous, body: change(previous.body) } : previous))
+  const editSheet = (change: (body: SheetBody) => SheetBody) =>
+    setEditor((previous) => (previous && isSheetBody(previous.body) ? { ...previous, body: change(previous.body) } : previous))
+  const editOwn = (id: string, value: string | undefined) =>
+    setEditor((previous) => {
+      if (!previous) return previous
+      const { [id]: _old, ...others } = previous.own ?? {}
+      return { ...previous, own: value === undefined ? others : { ...others, [id]: value } }
+    })
   const rename = (name: string) => setEditor((previous) => (previous ? { ...previous, name } : previous))
   const resolveConflict = () => setEditor((previous) => (previous ? { ...previous, conflict: null } : previous))
 
@@ -309,6 +380,8 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
       setEditor((previous) => (previous ? { ...previous, templateId, name, saved: { name, body: sent.body, draftRevision } } : previous))
       setPending(null)
       setNotice({ kind: 'ok', text: `Draft saved as revision ${draftRevision}. It is not published: payslips do not use it yet.` })
+      const ownNow = editor?.own
+      if (ownNow && !sameOwnValues(ownNow, editor?.savedOwn?.own ?? {})) await sendOwn(templateId, ownNow, editor?.savedOwn?.revision ?? 1)
       reload()
       return
     }
@@ -317,7 +390,7 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
       setPending(null)
       // A new template that "exists already": someone made one with that name. Nothing to merge.
       if (sent.templateId === null) return fail(failure('invalid', 'This company already has one with that name.'), 'refused', 'save')
-      const read = outcome.newer ? readBody(outcome.newer.body) : null
+      const read = outcome.newer ? readAnyBody(outcome.newer.body) : null
       if (outcome.newer && read?.ok) {
         // Never overwrite: the newer draft takes the editor, and my changes are set aside in memory.
         const { name, draftRevision } = outcome.newer
@@ -369,8 +442,24 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     }
   }
 
+  /** Saves this company's own values, which are not part of the draft. */
+  const sendOwn = async (templateId: string, own: OwnValues, revision: number) => {
+    setBusy('saving')
+    const saved = brn === null ? null : await saveOwnValues(port, brn, templateId, own, revision)
+    setBusy(null)
+    if (!saved) return
+    if (!saved.ok) return fail(saved.failure, saved.failure.kind === 'stale' ? 'stale' : 'refused', 'save')
+    setEditor((previous) => (previous ? { ...previous, savedOwn: { own, revision: saved.revision } } : previous))
+  }
+
   const save = () => {
     if (!editor || brn === null || cannotSave !== null || problems.length > 0 || busy !== null) return
+    const ownChanged = editor.own !== undefined && !sameOwnValues(editor.own, editor.savedOwn?.own ?? {})
+    const draftSame = editor.saved !== null && editor.name.trim() === editor.saved.name && sameBody(editor.body, editor.saved.body)
+    if (draftSame && ownChanged && editor.templateId) {
+      void sendOwn(editor.templateId, editor.own!, editor.savedOwn?.revision ?? 1).then(() => setNotice({ kind: 'ok', text: "This company's own values are saved." }))
+      return
+    }
     void run(
       {
         action: 'save',
@@ -495,7 +584,7 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
   const active: ActiveTemplate = useMemo(() => {
     const draft =
       editor && (!embedded || (previewDraft && !forOtherCompany))
-        ? { templateId: editor.templateId, name: editor.name, body: editor.body, draftRevision: editor.saved?.draftRevision ?? 0 }
+        ? { templateId: editor.templateId, name: editor.name, body: editor.body, own: editor.own, draftRevision: editor.saved?.draftRevision ?? 0 }
         : null
     return activeTemplate({ embedded, choice, choiceNeeded, draft })
   }, [embedded, choice, choiceNeeded, editor, previewDraft, forOtherCompany])
@@ -527,6 +616,13 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
     newTemplate,
     closeEditor,
     edit,
+    editSheet,
+    editOwn,
+    startFromFile,
+    history,
+    openHistory,
+    restoreVersion,
+    closeHistory: () => setHistory(null),
     rename,
     resolveConflict,
     save,

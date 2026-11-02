@@ -17,7 +17,7 @@ import { IssuePanel } from '../components/IssuePanel'
 import { MonthReview } from '../components/MonthReview'
 import { PayslipPreview } from '../components/PayslipPreview'
 import { ReasonDialog } from '../components/ReasonDialog'
-import type { PreparedPayslip } from '../lib/build'
+import type { AnyPayslip } from '../lib/build'
 import { formatPeriod } from '../lib/dates'
 import { buildPdfZip, buildWorkbook, download, exportBaseName } from '../lib/exports'
 import { buildIssue, issueStatuses } from '../lib/issueBuild'
@@ -42,7 +42,7 @@ interface Props {
   onPeriod: (period: string) => void
   issueDate: string
   onIssueDate: (date: string) => void
-  prepared: PreparedPayslip[]
+  prepared: AnyPayslip[]
   mapping: TemplateMapping
   /** Which template and version the payslips are built with: always shown. */
   templateChip: string
@@ -260,7 +260,7 @@ export function PayslipsScreen(props: Props) {
   }
 
   const hasPeriod = isMonth(period)
-  const statusOf = (item: PreparedPayslip): Status =>
+  const statusOf = (item: AnyPayslip): Status =>
     item.computation.errors.length > 0
       ? 'fix'
       : isReady(item.computation, accepted[item.computation.rowIndex] ?? {})
@@ -270,7 +270,7 @@ export function PayslipsScreen(props: Props) {
   const counts = { ready: 0, review: 0, fix: 0 }
   for (const status of statuses) counts[status]++
 
-  const item = prepared[current] as PreparedPayslip | undefined
+  const item = prepared[current] as AnyPayslip | undefined
   const selectedItems = prepared.filter((p) => selected.has(p.computation.rowIndex))
   const notReady = selectedItems.filter((p) => statusOf(p) !== 'ready').length
   const blockReason = props.exportBlock
@@ -719,7 +719,7 @@ export function PayslipsScreen(props: Props) {
 }
 
 interface ChecksProps {
-  item: PreparedPayslip
+  item: AnyPayslip
   mapping: TemplateMapping
   accepted: AcceptedChecks
   reasons: Record<string, string>

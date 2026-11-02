@@ -2,7 +2,7 @@
 // PUBLISHED template is chosen, the payroll data is for that month, and every selected payslip
 // has no error and every difference fixed or accepted with a reason.
 
-import type { PreparedPayslip } from './build'
+import type { AnyPayslip } from './build'
 import { canonicalJson } from './hubWire'
 import { encodeLines, figuresOf, sameLines } from './issuedLines'
 import { ratesSnapshot, type IssuedPayslip, type PayslipToIssue } from './issueStore'
@@ -10,13 +10,15 @@ import type { ImportedPayroll } from './payrollFile'
 import { isReady, type AcceptedChecks } from './payslip'
 import { acceptedDifferences, type Reasons } from './reasons'
 import type { RatesVersion } from './statutoryRates'
+import { isSheetDocument } from './sheetDocument'
+import { isSheetBody } from './sheetBody'
 import type { TemplateChoice } from './templateUse'
 
 export interface IssueInput {
   data: ImportedPayroll
   /** The pay month chosen on the Payslips page. */
   period: string
-  prepared: readonly PreparedPayslip[]
+  prepared: readonly AnyPayslip[]
   /** Row indexes of the employees to issue. */
   selected: readonly number[]
   accepted: Readonly<Record<number, AcceptedChecks>>
@@ -79,6 +81,8 @@ export function monthProblems(input: Pick<IssueInput, 'data' | 'period' | 'choic
   if (input.previewingDraft) problems.push('You are previewing a draft. Stop previewing it: only a published template version can be issued.')
   else if (input.choice.kind !== 'published') {
     problems.push('Payslips are issued with a published template version of the company. Choose one on the Template page, or publish the built-in template there.')
+  } else if (isSheetBody(input.choice.body)) {
+    problems.push('Payslips from your own file can be previewed and downloaded. Issuing them comes in the next stage.')
   }
   if (input.data.period === null) problems.push('The payroll data does not say which month it is for, so it cannot be issued. Get the month from the dashboard.')
   else if (input.data.period !== input.period) problems.push('The pay month chosen is not the month of the payroll data. They must be the same to issue.')
@@ -100,7 +104,7 @@ export function buildIssue(input: IssueInput): IssueBuild {
     const { computation, document } = item
     const name = computation.employeeName
     const accepted = input.accepted[rowIndex] ?? {}
-    if (!document || computation.errors.length > 0) {
+    if (!document || isSheetDocument(document) || computation.errors.length > 0) {
       problems.push(`${name}: the payslip has an error to fix.`)
       continue
     }
@@ -145,7 +149,7 @@ export type IssueStatus =
 /** Per row index. Empty while the month has not been loaded. */
 export function issueStatuses(
   data: ImportedPayroll,
-  prepared: readonly PreparedPayslip[],
+  prepared: readonly AnyPayslip[],
   month: readonly IssuedPayslip[] | null,
   accepted: Readonly<Record<number, AcceptedChecks>>,
   reasons: Reasons,
@@ -161,7 +165,7 @@ export function issueStatuses(
       continue
     }
     let same = false
-    if (document && computation.errors.length === 0) {
+    if (document && !isSheetDocument(document) && computation.errors.length === 0) {
       const { zeroReasons } = acceptedDifferences(computation, accepted[rowIndex] ?? {}, reasons[rowIndex])
       same = sameLines(encodeLines(document, figuresOf(computation, zeroReasons)), issued.lines)
     }

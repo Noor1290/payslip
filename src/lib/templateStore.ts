@@ -14,7 +14,9 @@ import {
   type HubRole,
   type SaveEnd,
 } from './hubWire'
-import { sameBody, type TemplateBody } from './templateBody'
+import { readOwnValues, type OwnValues } from './sheetBody'
+import { sameBody } from './templateBody'
+import type { AnyBody } from './templateUse'
 
 const id = z.uuid()
 const name = z.string().min(1).max(200)
@@ -115,7 +117,7 @@ export interface PendingDraftSave {
   /** Null for a new template. */
   templateId: string | null
   name: string
-  body: TemplateBody
+  body: AnyBody
   /** The draft revision the app last saw; 0 for a new template. */
   expectedRevision: number
 }
@@ -214,7 +216,7 @@ export interface PendingPublish {
   publishedBefore: number | null
   /** The draft being published, to recognise it afterwards. */
   name: string
-  body: TemplateBody
+  body: AnyBody
 }
 
 export function publishRow(pending: PendingPublish): Record<string, unknown> {
@@ -256,4 +258,47 @@ export async function publishDraft(port: HubPort, pending: PendingPublish): Prom
   if (sent.uncertain) return checkPublish(port, pending, sent.failure)
   const end: SaveEnd = sent.failure.kind === 'stale' ? 'stale' : sent.failure.kind === 'no-change' ? 'no-change' : 'refused'
   return { end, failure: sent.failure, version: null }
+}
+
+/** The most versions History lists: the latest ones. */
+export const HISTORY_MAX = 30
+
+/** Every version History lists, newest first. A published version never changes, so each is read by its number. */
+export async function loadHistory(port: HubPort, brn: string | null, templateId: string, latest: number): Promise<Loaded<TemplateVersion[]>> {
+  const numbers = Array.from({ length: Math.min(latest, HISTORY_MAX) }, (_, index) => latest - index)
+  const loaded = await Promise.all(numbers.map((version) => loadVersion(port, brn, templateId, version)))
+  const failed = loaded.find((one) => !one.ok)
+  if (failed && !failed.ok) return failed
+  const versions = loaded.flatMap((one) => (one.ok ? [one.value] : []))
+  const first = loaded[0]
+  return first?.ok ? { ok: true, value: versions, company: first.company, role: first.role } : { ok: false, failure: failure('bad-answer') }
+}
+
+const valuesSchema = z.object({ template_id: id, own_values: z.unknown(), values_revision: revision })
+const savedValuesSchema = z.object({ action: z.literal('values'), template_id: id, values_revision: revision })
+
+export interface TemplateValues {
+  own: OwnValues
+  revision: number
+}
+
+/** A template's own values for the selected company ("this company only"). */
+export async function loadOwnValues(port: HubPort, brn: string | null, templateId: string): Promise<Loaded<TemplateValues>> {
+  const answer = await ask(port, PAYSLIP_TEMPLATE, { action: 'values', template_id: templateId }, brn, valuesSchema)
+  if (!answer.ok) return answer
+  const row = answer.rows[0]
+  if (answer.rows.length !== 1 || row.template_id !== templateId) return { ok: false, failure: failure('bad-answer') }
+  return { ok: true, value: { own: readOwnValues(row.own_values), revision: row.values_revision }, company: answer.company, role: answer.role }
+}
+
+/** Replaces them. Refused as stale when someone else saved since, never overwritten. */
+export async function saveOwnValues(
+  port: HubPort,
+  brn: string,
+  templateId: string,
+  own: OwnValues,
+  expectedRevision: number,
+): Promise<{ ok: true; revision: number } | { ok: false; failure: Failure }> {
+  const sent = await sendSave(port, PAYSLIP_TEMPLATE, { action: 'values', brn, template_id: templateId, own_values: own, expected_revision: expectedRevision }, savedValuesSchema)
+  return sent.ok ? { ok: true, revision: sent.result.values_revision } : { ok: false, failure: sent.failure }
 }

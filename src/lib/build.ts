@@ -4,8 +4,9 @@ import { buildPayslipDocument, type PayslipDocument } from './layoutModel'
 import type { ImportedPayroll } from './payrollFile'
 import { computePayslip, type PayslipComputation } from './payslip'
 import { ratesFor, type RatesVersion } from './statutoryRates'
+import type { SheetDocument } from './sheetDocument'
 import type { PayslipTemplate, TemplateMapping } from './template'
-import { layoutPage, withAddressSplitAtLastComma, withNameInWideArea, type DrawList } from '../writers/pageGeometry'
+import { layoutPage, withAddressSplitAtLastComma, withNameInWideArea, type DrawList, type SheetFontName } from '../writers/pageGeometry'
 
 export interface BuildSettings {
   template: PayslipTemplate
@@ -73,6 +74,15 @@ export interface PreparedPayslip {
   document: PayslipDocument | null
   page: DrawList | null
 }
+
+/** A payslip of a layout from a file: the same, with its own document. */
+export interface SheetPayslip {
+  computation: PayslipComputation
+  document: SheetDocument | null
+  page: DrawList<SheetFontName> | null
+}
+
+export type AnyPayslip = PreparedPayslip | SheetPayslip
 
 /**
  * Everything the screen and the exports need for each employee. A page the payslip font cannot

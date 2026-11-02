@@ -7,6 +7,8 @@ import metricsJson from '../assets/fonts/metrics.json'
 import { KNOWN_DRAWINGS, unknownDrawing, type DocCell, type DocRow, type PayslipDocument } from '../lib/layoutModel'
 
 export type FontName = 'regular' | 'bold'
+/** Layouts from a file also print italics. The Table drawings never do. */
+export type SheetFontName = FontName | 'italic' | 'boldItalic'
 
 export interface FontMetrics {
   postscriptName: string
@@ -31,22 +33,26 @@ export interface DrawLine {
   y2: number
   width: number
   color: string
+  /** Layouts from a file only: on and off lengths of a dashed line. */
+  dash?: number[]
 }
-export interface DrawText {
+export interface DrawText<Font extends SheetFontName = FontName> {
   /** Left edge of the text. */
   x: number
   /** Baseline. */
   y: number
   text: string
-  font: FontName
+  font: Font
   size: number
+  /** Layouts from a file only: RRGGBB. Black when left out. */
+  color?: string
 }
-export interface DrawList {
+export interface DrawList<Font extends SheetFontName = FontName> {
   width: number
   height: number
   rects: DrawRect[]
   lines: DrawLine[]
-  texts: DrawText[]
+  texts: DrawText<Font>[]
   /** Characters the payslip font cannot print. A page with any of these must not be exported. */
   unsupported: string[]
   /** Texts too long for their cell even at the smallest size. Also blocks the export. */

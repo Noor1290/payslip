@@ -340,6 +340,24 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **Fixed (25 October 2026, owner's request).** The dashboard adds each company's issued payslips for the month to its `load` answer, behind the same single question and gate (no extra question). A payslip issued and unchanged is taken from its stored copy, exactly as on the Payslips page (`issueStatuses`, `decodeLines`), so it keeps the drawing it was issued with; the report lists each one ("Taken from the issued copy (revision N): NAME"). One that changed since it was issued is drawn from this month's figures. Tests: `tests/manyCompanies.test.ts`, "a payslip already issued for the month".
 
+## 44. "From your file": what Stage 1 leaves out
+
+**What happens.** A layout from a file can be uploaded, set up, saved, published, previewed and downloaded. It cannot be issued yet: the Payslips page says so. Long names, the address split, the cross-checks, required cells, "Publish to" with own values kept, the month review and several companies come in Stage 2. Until then: a name too wide for its cell is set smaller down to 8 points of the sheet, then refused; the Payslips page has no "Treat as zero" for a cell; `payslip-batch` does not read a layout yet, and a company whose payslips use one is listed as not usable there.
+
+**To decide.** Nothing. Stage 2 of PAYSLIP_FROM_FILE_PROMPT.md.
+
+## 45. "From your file": what an upload cannot keep
+
+**What happens.** The upload says so each time. Images and logos are left out (the dashboard refuses them in a template). Text with several styles in one cell keeps the cell's style. Only the first sheet is read. Conditional formats, comments and print titles are not read. The preview and the PDF print every font in TeX Gyre Pagella, the only font the app carries; the Excel output keeps the file's fonts. So a text can be a little wider or narrower in the PDF than in Excel; the PDF sets it smaller or refuses it rather than cut it.
+
+**To decide.** Nothing now.
+
+## 46. "From your file": the sheet prints small when it is wide
+
+**What happens.** As Excel's "fit to one page" does, the whole sheet is scaled to the page, keeping its proportions. The reference's four columns are 738 points wide, so on A4 (28 points of white edge) the page is at 73% and 11-point text prints at about 8 points. The Table payslip is not so: it was drawn for the page. Narrower columns in the file print larger, up to 100%.
+
+**To decide.** In Stage 2, how the 9-point rule for long names reads on such a page (the owner's rule is about the name cell). It is measured in points of the sheet in this drawing.
+
 ## Three entries of the proof no longer applied (fixed 1 Nov 2026)
 
 `scripts/prove-tests-can-fail.mjs` reported "3 of 175 changes were not caught". All three were skipped, not missed: the text they looked for had moved on in src/lib/templateBody.ts, src/lib/payslip.ts and src/writers/excelWriter.ts, so those breaks were never tried. They now aim at the current code, and each is caught.

@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { baselineFromPayroll, loadPayrollMonth } from './baseline'
-import type { PreparedPayslip } from './build'
+import type { AnyPayslip } from './build'
 import { normaliseBrn, type Failure, type HubPort } from './hubWire'
 import type { RatesSnapshot } from './issueStore'
 import { currentPayslips, previousMonth, type MonthComparison, type ReviewRow, type TemplateRef } from './monthCompare'
@@ -34,7 +34,7 @@ export interface MonthReviewInput {
   period: string
   data: ImportedPayroll | null
   /** This month's payslips, built from this month's payroll figures. Read, never changed. */
-  prepared: readonly PreparedPayslip[]
+  prepared: readonly AnyPayslip[]
   /** The template and mapping this month's payslips are made with. */
   template: PayslipTemplate
   mapping: TemplateMapping

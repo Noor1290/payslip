@@ -2,6 +2,8 @@
 // A payslip is exported from a PUBLISHED version or from the built-in template only. A draft can
 // be previewed, under a banner, and never exported.
 
+import { isSheetBody, type OwnValues, type SheetBody } from './sheetBody'
+import type { SheetInUse } from './sheetDocument'
 import { DEFAULT_TABLE_MAPPING, TABLE_TEMPLATE, type PayslipTemplate, type TemplateMapping } from './template'
 import { BUILT_IN_BODY, sameBody, templateOf, type TemplateBody } from './templateBody'
 import type { TemplateSummary } from './templateStore'
@@ -9,12 +11,16 @@ import type { TemplateSummary } from './templateStore'
 /** What the user (or the one-published-template rule) chose for the payslips. */
 export type TemplateChoice =
   | { kind: 'built-in' }
-  | { kind: 'published'; templateId: string; name: string; version: number; body: TemplateBody }
+  | { kind: 'published'; templateId: string; name: string; version: number; body: AnyBody; own?: OwnValues }
+
+/** A template of the company: the Table form, or a layout from a file. */
+export type AnyBody = TemplateBody | SheetBody
 
 export interface DraftInUse {
   templateId: string | null
   name: string
-  body: TemplateBody
+  body: AnyBody
+  own?: OwnValues
   /** 0 while the draft has never been saved. */
   draftRevision: number
 }
@@ -27,6 +33,8 @@ export interface ActiveTemplate {
   chip: string
   /** Why the payslips cannot be exported with this template. Null when they can. */
   exportBlock: string | null
+  /** A layout from a file: the payslips come from it, not from `template`. */
+  sheet?: SheetInUse
 }
 
 export const DRAFT_EXPORT_BLOCK =
@@ -46,7 +54,16 @@ export function activeTemplate(input: {
 }): ActiveTemplate {
   const { embedded, choice, draft } = input
   if (!embedded) {
-    if (!draft || sameBody(draft.body, BUILT_IN_BODY)) return { ...BUILT_IN, kind: 'built-in', chip: 'Table (built-in)', exportBlock: null }
+    if (draft && isSheetBody(draft.body)) {
+      return {
+        ...BUILT_IN,
+        kind: 'built-in-edited',
+        chip: 'From your file (not saved)',
+        exportBlock: null,
+        sheet: { body: draft.body, own: draft.own ?? {}, id: 'file', version: 'unsaved' },
+      }
+    }
+    if (!draft || sameBody(draft.body, BUILT_IN_BODY) || isSheetBody(draft.body)) return { ...BUILT_IN, kind: 'built-in', chip: 'Table (built-in)', exportBlock: null }
     return {
       ...templateOf(draft.body, { id: 'table', name: 'Table', version: 'built-in-1-edited' }),
       kind: 'built-in-edited',
@@ -57,6 +74,15 @@ export function activeTemplate(input: {
   if (draft) {
     const name = draft.name.trim() || 'New template'
     const revision = draft.draftRevision > 0 ? `draft revision ${draft.draftRevision}` : 'unsaved draft'
+    if (isSheetBody(draft.body)) {
+      return {
+        ...BUILT_IN,
+        kind: 'draft',
+        chip: `${name}, ${revision} (not published)`,
+        exportBlock: DRAFT_EXPORT_BLOCK,
+        sheet: { body: draft.body, own: draft.own ?? {}, id: draft.templateId ?? 'new', version: `draft-${draft.draftRevision}` },
+      }
+    }
     return {
       ...templateOf(draft.body, { id: draft.templateId ?? 'new', name, version: `draft-${draft.draftRevision}` }),
       kind: 'draft',
@@ -65,6 +91,15 @@ export function activeTemplate(input: {
     }
   }
   if (choice.kind === 'published') {
+    if (isSheetBody(choice.body)) {
+      return {
+        ...BUILT_IN,
+        kind: 'published',
+        chip: `${choice.name}, version ${choice.version} (published)`,
+        exportBlock: null,
+        sheet: { body: choice.body, own: choice.own ?? {}, id: choice.templateId, version: `v${choice.version}` },
+      }
+    }
     return {
       ...templateOf(choice.body, { id: choice.templateId, name: choice.name, version: `v${choice.version}` }),
       kind: 'published',

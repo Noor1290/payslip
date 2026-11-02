@@ -94,6 +94,10 @@ The month review needs nothing new from the hub. It uses two requests the hub al
    - `load`: one company: its saved run of the month (the rows `payroll-result` gives), the template its payslips use (chosen version; else its one published template; else none, with the reason), its rates, and the payslips already issued for that month (latest revisions, as `payslip-issue` gives them).
    - The contract is in `docs/INTEGRATION.md`, "`payslip-batch`".
 
+## From your file, Stage 1 (2 November 2026)
+
+16. **A company's own values for a template.** BUILT on the hub's branch `payslip-from-file`, not merged. Migration `0022_payslip_template_own_values.sql`, NOT run. Request `values` and save `values`, outside the body. The contract is in `docs/INTEGRATION.md`, "A company's own values". Stage 2 adds them to `payslip-batch`.
+
 ## Later change to the bridge file (13 October 2026)
 
 Not one of the items above, and not asked for by this app. The hub added one message to `bridge.js`, `activity`: while someone works in an app, the bridge says so at most once every 30 seconds, with nothing in it, so the dashboard neither signs its user out nor locks its password gate in the middle of that work. Still protocol version 1, and the app has nothing to do for it.

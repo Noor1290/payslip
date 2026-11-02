@@ -209,8 +209,8 @@ export function createFakeHub() {
 
   const answerTemplates = (params) => {
     if (!isObject(params)) return field('action')
-    if (params.action !== 'list' && params.action !== 'load' && params.action !== 'check') return field('action')
-    const allowed = params.action === 'list' ? ['action', 'brn'] : params.action === 'check' ? ['action', 'brn', 'name', 'page'] : ['action', 'brn', 'template_id', 'version']
+    if (params.action !== 'list' && params.action !== 'load' && params.action !== 'check' && params.action !== 'values') return field('action')
+    const allowed = params.action === 'list' ? ['action', 'brn'] : params.action === 'check' ? ['action', 'brn', 'name', 'page'] : params.action === 'values' ? ['action', 'brn', 'template_id'] : ['action', 'brn', 'template_id', 'version']
     if (unknownKey(params, allowed)) return refuse('invalid', 'Unexpected field in the data.')
     if (brnProblem(params.brn, false)) return field('brn')
     if (params.action === 'load') {
@@ -225,6 +225,12 @@ export function createFakeHub() {
     const refusal = context(params.brn)
     if (refusal) return refusal
     const answer = (rows) => ({ ok: true, dataType: 'payslip-template', rows, meta: meta() })
+
+    if (params.action === 'values') {
+      if (!state.templates.some((row) => row.id === params.template_id)) return refuse('not-found', 'This company has no such payslip template.')
+      const stored = state.ownValues?.[params.template_id] ?? { own_values: {}, values_revision: 1 }
+      return answer([{ template_id: params.template_id, ...copy(stored) }])
+    }
 
     if (params.action === 'check') {
       if (state.role !== 'admin') return refuse('forbidden', 'Only an admin of this company can publish a template.')
@@ -378,6 +384,22 @@ export function createFakeHub() {
     if (!isObject(row)) return field('row')
     if (row.action === 'publish-summary') return checkSummary(row)
     if (row.action === 'use') return checkUse(row)
+    if (row.action === 'values') {
+      if (unknownKey(row, ['action', 'brn', 'template_id', 'own_values', 'expected_revision'])) return refuse('invalid', 'Unexpected field in the data.')
+      if (brnProblem(row.brn, true)) return field('brn')
+      const refusal = context(row.brn)
+      if (refusal) return refusal
+      if (state.role !== 'admin') return refuse('forbidden', 'Only an admin of this company can save or publish a template.')
+      state.ownValues ??= {}
+      const current = state.ownValues[row.template_id]?.values_revision ?? 1
+      if (current !== row.expected_revision) return refuse('stale', 'Someone else changed this.')
+      return {
+        store: () => {
+          state.ownValues[row.template_id] = { own_values: copy(row.own_values), values_revision: current + 1 }
+          return { action: 'values', template_id: row.template_id, values_revision: current + 1 }
+        },
+      }
+    }
     if (row.action === 'publish-copy') return checkCopy(row)
     if (row.action !== 'save-draft' && row.action !== 'publish') return field('action')
     const publishing = row.action === 'publish'

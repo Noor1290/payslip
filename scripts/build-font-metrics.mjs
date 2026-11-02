@@ -31,9 +31,18 @@ export function buildMetrics() {
   }
 }
 
+/** The two italics, for "From your file" layouts only. In a file of their own: metrics.json stays as it is. */
+export function buildItalicMetrics() {
+  return {
+    italic: readMetrics('texgyrepagella-italic.otf'),
+    boldItalic: readMetrics('texgyrepagella-bolditalic.otf'),
+  }
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const metrics = buildMetrics()
   writeFileSync(resolve(fontsDir, 'metrics.json'), `${JSON.stringify(metrics)}\n`)
+  writeFileSync(resolve(fontsDir, 'metrics-italic.json'), `${JSON.stringify(buildItalicMetrics())}\n`)
   for (const [name, m] of Object.entries(metrics)) {
     console.log(name, m.postscriptName, 'unitsPerEm', m.unitsPerEm, 'capHeight', m.capHeight, 'characters', Object.keys(m.widths).length)
   }

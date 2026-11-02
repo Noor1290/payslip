@@ -175,6 +175,10 @@ Calculation policy (fixed, do not ask):
   - The review lives in a card on the Payslips page, under the employee list. The paper preview is never tinted, highlighted or marked.
   - "Get from dashboard" keeps asking for the latest run (known issue 10 stays open).
 
+## 8a. From your file (November 2026, owner's prompt PAYSLIP_FROM_FILE_PROMPT.md)
+
+A third option beside Table and Lookup: the owner's own payslip layout, uploaded as an Excel file. Stored as template schema 2, kind "file" (`src/lib/sheetBody.ts`), through the same `payslip-template` messages; the file itself is not kept. A cell holds text as typed, a fixed value (all companies, or this company only: own values, outside the body, dashboard migration 0022), a company detail, an employee field, a payroll figure, a small calculation, a date (employment, pay month, today, another field) or nothing. Numbers, dates and formulas of an upload start Empty. Employer columns stay blocked. It has its own document (`src/lib/sheetDocument.ts`), page (`src/writers/sheetGeometry.ts`) and Excel sheet (`src/writers/sheetExcel.ts`): nothing of it touches the Table drawings. For this option only, a cell can calculate and round, because the owner chose it cell by cell; a payroll figure itself is still copied, never patched. Decisions: italics are bundled (TeX Gyre Pagella italic and bold italic, same GUST licence, used by these layouts only); Today's date will not count towards "Changed since" (Stage 2); History and Restore are for this option only, from the dashboard's load of a version.
+
 ## 9. Coming soon (do not build now)
 
 - The lookup-style template (Phase 6). Show it as a disabled "Coming soon" card in the template picker.

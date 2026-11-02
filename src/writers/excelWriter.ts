@@ -10,7 +10,9 @@
 import ExcelJS from 'exceljs'
 import { KNOWN_DRAWINGS, unknownDrawing, type DocCell, type DocRow, type PayslipDocument } from '../lib/layoutModel'
 import { centsToNumber, isWholeRupees } from '../lib/money'
+import { isSheetDocument, type SheetDocument } from '../lib/sheetDocument'
 import { addressOnPage, nameOnPage, nameOnPageV4, wideNameInExcel } from './pageGeometry'
+import { addSheetPage } from './sheetExcel'
 
 // Accounting-style formats, as in the reference: a zero shows as "-".
 export const FORMAT_WHOLE = '_-* #,##0_-;-* #,##0_-;_-* "-"??_-;_-@'
@@ -192,12 +194,12 @@ function addSheet(workbook: ExcelJS.Workbook, name: string, doc: PayslipDocument
 }
 
 /** One workbook with a sheet per employee. */
-export async function writePayslipWorkbook(docs: readonly PayslipDocument[]): Promise<Uint8Array> {
+export async function writePayslipWorkbook(docs: readonly (PayslipDocument | SheetDocument)[]): Promise<Uint8Array> {
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'Payslip app'
   workbook.lastModifiedBy = 'Payslip app'
   const names = sheetNames(docs.map((doc) => doc.employeeName))
-  docs.forEach((doc, index) => addSheet(workbook, names[index], doc))
+  docs.forEach((doc, index) => (isSheetDocument(doc) ? addSheetPage(workbook, names[index], doc) : addSheet(workbook, names[index], doc)))
   const buffer = await workbook.xlsx.writeBuffer()
   return new Uint8Array(buffer as ArrayBuffer)
 }

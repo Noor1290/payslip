@@ -1,6 +1,6 @@
 # Connecting an app to Payroll Hub
 
-This is for whoever adds the bridge to an app (`payroll_sys`, `pdf-form-filler`, the payslip app), including Claude Code working in that app's repository. It explains what to copy, what to wire up, and how to check it works.
+This is for whoever adds the bridge to an app (`payroll_sys`, `pdf-form-filler`, the payslip app, MRA Returns), including Claude Code working in that app's repository. It explains what to copy, what to wire up, and how to check it works.
 
 ## The idea in one minute
 
@@ -151,6 +151,42 @@ Each message carries `brn`, the company selected in the dashboard (`wrong-compan
 - **`key-change`**: a column's or an identity field's key changed. One step, all or nothing: the setup that carries the new key is saved exactly as `save-shared` (with `shared`) or `save-company` (with `company`) would save it, with every check they have, and the values move from `old_key` to `new_key` in every saved month the key reaches: every company attached to the shared setup when `company_brn` is `null` (a Global column, an identity field), only that company otherwise. Each month moved gets a new revision, listed in `months`. Exactly one of `shared` and `company`; with `company`, every move must name that company. At most 20 moves, applied in order.
 - `forbidden`: not an admin of that company (or, for a Global key, of every company using the shared setup). `not-found`: the company has no column setup in the dashboard yet, or a key is to move in a company not attached to the shared setup.
 
+### Payroll app: several companies in one Excel file (`payroll-batch`)
+
+Added for "Several companies…" in the payroll app (25 Oct 2026, branch `multi-company-excel`, Stage 1: the export; Stage 1b: a range of months). No migration: it reads what `payroll-setup` and `payroll-month` already keep. Request only: nothing is ever saved through this data type. It works as `payslip-batch` does (the same code, `src/features/workspace/batchAccess.ts`): each company is one the user is an ADMIN of, read from the database at each request; `brn` must be the selected company's (`wrong-company` otherwise) and is required on `ask` and `load`.
+
+| `params`                                                | Asked of the user | Answer rows |
+| ------------------------------------------------------- | ----------------- | ----------- |
+| `{ action: "companies", brn? }`                         | nothing           | One per company the user is an admin of and that has a BRN, the selected company first, then by name: `{ brn, name, selected, has_setup }`. No value per employee. |
+| `{ action: "ask", brn, from, to, companies: [brn, ...] }` | ONE prompt, in the same dialog as a saved run, with the password gate open | The companies allowed: `{ brn, name }`. `meta.period` is the month when `from` and `to` are the same. |
+| `{ action: "load", brn, from, to, company_brn }`          | nothing more      | ONE row for that company (below). |
+
+- **`from` and `to`** are months, `"YYYY-MM"`: the same month for one month, or a later `to`, 24 months at most in all (`invalid` otherwise).
+- **`ask`** names 1 to 200 companies, always by BRN (there is no `all`): the prompt names the months and EVERY company, never "and N more" ("It wants the October 2026 payroll of 3 companies: ABC Co Ltd, Big Sample Ltd and New Venture Ltd.", or "It wants the July 2026 to June 2027 payroll of 4 companies: …"). A company the user is not an admin of is refused at once as `forbidden` ("Only companies where you are an admin can be chosen."), without asking. `denied`, `timeout` and `locked` as for `payroll-result`.
+- **Agreeing allows `load`** for those companies and exactly that `from` and `to` only (not a part of the range, nor a larger one), for this app, this user and the company selected now, for 15 minutes, in the dashboard's memory only; forgotten when the gate locks, on sign-out, or when the app asks again. It is separate from what `payslip-batch` allowed. A `load` outside it is refused as `denied`, with nothing read.
+- **`load`** needs the gate open (`locked` otherwise; the months are read under the gated query key, as `payroll-month` reads them) and the user to be an admin of that company still (`forbidden`, "Only an admin of that company can export its employees' figures."). Its one row: `{ brn, name, address, from, to, setup, months }`:
+  - `setup`: `{ shared_setup_id, shared_name, shared_body, shared_revision, company_body, company_revision }`, the bodies exactly as `payroll-setup` stores them; `null` when the company has no column setup.
+  - `months`: one per month of the range that is saved, oldest first (none when no month is saved): `{ period, revision, shared_revision, company_revision, employee_count, employees, updated_at }`, the employees exactly as `payroll-month` stores them. `shared_revision` and `company_revision` are the setup revisions each month was saved with.
+- The app works out the figures itself, with the company's column setup as it is now, as its Employee Table and Totals show every month. The dashboard never looks inside a body or a month.
+- Every request is a row in the Transfer log (a `load` counts one row: the company), never with a value.
+
+### Payroll app: importing such a file (`payroll-import`)
+
+Added for "Several companies…" > Import (Stage 2), database side in `supabase/migrations/0019_import_payroll_company.sql`. The app reads the file itself (by its hidden sheet, never by the headings) and matches each sheet to a company by BRN, never by name. National IDs and salaries, so: admins only, with the password gate open (`locked` otherwise, nothing read or stored), and NO dialog: the preview the user confirms in the app is the confirmation (the owner's decision). `brn` is the selected company's (`wrong-company` otherwise).
+
+| Kind | What the app sends | What comes back |
+| --- | --- | --- |
+| request | `params: { action: "check", brn, from, to, companies: [brn, ...] }` (1 to 200 BRNs, the range as for `payroll-batch`) | one row per BRN: `{ brn, status: "absent" }` (the user has no company with that BRN, whether or not one exists); `{ brn, status: "member", name }` (a member, not an admin); or `{ brn, status: "admin", name, address, setup, months, approved }`: `setup` as `payroll-batch` gives it, or `null`; `months` the saved months of the range, `{ period, revision, employee_count }` (no employee); `approved` the months of the range whose saved run is approved |
+| save | `{ action: "company", brn, company_brn, new_company?: { name, address }, setup?: { shared_setup_id, create, name?, shared_body?, company_body }, expected?: { shared_revision, company_revision }, months: [{ period, employees, expected_revision, replace }] }` | `result: { action, brn, company, created, attached, shared_created, shared_setup_id, months: [{ period, revision, employee_count, replaced }] }` |
+| save | `{ action: "summary", brn, created, added, replaced, skipped, failed }` | `result: { action }`. Stores nothing: the one toast for the whole import |
+
+- **`company`** is ONE company of the file, stored ALL or NOTHING by `import_payroll_company` (migration 0019): if any part is refused, nothing of that company is stored, not the company, not its setup, not a month. One company refused does not affect the others: each is its own message.
+  - `new_company` only for a BRN the user has no company with (`stale` otherwise); a company is then made with that name, BRN and address, the user its admin (as `create_company`: an admin of at least one company; a BRN already used by a company the user cannot see is refused as `invalid`, "…you are not a member of it. It was not added."). Without it, the user must be an admin of that company (`forbidden`, "Only an admin of that company can import its months.").
+  - `setup` only for a company with no column setup yet: attached to the shared setup `shared_setup_id` (the selected company's, when the file's is the same), or to a new one made from the file (`create: true`, with `name` and `shared_body`), with `company_body` as its own setup. For a company that has a setup, `expected` names the revisions the file was checked against; if someone saved since, `stale`.
+  - `months`: 1 to 24, each named once: `period` `"YYYY-MM"`, `employees` as `payroll-month` stores them (1 MB at most), `expected_revision` (0 for a month not saved yet), `replace`. A saved month is replaced only with `replace: true`, as a new revision whose previous content is kept (History and Restore undo it), and never when its run is approved: `forbidden`, "The month YYYY-MM has an approved run in the dashboard, so it is never replaced. Nothing of this company was saved."
+- A company made here is added to the dashboard's company list. Each company is a row in the Transfer log without a toast; `summary` shows the one toast ("Payroll imported from Excel: 2 companies added to the dashboard, 14 months added, 3 months replaced; 4 months skipped, 1 company not imported.").
+- After `unavailable` or no answer: `check` that company again before sending it again (its months then have a newer revision if it was stored).
+
 ## `pdf-form-filler` (app id: `pdf-editor`)
 
 This app **receives** payroll results.
@@ -282,6 +318,7 @@ A row from a saved run also has `Date of Employment` (text, `YYYY-MM-DD`) when t
   | `invalid`       | A field is missing, unknown, of the wrong type, out of range or too precise; a template name is taken; a body contains an image. | Fix the data. `error` names the field, never its value. |
   | `not-found`     | No such template or version in this company.                                                         | Reload the list.                                                      |
   | `too-large`     | Over a size limit, or the company has reached its limit of templates or rates versions.              | Make it smaller; a retry cannot help.                                 |
+  | `no-company`    | The signed-in account belongs to no company. Nothing was read or stored.                              | Show `error`, and offer nothing else: every app says the same sentence. |
   | `unavailable`   | The dashboard could not do it: nobody signed in, no company selected, the database is not reachable or not set up, or a save was not confirmed in time. | See the rule below before saving again. |
 
 - **After "no answer" or `unavailable` on a save: reload, then compare the revision, before saving again.** The dashboard answers a save within 8 seconds: the real outcome if it has one, otherwise `unavailable` ("could not confirm the save"). `bridge.js` gives up by itself after 10 seconds (`{ ok: false, error }` with no `code`). In both cases the save MAY have been stored. So the app must not send it again as it is. It must ask for the data again and look at the revision: if it has moved on to the one the save would have produced, the save went through; if it has not, the app may save again with the same `expected_revision`. An app that skips this is not harmed (the second save is refused as `stale` or `no-change`), but its user is told a save failed when it did not.
@@ -321,6 +358,7 @@ Requests, by `params.action`:
 | `{ action: "list", brn? }`                       | One per template, by name, without bodies: `template_id`, `name`, `draft_revision`, `updated_at`, `updated_by_you`, `published_version` and `published_at` (both `null` when never published), and `in_use_version`: the version of this template used for the company's payslips, or `null` (see "The template used for the payslips" below). |
 | `{ action: "load", template_id, brn? }`          | One row, the draft: `template_id`, `name`, `draft_revision`, `body`, `updated_at`, `updated_by_you`.                            |
 | `{ action: "load", template_id, version, brn? }` | One row, that published version: `template_id`, `name` (as it was when published), `version`, `body`, `published_at`, `published_by_you`. |
+| `{ action: "values", template_id, brn? }`        | One row, the company's own values for that template: `template_id`, `own_values`, `values_revision`. See "A company's own values" below. |
 
 Saves, by the row's `action`:
 
@@ -332,6 +370,7 @@ Saves, by the row's `action`:
 | `{ action: "use", brn, template_id, version }` (both `null` to clear the choice)      | `{ action: "use", template_id, version }`                   |
 | `{ action: "publish-copy", brn, company_brn, name, body, expected_revision }`         | `{ action: "publish-copy", brn, company, template_id, name, version, draft_revision, created, published, published_at }` |
 | `{ action: "publish-summary", brn, name, published, skipped, failed, unconfirmed }`  | `{ action: "publish-summary" }`                              |
+| `{ action: "values", brn, template_id, own_values, expected_revision }`              | `{ action: "values", template_id, values_revision }`         |
 
 `expected_revision` is the `draft_revision` the app last saw. A save-draft always sends the whole draft (name and body); renaming is a save-draft with the new name. Publishing publishes exactly the draft revision named, or is refused as `stale`.
 
@@ -342,6 +381,10 @@ Limits:
 - A name is 1 to 80 characters after trimming, and unique in its company whatever the capitals (`invalid`).
 - No images or other embedded files: a body in which any text or key contains a `data:` URI is refused (`invalid`). A logo is not part of a template in this stage.
 - There is no action to delete or archive a template, and a published version can never be removed. Anything other than the actions above is `invalid`. (Follow-up: docs/FUTURE_WORK.md, section 9c.)
+
+#### A company's own values
+
+Added with migration `supabase/migrations/0022_payslip_template_own_values.sql`. A layout from a file can have a fixed value for all companies (in the body) and a value for this company only (here, by cell id, an object of at most 64 KB). They are not part of the body and not versioned: publishing, to this company or from another, never touches them, and changing one adds no version. Anyone may read them; an admin replaces them all at once with `values`, naming the `values_revision` last seen (`stale` otherwise, nothing stored; it starts at 1). No images, as for a body. Until 0022 is run, the request answers no values at revision 1 and the save is refused as `unavailable`, naming that file.
 
 #### The template used for the payslips, and publishing to several companies
 
@@ -518,6 +561,59 @@ Payslips for several companies at once, download only: nothing is ever saved thr
   - `issued`: the payslips already issued for that month, the latest revision of each, as `payslip-issue` `load` gives them (`issued_by_you`, never a user id). The app downloads one that is issued and unchanged exactly as it was stored.
 - Every request is a row in the Transfer log (a `load` counts one row: the company), never with a value.
 
+## MRA Returns (app id: `mra-returns`)
+
+The fifth app (`https://noor1290.github.io/mra_returns/`, repo `mra_returns`). It makes the MRA return files (the CSG file, MRA "PACO", and the PRGF file) from saved runs: the rows "Get from dashboard" gives, as Payroll System sent them. It never sends payroll data, and the files it makes are never stored; the only thing it saves is its own templates. It is registered for two data types:
+
+| Data type   | The app may ask for it | The app may save it | Asked of the dashboard's user |
+| ----------- | ---------------------- | ------------------- | ----------------------------- |
+| `mra-batch` | yes, admins only       | no                  | the list of companies: nothing; a month of one or several companies: ONE prompt, and the password gate open |
+| `mra-template` | yes, admins only    | yes, admins only    | nothing (no prompt, no gate: a template holds no employee) |
+
+**`payroll-setup` `copy-source`** (`params: { action: "copy-source", brn?, company_brn }`, November 2026, no migration): one row, `{ shared_body, company_body }`, the setup of `company_brn`, for "Start a separate column setup" as a copy. Admins of that company only (`forbidden`), `not-found` when it has none. Column setups hold no employee and no pay, so there is no prompt and no gate, as for `load`. Nothing is stored: the app then saves a new shared setup and attaches the company as usual.
+
+### `mra-batch`
+
+Added 27 Oct 2026 (branch `mra-returns`, Stage 0). No migration: it reads the saved runs (`payroll_runs`, `payroll_entries`) that `payroll-result` reads. It works as `payroll-batch` does (the same code, `src/features/workspace/batchAccess.ts`): each company is one the user is an ADMIN of, read from the database at each request; `brn` must be the selected company's (`wrong-company` otherwise) and is required on `ask` and `load`. One company is asked for the same way as several.
+
+| `params`                                           | Asked of the user | Answer rows |
+| -------------------------------------------------- | ----------------- | ----------- |
+| `{ action: "companies", brn? }`                    | nothing           | One per company the user is an admin of and that has a BRN, the selected company first, then by name: `{ brn, name, selected }`. Names only. When the user is not an admin of the selected company, it is not in the list (no row has `selected: true`). |
+| `{ action: "ask", brn, period, companies: [brn, ...] }` | ONE prompt, in the same dialog as a saved run, with the password gate open | The companies allowed: `{ brn, name }`. `meta.period` is the month. |
+| `{ action: "load", brn, period, company_brn }`     | nothing more      | ONE row for that company (below). |
+| `{ action: "open-profile", brn, company_brn }`     | nothing           | No rows. The dashboard then shows that company's Company profile (below). |
+
+- **`ask`** names 1 to 200 companies, always by BRN (there is no `all`): the prompt names the month and EVERY company ("It wants the August 2026 payroll of 2 companies: ABC Co Ltd and DEF Ltd."). A company the user is not an admin of is refused at once as `forbidden` ("Only companies where you are an admin can be chosen."), without asking. `denied`, `timeout` and `locked` as for `payroll-result`.
+- **Agreeing allows `load`** for those companies and that month only, for this app, this user and the company selected now, for 15 minutes, in the dashboard's memory only; forgotten when the gate locks, on sign-out, or when the app asks again. It is separate from what `payslip-batch` and `payroll-batch` allowed. A `load` outside it is refused as `denied` ("That company and month were not allowed in the dashboard for this app. Ask again."), with nothing read.
+- **`load`** needs the gate open (`locked` otherwise, nothing read) and the user to be an admin of that company still (`forbidden`, "Only an admin of that company can make its MRA returns."). Its one row: `{ brn, name, address, period, run, status, employees, mra, email, templates }`: `run` says whether the company has a saved run for that month (`false` when that month was never sent to the dashboard, with no employees); `status` is that run's `"draft"` or `"approved"`, `null` when there is none (November 2026, no migration: the app says when a month is not approved, and it is never refused); `employees` are its rows as `payroll-result` gives them, in the order of the Employee Table (the position is kept in `payroll_entries.extra` under a reserved key since November 2026, no migration; no screen, export or app sees that key), and by ID for a run saved before that. Since migration 0020 (Stage 1, 28 Oct 2026): `mra` is `{ ern, telephone, mobile, declarant }`, the company's MRA details from its Company profile, each `""` when not set (the ERN is text: leading zeros stay); `email` is the signed-in user's own email for the returns, the same for every company, or `""`; `templates` lists the MRA templates the company uses, `{ template_id, own_values, values_revision }`, with its own values for each (no body). Until 0020 is run, a `load` is refused as `unavailable`, naming that file.
+- **`open-profile`** (Stage 2, 29 Oct 2026; no migration) sends nothing: once the answer has left, the dashboard shows the Company profile of `company_brn`, where its MRA details are filled in. A company other than the selected one is selected first, the usual way (the user is asked first if an app holds unsaved changes; the app frames then reload, which ends what `ask` allowed); the profile is shown only once it is selected. Only a company the user is an ADMIN of, read from the database (`forbidden`, "Only an admin of that company can open its MRA details."); no prompt and no password gate. `unavailable` when the dashboard's shell is not there to show it.
+- Every request is a row in the Transfer log (a `load` counts one row: the company), never with a value.
+
+### `mra-template`
+
+Added with migration `supabase/migrations/0020_mra_returns.sql` (Stage 1, 28 Oct 2026). A template is the layout of ONE return file: the grid of cells, which rows are copied exactly (titles and headings), the employer row, the employee row, what goes in each cell, the formats and the file settings. `body` is a JSON object the app defines (the dashboard stores and returns it exactly and never looks inside), 250 KB at most. It never holds an employee or a figure: the app keeps the text of the copied rows only, never the employee rows of an uploaded file. So: **admins only** (a member is refused at once as `forbidden`, "Only an admin of this company can see or change its MRA templates."), and **no prompt and no password gate**; every exchange is a row in the Transfer log (never the name or the body) and every save shows a toast.
+
+A template is shared the way the payroll app's Global columns are: it is used by one or more companies; an ADMIN of any of them reads it; only an admin of EVERY one of them may change it (`can_change`, with the counts `companies` and `admin_of`). Each company has its **own values** for it (`own_values`, a JSON object of 64 KB at most, for the fixed values "for this company only"), changed by that company's admins, with their own revision (`values_revision`). Everything is about the company selected in the dashboard (`brn`, `wrong-company` otherwise); a template it does not use is `not-found`.
+
+| Kind | What the app sends | What comes back |
+| --- | --- | --- |
+| request | `params: { action: "list", brn? }` | a row per template the company uses, by name, no bodies: `{ template_id, name, revision, updated_at, updated_by_you, can_change, companies, admin_of, values_revision }`. May be none |
+| request | `params: { action: "load", brn?, template_id }` | one row: the same, plus `body` and `own_values` |
+| request | `params: { action: "history", brn?, template_id }` | a row per kept revision, newest first (200 at most): `{ revision, name, saved_at, saved_by_you }` |
+| request | `params: { action: "revision", brn?, template_id, revision }` | one kept revision as it was saved: `{ template_id, revision, name, body, saved_at, saved_by_you }`, or `not-found`. Reading it changes nothing |
+| request | `params: { action: "companies", brn?, template_id }` | the user's ADMIN companies with a BRN, the selected one first: `{ brn, name, selected, uses }` |
+| save | `{ action: "save", brn, template_id, name, body, expected_revision }` | `result: { action, template_id, name, revision, updated_at }` |
+| save | `{ action: "values", brn, template_id, own_values, expected_revision }` | `result: { action, template_id, name, company, values_revision, updated_at }` |
+| save | `{ action: "attach", brn, template_id, company_brn, own_values? }` | `result: { action, template_id, name, brn, company, values_revision }` |
+| save | `{ action: "detach", brn, template_id, expected_revision }` | `result: { action, template_id, name, company, deleted }` |
+
+- **The app chooses a template's id** (a UUID) and makes it with `expected_revision: 0`: it is made for the selected company. A save sent twice is refused as `stale`.
+- **`expected_revision`** is the revision the app last saw (`values_revision` for `values`). If someone saved since: `stale`, and nothing is overwritten. After `unavailable` or no answer: `load` and compare before saving again.
+- **History and Restore**: every revision is kept. Restoring one is a `save` of that revision's body (a NEW revision; nothing earlier is rewritten).
+- **`attach`** uses the template in another company the user is an admin of (`company_brn`; `forbidden` otherwise), only for someone who may change it; once per company (`stale`, "That company already uses this MRA template.").
+- **`detach`** takes it out of the selected company; `expected_revision` is the TEMPLATE's revision. From the last company using it, the template and its whole history are **deleted for good** (`deleted: true`): the app asks first and says so.
+- Limits: a name is 1 to 80 characters, unique in each company using it whatever the capitals (`invalid`); a company uses at most 20 templates (`too-large`).
+
 ## How to check it works
 
 The bridge only trusts the **deployed** dashboard at `https://noor1290.github.io`. It will not connect to a dashboard running on `localhost`; there the app shows as "Not connected (local run)". So:
@@ -567,6 +663,10 @@ Limits per data type, checked by the dashboard before anything else:
 | `payslip-template` | exactly 1                           | 160 KB (the body itself: 150 KB) | 0 to 50          |
 | `payslip-issue`    | exactly 1, holding 1 to 1,000 payslips | 4 MB (each payslip: 16 KB)   | 0 to 5,000        |
 | `payslip-batch`    | none: request only                  | none                            | 0 to 5,000        |
+| `payroll-batch`    | none: request only                  | none                            | 0 to 500          |
+| `payroll-import`   | exactly 1                           | 25 MB (24 months of 1 MB)       | 0 to 200          |
+| `mra-batch`        | none: request only                  | none                            | 0 to 500          |
+| `mra-template`     | exactly 1                           | 270 KB (the body itself: 250 KB; own values: 64 KB) | 0 to 5,000 |
 | `pdf-template`     | exactly 1                           | 270 KB (the body itself: 250 KB) | 0 to 200         |
 | `pdf-file`         | exactly 1, holding one file         | 7.1 MB (a 5 MB file as base64)  | exactly 1         |
 

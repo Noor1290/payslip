@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import type { DrawList } from '../writers/pageGeometry'
+import type { DrawList, SheetFontName } from '../writers/pageGeometry'
 
 /**
  * The on-screen payslip: the same drawing list the PDF writer uses, as SVG on a white page.
@@ -10,7 +10,7 @@ import type { DrawList } from '../writers/pageGeometry'
  * 0.085 pt short before, about 0.014 pt after). Screen only: the drawing list, the PDF and the
  * Excel file are not touched.
  */
-export const PayslipPreview = memo(function PayslipPreview({ page, label }: { page: DrawList; label: string }) {
+export const PayslipPreview = memo(function PayslipPreview({ page, label }: { page: DrawList<SheetFontName>; label: string }) {
   return (
     <svg
       className="paper"
@@ -34,10 +34,19 @@ export const PayslipPreview = memo(function PayslipPreview({ page, label }: { pa
           stroke={`#${line.color}`}
           strokeWidth={line.width}
           strokeLinecap="square"
+          {...(line.dash ? { strokeDasharray: line.dash.join(' ') } : {})}
         />
       ))}
       {page.texts.map((text, index) => (
-        <text key={`t${index}`} x={text.x} y={text.y} fontSize={text.size} fontWeight={text.font === 'bold' ? 700 : 400}>
+        <text
+          key={`t${index}`}
+          x={text.x}
+          y={text.y}
+          fontSize={text.size}
+          fontWeight={text.font === 'bold' || text.font === 'boldItalic' ? 700 : 400}
+          {...(text.font === 'italic' || text.font === 'boldItalic' ? { fontStyle: 'italic' } : {})}
+          {...(text.color ? { style: { fill: `#${text.color}` } } : {})}
+        >
           {text.text}
         </text>
       ))}

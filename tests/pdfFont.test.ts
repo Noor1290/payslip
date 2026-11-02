@@ -152,18 +152,20 @@ describe('The preview and the PDF use the same font files', () => {
   const exportsSource = readFileSync(resolve(root, 'src/lib/exports.ts'), 'utf8')
   const files = { 400: 'texgyrepagella-regular.otf', 700: 'texgyrepagella-bold.otf' }
 
-  it('the preview font is declared from the two files the PDF embeds, and nothing else', () => {
+  it('the preview font is declared from the files the PDF embeds, and nothing else: the two of every payslip, and the italics of a layout from a file', () => {
     const faces = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((match) => match[1]).filter((face) => face.includes("'Payslip Pagella'"))
-    const declared = faces.map((face) => [Number(/font-weight:\s*(\d+)/.exec(face)![1]), [...face.matchAll(/url\('([^']+)'\)/g)].map((url) => url[1])])
+    const declared = faces.map((face) => [Number(/font-weight:\s*(\d+)/.exec(face)![1]), /font-style:\s*(\w+)/.exec(face)![1], [...face.matchAll(/url\('([^']+)'\)/g)].map((url) => url[1])])
     expect(declared).toEqual([
-      [400, [`./assets/fonts/${files[400]}`]],
-      [700, [`./assets/fonts/${files[700]}`]],
+      [400, 'normal', [`./assets/fonts/${files[400]}`]],
+      [700, 'normal', [`./assets/fonts/${files[700]}`]],
+      [400, 'italic', ['./assets/fonts/texgyrepagella-italic.otf']],
+      [700, 'italic', ['./assets/fonts/texgyrepagella-bolditalic.otf']],
     ])
     expect(/\.paper text\s*\{[^}]*font-family:\s*'Payslip Pagella'/.test(css)).toBe(true)
   })
 
-  it('the PDF export loads those same two files', () => {
+  it('the PDF export loads those same files', () => {
     const imported = [...exportsSource.matchAll(/from '\.\.\/assets\/fonts\/([^'?]+)\?url'/g)].map((match) => match[1]).sort()
-    expect(imported).toEqual(Object.values(files).sort())
+    expect(imported).toEqual([...Object.values(files), 'texgyrepagella-italic.otf', 'texgyrepagella-bolditalic.otf'].sort())
   })
 })

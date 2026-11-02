@@ -9,9 +9,11 @@
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 import { lowContrast, unnamedControls } from './lib/a11y-page.mjs'
+import { fakeLayoutBytes } from './lib/fake-layout.mjs'
 import { startPreview } from './lib/preview-server.mjs'
 
 const sample = fileURLToPath(new URL('../samples/ABC Co Ltd-pdf-fill-2026-09.json', import.meta.url))
+const layout = await fakeLayoutBytes()
 const problems = []
 const fail = (theme, text) => problems.push(`[${theme}] ${text}`)
 
@@ -108,6 +110,21 @@ try {
     await page.getByRole('heading', { name: 'Where each line comes from' }).waitFor()
     await checkScreen(page, theme, 'template')
     await checkFocusRing(page, theme, 'template', 40)
+
+    // A layout from a file: the grid and the cell panel.
+    await page.getByTestId('layout-file').setInputFiles({ name: 'Monthly payslip.xlsx', mimeType: 'application/octet-stream', buffer: Buffer.from(layout) })
+    await page.getByTestId('sheet-grid').waitFor()
+    await page.getByRole('button', { name: /^Cell C14:/ }).click()
+    await page.getByTestId('sheet-cell-editor').waitFor()
+    await page.locator('label.field', { hasText: 'What goes in it' }).locator('select').selectOption('payroll')
+    await page.getByTestId('number-preview').waitFor()
+    await checkScreen(page, theme, 'layout from a file')
+    await page.locator('label.field', { hasText: 'What goes in it' }).locator('select').selectOption('employment')
+    await page.getByTestId('date-preview').waitFor()
+    await checkScreen(page, theme, 'layout from a file, date')
+    await page.locator('label.field', { hasText: 'What goes in it' }).locator('select').selectOption('calc')
+    await page.getByTestId('calc-part').waitFor()
+    await checkScreen(page, theme, 'layout from a file, calculation')
 
     await page.getByRole('button', { name: 'Statutory rates', exact: true }).click()
     await page.getByRole('heading', { name: 'Worked example' }).waitFor()

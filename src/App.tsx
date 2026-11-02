@@ -7,6 +7,7 @@ import { HUB_APP_ID, mergePayroll, PAYROLL_RESULT, readHubPayload, readHubReply,
 import { bridgePort, type HubRole } from './lib/hubWire'
 import { ratesSnapshot } from './lib/issueStore'
 import type { ImportedPayroll } from './lib/payrollFile'
+import { prepareSheetPayslips } from './lib/sheetDocument'
 import type { AcceptedChecks } from './lib/payslip'
 import type { Reasons } from './lib/reasons'
 import { loadRates, ratesForCrossCheck, type RatesState } from './lib/ratesStore'
@@ -151,14 +152,16 @@ export default function App() {
   const crossCheckRates = useMemo(() => ratesForCrossCheck(rates, period), [rates, period])
   const prepared = useMemo(
     () =>
-      data && isMonth(period)
+      data && isMonth(period) && templates.active.sheet
+        ? prepareSheetPayslips(data, templates.active.sheet, period, issueDate)
+        : data && isMonth(period)
         ? preparePayslips(
             data,
             { template, mapping, rateVersions: crossCheckRates.versions, whyNoRates: crossCheckRates.whyNone, period, treatAsZero },
             issueDate,
           )
         : [],
-    [data, period, template, mapping, crossCheckRates, treatAsZero, issueDate],
+    [data, period, template, mapping, crossCheckRates, treatAsZero, issueDate, templates.active.sheet],
   )
 
   // The month review: this month's payslips beside the ones issued last month. It only reads them.
@@ -392,6 +395,7 @@ export default function App() {
           <TemplateScreen
             data={data}
             embedded={insideDashboard}
+            issueDate={issueDate}
             templates={{
               ...templates,
               reload: () => {

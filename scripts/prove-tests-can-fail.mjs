@@ -10,6 +10,20 @@ import { fileURLToPath } from 'node:url'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
 const changes = [
+  ['From your file: a number in the file is kept in the layout', 'src/lib/sheetRead.ts', "const source = typed !== null && typed.trim() !== '' ? ({ type: 'text', value: typed.slice(0, MAX_TEXT) } as const) : ({ type: 'empty' } as const)", "const source = value !== null ? ({ type: 'text', value: String(typed ?? value).slice(0, MAX_TEXT) } as const) : ({ type: 'empty' } as const)"],
+  ['From your file: a merged block is lost on reading', 'src/lib/sheetRead.ts', '.filter((merge) => merge.top >= top && merge.bottom <= bottom && merge.left >= left && merge.right <= right)', '.filter(() => false)'],
+  ['From your file: the month is written with its short name', 'src/lib/sheetFormats.ts', "      case 'MMMM':\n        return MONTHS[Number(month) - 1]", "      case 'MMMM':\n        return MONTHS[Number(month) - 1].slice(0, 3)"],
+  ['From your file: Excel shows the month in the language of the computer', 'src/lib/sheetFormats.ts', 'return `[$-409]${pieces', 'return `${pieces'],
+  ['From your file: a zero is no longer a dash', 'src/lib/sheetFormats.ts', "if (format.dash && isZero(rounded)) return { text: '-', value: rounded, places }", ''],
+  ['From your file: a missing figure is a zero', 'src/lib/sheetEvaluate.ts', "if (!money.ok) return { problem: money.reason === 'missing' ? 'missing-key' : money.reason }", "if (!money.ok) return { value: ZERO }"],
+  ['From your file: the total rounded once rounds each part', 'src/lib/sheetEvaluate.ts', "if (!once && term.round === 'whole') value = roundHalfUp(value, 0)", "if (term.round === 'whole' || once) value = roundHalfUp(value, 0)"],
+  ['From your file: a company\'s own value is ignored', 'src/lib/sheetEvaluate.ts', 'return this.plain(this.context.own[cell.id] ?? source.value, cell)', 'return this.plain(source.value, cell)'],
+  ['From your file: an employer column can be chosen', 'src/lib/sheetBody.ts', 'if (blocked.has(normaliseKey(key)) || isEmployerContributionKey(key)) {', 'if (false) {'],
+  ['From your file: a loop is not noticed', 'src/lib/sheetEvaluate.ts', "if (this.stack.includes(of.id)) return { problem: this.stack.at(-1) === of.id ? 'self-reference' : 'loop' }", "if (this.stack.includes(of.id)) return { value: ZERO }"],
+  ['From your file: a text too long is cut, not refused', 'src/writers/sheetGeometry.ts', '      overflow.push(cell.text)\n      return', '      return'],
+  ['From your file: the PDF takes the date of the clock', 'src/writers/pdfWriter.ts', '  pdf.setModificationDate(fileDate)\n', '  pdf.setModificationDate(new Date())\n'],
+  ['From your file: Excel loses the number format', 'src/writers/sheetExcel.ts', 'target.numFmt = excelNumberFormat(format, cell.places ?? 0)', ''],
+  ['From your file: a removed row leaves its merged block where it was', 'src/lib/sheetEdit.ts', 'if (at < start) return [start - 1, length]', 'if (at < start) return [start, length]'],
   ['CSG tier test: > becomes >=', 'src/lib/statutoryRates.ts', 'base > rates.csgThreshold', 'base >= rates.csgThreshold'],
   ['NSF ceiling removed', 'src/lib/statutoryRates.ts', 'Math.min(base, rates.nsfCeiling)', 'base'],
   ['NSF 60+ exemption ignored', 'src/lib/statutoryRates.ts', 'if (isAged60 && rates.nsfExemptAt60) return 0', 'if (false) return 0'],

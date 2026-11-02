@@ -119,7 +119,7 @@ try {
   const drawn = await page.getByTestId('payslip-page').evaluate(async (svg) => {
     await document.fonts.ready
     return {
-      faces: [...document.fonts].filter((face) => face.family.replace(/["']/g, '') === 'Payslip Pagella').map((face) => `${face.weight} ${face.status}`).sort(),
+      faces: [...document.fonts].filter((face) => face.family.replace(/["']/g, '') === 'Payslip Pagella' && face.style === 'normal').map((face) => `${face.weight} ${face.status}`).sort(),
       family: getComputedStyle(svg.querySelector('text')).fontFamily,
       texts: [...svg.querySelectorAll('text')].map((text) => ({
         text: text.textContent,
