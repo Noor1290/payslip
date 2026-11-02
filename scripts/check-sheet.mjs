@@ -67,6 +67,11 @@ try {
   await page.goto(`${HUB}/payroll-hub/`)
   const app = page.frameLocator('#app')
   await app.getByText('Dashboard connected').waitFor()
+  // Tall enough that a screenshot of a whole section is not cut by the frame.
+  if (shots) {
+    await page.setViewportSize({ width: 1600, height: 2600 })
+    await page.evaluate(() => (document.getElementById('app').style.height = '2560px'))
+  }
   const shot = async (name) => {
     if (!shots) return
     const editor = app.getByTestId('template-editor')
@@ -180,13 +185,7 @@ try {
   const paper = await app.getByTestId('payslip-page').textContent()
   for (const printed of ['Payslip', 'ABC Co Ltd', 'DOE JANE', 'National ID :']) check(paper.includes(printed), `The preview does not show "${printed}".`)
   check(!paper.includes('SAMPLE PERSON'), 'The text of the uploaded example is still on the payslip.')
-  if (shots) {
-    await page.setViewportSize({ width: 1600, height: 2600 })
-    await page.evaluate(() => (document.getElementById('app').style.height = '2560px'))
-    await app.getByTestId('payslip-page').screenshot({ path: join(shots, '7-preview.png') })
-    await page.evaluate(() => (document.getElementById('app').style.height = '1000px'))
-    await page.setViewportSize({ width: 1600, height: 1040 })
-  }
+  if (shots) await app.getByTestId('payslip-page').screenshot({ path: join(shots, '7-preview.png'), animations: 'disabled' })
   await shot('7b-payslips-page')
 
   const download = async (name) => {
