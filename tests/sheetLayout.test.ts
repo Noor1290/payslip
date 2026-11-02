@@ -14,7 +14,10 @@ import { activeTemplate } from '../src/lib/templateUse'
 import { writePayslipPdf } from '../src/writers/pdfWriter'
 import { writePayslipWorkbook } from '../src/writers/excelWriter'
 import { columnPoints, layoutSheet } from '../src/writers/sheetGeometry'
+import { cffHeaderProblem } from '../src/writers/fontProgram'
 import { fakeLayoutBytes } from '../scripts/lib/fake-layout.mjs'
+import { readCffStrict } from './cff'
+import { readPdfFonts } from './pdfFonts'
 import { loadFixture } from './helpers'
 
 const fontsDir = resolve(import.meta.dirname, '../src/assets/fonts')
@@ -368,6 +371,18 @@ describe('a payslip from the fake layout', () => {
     const pdf = await PDFDocument.load(bytes)
     expect(pdf.getPageCount()).toBe(1)
     expect(pdf.getPage(0).getSize()).toEqual({ width: 595.28, height: 841.89 })
+  })
+
+  it('every font in the PDF, italics too, has a header a strict viewer accepts', async () => {
+    const { document } = buildSheetDocument(await chosen(), data().rows[0], '2026-09', '2026-09-30')
+    const { fonts: found, runs } = await readPdfFonts(await writePayslipPdf(document, fonts, new Date('2026-09-01T00:00:00Z')))
+    expect(found.map((one) => one.name).sort()).toEqual(['TeXGyrePagella-Bold', 'TeXGyrePagella-Italic', 'TeXGyrePagella-Regular'])
+    for (const font of found) {
+      expect(font.program).toBeInstanceOf(Uint8Array)
+      expect(cffHeaderProblem(font.program!)).toBeNull()
+      expect(() => readCffStrict(font.program!)).not.toThrow()
+    }
+    expect(runs.find((run) => run.text === 'CSG')?.font.name).toBe('TeXGyrePagella-Italic')
   })
 
   it('the same payslip gives the same PDF, byte for byte, at any time', async () => {
