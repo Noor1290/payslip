@@ -9,6 +9,9 @@ import { buildIssue, issueStatuses, monthProblems, type IssueInput } from '../sr
 import { decodeAnyLines, decodeLines, sameLines } from '../src/lib/issuedLines'
 import { PAYSLIP_MAX_BYTES, planIssue, type IssuedPayslip } from '../src/lib/issueStore'
 import { baselineFromIssued, compareMonth, currentPayslips } from '../src/lib/monthCompare'
+import { baselineFromPayroll } from '../src/lib/baseline'
+import { reviewTemplateRef } from '../src/lib/useMonthReview'
+import { DEFAULT_TABLE_MAPPING, TABLE_TEMPLATE } from '../src/lib/template'
 import type { PayrollRow } from '../src/lib/payrollFile'
 import { checkKey, ROUNDING_REASON, withReason, zeroKey, type Reasons } from '../src/lib/reasons'
 import { formatFor, type SheetBody, type Source } from '../src/lib/sheetBody'
@@ -274,6 +277,31 @@ describe('"Changed since"', () => {
     const issued = asIssued(built(await issueInput()))
     const again = buildIssue(await issueInput({ today: '2026-10-02', month: issued }))
     expect(again.ok && again.identical.length).toBe(data.rows.length)
+  })
+})
+
+describe('the month review, with the template it is given', () => {
+  it('this month is named by the layout, so last month issued with the same version raises no "another template" banner', async () => {
+    const input = await issueInput()
+    const august = asIssued(built(input)).map((payslip) => ({ ...payslip, lines: [{ ...(payslip.lines[0] as object), period: '2026-08' }, ...payslip.lines.slice(1)] }))
+    // The Table template the screen also carries, and the layout the payslips are really made with.
+    const ref = reviewTemplateRef({ id: 'table', version: 'built-in-1' }, sheetOf(input.choice.kind === 'published' ? (input.choice.body as SheetBody) : await layout()))
+    expect(ref).toEqual({ id: TEMPLATE_ID, version: 'v1' })
+    const comparison = compareMonth(PERIOD, currentPayslips(input.data, input.prepared, ref, null), baselineFromIssued('2026-08', august))
+    expect(comparison.banner.filter((line) => line.kind === 'template')).toEqual([])
+    expect(reviewTemplateRef({ id: 'table', version: 'built-in-1' })).toEqual({ id: 'table', version: 'built-in-1' })
+  })
+
+  it("last month's payroll figures are put on the layout's own cells", async () => {
+    const body = await layout()
+    const baseline = baselineFromPayroll('2026-08', { ...data, period: '2026-08' }, TABLE_TEMPLATE, DEFAULT_TABLE_MAPPING, sheetOf(body))
+    const doe = baseline.payslips.find((payslip) => payslip.employeeName === 'DOE JANE')!
+    expect(doe.side?.figures.totals).toEqual({ earnings: 2_108_500, deductions: 49_038, net: 2_059_463 })
+    expect(doe.side?.figures.lines.map((line) => line.label)).toEqual(['Basic Salary', 'CSG', 'Govt Increment', 'NSF', 'Allowances', 'PAYE'])
+    // A figure missing there: that payslip is not compared, and the reason names the cell.
+    const { Allowances: _allowances, ...without } = data.rows[0]
+    const broken = baselineFromPayroll('2026-08', { ...data, rows: [without], period: '2026-08' }, TABLE_TEMPLATE, DEFAULT_TABLE_MAPPING, sheetOf(body))
+    expect(broken.payslips[0]).toMatchObject({ side: null, problem: expect.stringContaining('Cell C16: the payroll data has no "Allowances"') })
   })
 })
 

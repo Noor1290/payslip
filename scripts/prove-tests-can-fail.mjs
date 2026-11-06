@@ -66,6 +66,8 @@ const changes = [
   ['From your file: several companies cross-check a layout against the rates', 'src/lib/manyPayslips.ts', 'ratesUsed: sheet ? null : ratesFor(rates.versions, bundle.period),', 'ratesUsed: ratesFor(rates.versions, bundle.period),'],
   ['From your file: the report leaves out the empty required cells', 'src/lib/manyPayslips.ts', '    for (const item of outcome.required) lines.push(`  ${requiredText(item)}`)\n', ''],
   ['From your file: the report says the small print for every payslip', 'src/lib/manyPayslips.ts', '    if (outcome.smallPrint) lines.push(`  ${outcome.smallPrint}`)\n', '    if (outcome.smallPrint) for (const _doc of outcome.documents) lines.push(`  ${outcome.smallPrint}`)\n'],
+  ['From your file: the month review names this month by the Table template', 'src/lib/useMonthReview.ts', '  return sheet ? { id: sheet.id, version: sheet.version } : { id: template.id, version: template.version }', '  return { id: template.id, version: template.version }'],
+  ['From your file: last month\'s payroll figures are put on the Table template', 'src/lib/baseline.ts', '  const computations = sheet\n', '  const computations = false && sheet\n'],
   ['From your file: the PDF takes the date of the clock', 'src/writers/pdfWriter.ts', '  pdf.setModificationDate(fileDate)\n', '  pdf.setModificationDate(new Date())\n'],
   ['From your file: Excel loses the number format', 'src/writers/sheetExcel.ts', 'target.numFmt = excelNumberFormat(format, cell.places ?? 0)', ''],
   ['From your file: a removed row leaves its merged block where it was', 'src/lib/sheetEdit.ts', 'if (at < start) return [start - 1, length]', 'if (at < start) return [start, length]'],

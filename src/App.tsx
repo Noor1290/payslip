@@ -179,7 +179,9 @@ export default function App() {
     prepared,
     template,
     mapping,
-    rates: ratesUsedSnapshot,
+    sheet: templates.active.sheet,
+    // A layout from a file is not cross-checked against the rates.
+    rates: templates.active.sheet ? null : ratesUsedSnapshot,
     templateName,
   })
 

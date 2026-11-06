@@ -16,6 +16,7 @@ import { failure, normaliseBrn, refusalOf, type Failure, type HubPort } from './
 import type { Baseline, BaselinePayslip } from './monthCompare'
 import { importPayrollRows, type ImportedPayroll } from './payrollFile'
 import type { PayslipTemplate, TemplateMapping } from './template'
+import { prepareSheetPayslips, type SheetInUse } from './sheetDocument'
 
 const month = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/)
 
@@ -78,16 +79,19 @@ export async function loadPayrollMonth(port: HubPort, brn: string, period: strin
  * same code that builds this month's payslips. A row that cannot be put on it (a figure missing
  * or wrong) is kept with the reason, and is never compared by guess.
  */
-export function baselineFromPayroll(period: string, data: ImportedPayroll, template: PayslipTemplate, mapping: TemplateMapping): Baseline {
-  // The cross-check is not part of a comparison: no rates are needed to copy the figures.
-  const computations = computeAll(data, { template, mapping, rateVersions: [], period })
+export function baselineFromPayroll(period: string, data: ImportedPayroll, template: PayslipTemplate, mapping: TemplateMapping, sheet?: SheetInUse): Baseline {
+  // The cross-check is not part of a comparison: no rates are needed to copy the figures. A layout
+  // from a file puts them on its own cells; a figure in error there leaves the payslip uncompared.
+  const computations = sheet
+    ? prepareSheetPayslips(data, sheet, period, `${period}-01`).map(({ computation }) => (computation.errors.length > 0 ? { ...computation, totals: null } : computation))
+    : computeAll(data, { template, mapping, rateVersions: [], period })
   return {
     period,
     source: 'payroll',
     payslips: computations.map((computation): BaselinePayslip => {
       const base = { nationalId: String(data.rows[computation.rowIndex].ID).trim(), employeeName: computation.employeeName, revision: null }
       const { totals } = computation
-      const broken = computation.errors.find((error) => error.lineId !== undefined && !error.lineId.startsWith('check-'))
+      const broken = computation.errors.find((error) => error.lineId !== undefined && !error.lineId.startsWith('check-')) ?? computation.errors[0]
       // A payslip with a line in error has no totals: it is never laid out, and never compared.
       if (!totals) {
         return { ...base, side: null, problem: `Last month's payroll figures cannot be put on this template. ${broken?.message ?? 'A figure is missing or wrong.'}` }

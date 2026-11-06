@@ -2,6 +2,7 @@
 // useIssuing, or last month's payroll figures when none was issued), the comparison, and the
 // review marks. Everything is in this tab's memory only, and is dropped when the company changes.
 
+import type { SheetInUse } from './sheetDocument'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { baselineFromPayroll, loadPayrollMonth } from './baseline'
 import type { AnyPayslip } from './build'
@@ -38,6 +39,8 @@ export interface MonthReviewInput {
   /** The template and mapping this month's payslips are made with. */
   template: PayslipTemplate
   mapping: TemplateMapping
+  /** A layout from a file: this month's payslips are made with it, not with `template`. */
+  sheet?: SheetInUse
   /** The rates this month's cross-check used, or null when it did not run. */
   rates: RatesSnapshot | null
   templateName: (id: string) => string | null
@@ -48,7 +51,12 @@ type PayrollLoad = { status: 'loading' } | { status: 'failed'; failure: Failure 
 
 const NOT_ASKED: BaselineState = { status: 'not-asked' }
 
-export function useMonthReview({ port, issuing, company, period, data, prepared, template, mapping, rates, templateName }: MonthReviewInput) {
+/** Which template this month's payslips are made with, as the review names it: the layout from a file when there is one. */
+export function reviewTemplateRef(template: Pick<PayslipTemplate, 'id' | 'version'>, sheet?: Pick<SheetInUse, 'id' | 'version'>): TemplateRef {
+  return sheet ? { id: sheet.id, version: sheet.version } : { id: template.id, version: template.version }
+}
+
+export function useMonthReview({ port, issuing, company, period, data, prepared, template, mapping, sheet, rates, templateName }: MonthReviewInput) {
   const [marks, setMarks] = useState<ReviewMarks>({})
   const [payrollMonths, setPayrollMonths] = useState<Record<string, PayrollLoad>>({})
 
@@ -67,11 +75,11 @@ export function useMonthReview({ port, issuing, company, period, data, prepared,
   // Last month's payroll figures are put on the template in use now, so they follow a template change.
   const payroll = useMemo((): PayrollBaseline | undefined => {
     if (!payrollLoad || lastPeriod === null) return undefined
-    return payrollLoad.status === 'loaded' ? { status: 'loaded', baseline: baselineFromPayroll(lastPeriod, payrollLoad.data, template, mapping) } : payrollLoad
-  }, [payrollLoad, lastPeriod, template, mapping])
+    return payrollLoad.status === 'loaded' ? { status: 'loaded', baseline: baselineFromPayroll(lastPeriod, payrollLoad.data, template, mapping, sheet) } : payrollLoad
+  }, [payrollLoad, lastPeriod, template, mapping, sheet])
 
   const state = useMemo(() => (lastPeriod === null ? NOT_ASKED : baselineState(lastPeriod, issuedLastMonth, payroll)), [lastPeriod, issuedLastMonth, payroll])
-  const templateRef = useMemo((): TemplateRef => ({ id: template.id, version: template.version }), [template.id, template.version])
+  const templateRef = useMemo(() => reviewTemplateRef(template, sheet), [template, sheet])
   const current = useMemo(() => (data ? currentPayslips(data, prepared, templateRef, rates) : []), [data, prepared, templateRef, rates])
   const comparison = useMemo(() => comparisonOf(state, period, current, templateName), [state, period, current, templateName])
 
