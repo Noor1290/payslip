@@ -137,3 +137,9 @@ Stage 1, approved by the owner on 2 November 2026. `...` stands for a name, numb
 - (Payslips page, one notice above the downloads and the issue, only below 85%) This layout prints at ...% of its size in Excel: 11-point text prints at about ... points. Its page settings are on the Template page.
 - (changed) This payslip was issued by a newer version of the app (format ...). This version reads formats 1 and 2.
 - (removed) The temporary "Issuing them comes in the next stage." sentence.
+
+## Stage 2 prompt, Stage 4: several companies and Publish to (approved 6 November 2026)
+
+- (Publish to several companies, a layout with a fixed value) A value for one company only is not copied: each ticked company keeps its own, and a company that has none shows the value for all companies.
+- (Several companies, the report) A required cell is empty, downloaded anyway: ..., cell ...
+- (Several companies, the report, once per company below 85%) the Payslips page notice approved in Stage 3.
