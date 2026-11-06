@@ -62,7 +62,7 @@ describe('the cross-checks of the totals the layout marks', () => {
       // 21,085 - 490.38 = 20,594.62 on the payslip; the payroll says 20,594.63.
       { id: 'net', payrollKey: 'Net Pay', payslipCents: 2_059_462, payrollCents: 2_059_463, kind: 'rounding' },
     ])
-    expect(computation.checks.map((check) => check.label)).toEqual(['Total Earnings, cell B1 (Label 1)', 'Total Deductions, cell B2 (Label 2)', 'Net Pay, cell B3 (Label 3)'])
+    expect(computation.checks.map((check) => check.label)).toEqual(['Total Earnings, cell B1', 'Total Deductions, cell B2', 'Net Pay, cell B3'])
   })
 
   it('a difference blocks the payslip until it is accepted, exactly as on the Table payslip', () => {
@@ -74,7 +74,7 @@ describe('the cross-checks of the totals the layout marks', () => {
     expect(isReady(computation, { net: 1 })).toBe(false)
     const { differences, missing } = acceptedDifferences(computation, { net: -1 }, { 'check-net': ROUNDING_REASON })
     expect(missing).toEqual([])
-    expect(differences).toEqual([{ what: 'Net Pay, cell B3 (Label 3)', payroll: 20_594.63, payslip: 20_594.62, reason: ROUNDING_REASON }])
+    expect(differences).toEqual([{ what: 'Net Pay, cell B3', payroll: 20_594.63, payslip: 20_594.62, reason: ROUNDING_REASON }])
   })
 
   it('only exactly 0.01 is rounding: 0.02 is a difference', () => {

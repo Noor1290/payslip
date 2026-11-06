@@ -99,3 +99,35 @@ Stage 1, approved by the owner on 2 November 2026. `...` stands for a name, numb
 
 ### Problems shown for a layout
 - The address split at its last comma needs one cell for the part before the comma and one cell for the part after it.
+
+## Stage 2 prompt, Stage 2: cross-checks, required cells, Treat as zero (approved 6 November 2026)
+
+`...` is a name, number or cell. A cell in a message is named "C11 (NIC)": its place, then the text to its left or the name given to the figure; in the checks card, by its place only.
+
+### Cell panel
+- This cell is the payslip's: Not a total / Total earnings, checked against Gross Pay / Total deductions, checked against Total deductions / Net pay, checked against Net Pay
+- Required / When it is empty, it is listed before a download, and the payslip is not issued.
+
+### Problems shown for a layout
+- Cell ... is marked as Total earnings, but it shows no payroll figure or calculation. (or Total deductions, Net pay)
+- Only one cell can be Total earnings: ..., ... are. (or Total deductions, Net pay)
+
+### Payslips page: the checks card
+- Total Earnings, cell C18 / Total Deductions, cell E18 / Net Pay, cell E20 (the cell where each is), each "against" its payroll total as today
+- Warning: No cell of the layout is marked as Total earnings, Total deductions or Net pay, so this payslip is not checked against the payroll's totals.
+- Warning: Cell ... is required, and it is empty.
+- Treated as zero. Cell ...: (reason)
+
+### Treat as zero for a cell
+- Treat cell ... as zero?
+- ...: the payroll data has no figure for cell .... The cell will show 0, written as its format writes it. No other figure is changed.
+
+### Before a download
+- 1 required cell is empty / ... required cells are empty
+- Fill them in, or download anyway. A payslip with an empty required cell cannot be issued.
+- ...: cell ... (one line per payslip)
+- Go back / Download anyway
+
+### Issuing
+- Before payslips from your own file are issued, mark the cells of Total earnings, Total deductions and Net pay in the layout, on the Template page.
+- ...: a required cell is empty: .... / ...: required cells are empty: ..., ....

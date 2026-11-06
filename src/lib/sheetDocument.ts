@@ -86,7 +86,7 @@ export function cellTitle(body: SheetBody, row: number, cell: SheetCell): string
 export interface SheetFacts {
   lines: ComputedLine[]
   /** The cents printed in each cell marked as a total. Null when the cell has a problem. */
-  totals: Partial<Record<SheetTotal, { cents: number | null; title: string }>>
+  totals: Partial<Record<SheetTotal, { cents: number | null; name: string }>>
   zeroable: Record<string, string>
   zeroCells: { id: string; label: string }[]
   requiredEmpty: string[]
@@ -130,7 +130,7 @@ export function buildSheetDocument(
           display: formatCents(cents),
         })
       } else if (value.zeroed) facts.zeroCells.push({ id: cell.id, label: title })
-      if (cell.total) facts.totals[cell.total] = { cents: value.kind === 'number' && !value.problem ? centsOf(value) : null, title }
+      if (cell.total) facts.totals[cell.total] = { cents: value.kind === 'number' && !value.problem ? centsOf(value) : null, name: cellName(body, rowIndex, cell.col) }
       if (cell.required && !value.problem && value.text.trim() === '') facts.requiredEmpty.push(title)
 
       const printed: SheetDocCell = { col: cell.col, style: cell.style, text: value.text }
@@ -189,7 +189,8 @@ function sheetChecks(row: PayrollRow, facts: SheetFacts, errors: Issue[]): Recon
     const marked = facts.totals[total]
     if (!marked) continue
     const id = CHECK_OF[total]
-    const label = `${CHECK_LABEL[id]}, cell ${marked.title}`
+    // The cell's place only: the total already says what it is (owner, 6 November 2026).
+    const label = `${CHECK_LABEL[id]}, cell ${marked.name}`
     const payrollKey = DEFAULT_TABLE_MAPPING.checks[id]
     const payroll = parseMoney(row[payrollKey])
     if (!payroll.ok) {
