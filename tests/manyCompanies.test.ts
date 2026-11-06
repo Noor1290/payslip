@@ -2,6 +2,7 @@
 // dashboard, each company built with its own template and rates through the same checks as the
 // Payslips page, the zip's folders, files and report, and companies that are skipped.
 // Fake data only (ABC Co Ltd and invented companies).
+import type { PayslipDocument } from '../src/lib/layoutModel'
 import { strFromU8, unzipSync } from 'fflate'
 import { PDFDocument } from 'pdf-lib'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -395,7 +396,7 @@ describe('a payslip already issued for the month', () => {
     outcome.documents.forEach((document, index) => {
       const row = imported.data.rows.find((r) => `${r.Surname} ${r['Other names']}` === document.employeeName)!
       const computation = buildCompanyComputations(abc)[index]
-      const lines = encodeLines({ ...document, drawing }, figuresOf(computation))
+      const lines = encodeLines({ ...(document as PayslipDocument), drawing }, figuresOf(computation))
       change(lines)
       hub.state.issued.push({ national_id: String(row.ID), period: '2026-09', revision: 2, template_id: '20000000-0000-4000-8000-000000000001', template_version: 1, rates: null, lines, accepted_differences: [], issued_at: '2026-10-02T09:00:00+04:00', by: 'you' })
     })

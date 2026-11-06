@@ -282,16 +282,74 @@ try {
     writeFileSync(join(shots, 'payslips-2026-09.xlsx'), xlsx)
   }
 
-  // Issuing waits for Stage 2, and says so.
-  const issued = await page.evaluate(() => window.log.filter((m) => m.payload?.dataType === 'payslip-issue' && m.type === 'send-data').length)
-  check(issued === 0, 'Something was issued.')
+  // Below 85%: said once, above the downloads and the issue, never on each payslip.
+  check((await app.getByTestId('small-print-notice').count()) === 1, 'The small print is not said once on the Payslips page.')
+  check(!(await app.getByTestId('payslip-page').textContent()).includes('prints at'), 'The small print is said on the payslip itself.')
+
+  // Issuing. The month is loaded, then compared with August 2026 (nothing issued, nothing saved).
+  const issuePanel = app.getByTestId('issue-panel')
+  const issueButton = issuePanel.getByRole('button', { name: /^Issue \d* ?payslips?$/ })
+  const issueDialog = app.getByRole('dialog', { name: /^Issue \d+ payslips? for September 2026\?$/ })
+  const employeeRows = app.getByRole('region', { name: 'Employees' }).locator('tbody tr')
+  await issuePanel.getByRole('button', { name: /Check (again )?what is issued/ }).click()
+  await app.getByTestId('issued-count').filter({ hasText: '0 issued in the dashboard' }).waitFor()
+  await app.getByTestId('month-review').getByRole('button', { name: 'Compare with August 2026' }).click()
+  await app.getByTestId('review-none-issued').waitFor()
+  await app.getByTestId('month-review').getByRole('button', { name: 'Compare with the payroll figures of August 2026' }).click()
+  await app.getByTestId('review-nothing').waitFor()
+  // The empty required cell stops the issue, and says which.
+  const blocked = (await issuePanel.textContent()) ?? ''
+  check(blocked.includes('a required cell is empty: E22'), `The issue does not say that a required cell is empty: ${blocked}`)
+  if (shots) await issuePanel.screenshot({ path: join(shots, '18-issue-blocked-by-required.png') })
+
+  // Filled in, version 2 published and used: the month can be issued.
+  await nav('Template')
+  await app.getByRole('button', { name: /^Cell E22:/ }).click()
+  await field(app, 'Value for all companies').fill('Director')
+  await app.getByRole('button', { name: 'Save draft' }).click()
+  await app.getByTestId('template-saved').waitFor()
+  await app.getByRole('button', { name: 'Publish as version 2' }).click()
+  await app.getByRole('dialog', { name: 'Use version 2 now?' }).getByRole('button', { name: 'Use version 2' }).click()
+  await app.getByTestId('template-in-use').getByText('version 2 (published)').waitFor()
+  await nav('Payslips')
+  await issuePanel.waitFor()
+  await issuePanel.getByRole('button', { name: /Check (again )?what is issued/ }).click().catch(() => {})
+  await issueButton.click()
+  await issueDialog.waitFor()
+  if (shots) await issueDialog.screenshot({ path: join(shots, '19-issue-confirm.png') })
+  await issueDialog.getByRole('button', { name: 'Issue', exact: true }).click()
+  await app.getByTestId('issue-summary').filter({ hasText: `Issued: ${fixture.length}. Not issued: 0.` }).waitFor()
+  check((await employeeRows.filter({ hasText: 'Issued, revision 1' }).count()) === fixture.length, 'The payslips are not marked as issued.')
+  const issuedLines = await page.evaluate(() => window.hub.state.issued.map((row) => row.lines))
+  check(issuedLines.every((lines) => lines[0].format === 2 && lines[0].kind === 'document'), 'The payslips were not stored in format 2.')
+  check(issuedLines.every((lines) => new TextEncoder().encode(JSON.stringify(lines)).length < 16_000), 'A stored payslip is over 16 KB.')
+
+  // Another date on the payslip: not a change ("Changed since" does not count today's date).
+  await app.getByLabel('Date on the payslip').fill('2026-10-15')
+  await app.getByTestId('payslip-page').filter({ hasText: '15-Oct-26' }).waitFor()
+  check((await employeeRows.filter({ hasText: 'Issued, revision 1' }).count()) === fixture.length, "Today's date made an issued payslip count as changed.")
+  check((await employeeRows.filter({ hasText: 'Changed since' }).count()) === 0, "Today's date shows as Changed since.")
+  if (shots) await app.getByRole('region', { name: 'Employees' }).screenshot({ path: join(shots, '20-issued-other-date.png') })
+
+  // The issued payslips, reopened from what was stored.
+  await nav('Issued payslips')
+  await app.getByRole('region', { name: 'Issued payslips of the month' }).getByText('Monthly payslip, version 2').first().waitFor()
+  const reopened = (await app.getByTestId('payslip-page').textContent()) ?? ''
+  // Issued with the date of the day; the later date chosen since is not on the stored payslip.
+  check(reopened.includes('DOE JANE') && !reopened.includes('15-Oct-26'), 'The reopened payslip is not the one issued, with its date.')
+  await shot('21-issued-reopened')
+  const [issuedZip] = await Promise.all([page.waitForEvent('download'), app.getByRole('button', { name: /PDF/ }).first().click()])
+  const issuedPdfs = Object.entries(unzipSync(readFileSync(await issuedZip.path())))
+  check(issuedPdfs.length === fixture.length, `The issued PDF zip holds ${issuedPdfs.length} files.`)
+  await nav('Payslips')
+  await app.getByLabel('Date on the payslip').fill('2026-09-30')
 
   // History and Restore.
   await nav('Template')
   await app.getByRole('button', { name: 'History' }).click()
   await app.getByTestId('sheet-history').getByText('Version 1', { exact: true }).waitFor()
   await shot('8-history')
-  await app.getByRole('button', { name: /^Restore/ }).click()
+  await app.getByRole('button', { name: 'Restore version 1' }).click()
   await app.getByTestId('template-saved').waitFor()
 
   check(outside.length === 0, `Requests to other addresses: ${[...new Set(outside)].join(', ')}`)
@@ -304,4 +362,4 @@ if (problems.length > 0) {
   console.error(`\nFrom your file check FAILED:\n- ${problems.join('\n- ')}`)
   process.exit(1)
 }
-console.log('From your file check passed: upload, cells, address on two lines, page settings, totals, required cell, save, own value, publish, use, preview, long name, treat as zero, rounding, required before download, PDF, Excel, history.')
+console.log('From your file check passed: upload, cells, address on two lines, page settings, totals, required cell, save, own value, publish, use, preview, long name, treat as zero, rounding, required before download, PDF, Excel, small print said once, issue blocked by a required cell, version 2, issue, the date on the payslip not a change, issued reopened, history.')

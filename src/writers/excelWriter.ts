@@ -200,6 +200,21 @@ export async function writePayslipWorkbook(docs: readonly (PayslipDocument | She
   workbook.lastModifiedBy = 'Payslip app'
   const names = sheetNames(docs.map((doc) => doc.employeeName))
   docs.forEach((doc, index) => (isSheetDocument(doc) ? addSheetPage(workbook, names[index], doc) : addSheet(workbook, names[index], doc)))
-  const buffer = await workbook.xlsx.writeBuffer()
-  return new Uint8Array(buffer as ArrayBuffer)
+  const sheets = docs.length > 0 && docs.every(isSheetDocument)
+  if (!sheets) {
+    const buffer = await workbook.xlsx.writeBuffer()
+    return new Uint8Array(buffer as ArrayBuffer)
+  }
+  // Payslips of a layout from a file: the same payslips give the same file, byte for byte, at any
+  // time. Every date inside it is the first day of the pay month, and the zip is written again
+  // with that date on every part (Excel's own writer stamps the time of the clock).
+  const date = new Date(`${docs[0].period}-01T00:00:00Z`)
+  workbook.created = date
+  workbook.modified = date
+  const { unzipSync, zipSync } = await import('fflate')
+  const parts = unzipSync(new Uint8Array((await workbook.xlsx.writeBuffer()) as ArrayBuffer))
+  const ordered = Object.keys(parts).sort()
+  // The zip keeps a local time: made from the local calendar, it is the same in every time zone.
+  const [year, month] = docs[0].period.split('-').map(Number)
+  return zipSync(Object.fromEntries(ordered.map((name) => [name, parts[name]])), { level: 6, mtime: new Date(year, month - 1, 1) })
 }

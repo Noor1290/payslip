@@ -12,11 +12,12 @@ import { payslipFileNames, preparePayslips } from './build'
 import { formatPeriod, formatShortDate } from './dates'
 import { exportBaseName } from './exports'
 import type { PayslipDocument } from './layoutModel'
+import type { SheetDocument } from './sheetDocument'
 import type { CompanyBundle } from './manyStore'
 import { formatCents } from './money'
 import { importPayrollRows } from './payrollFile'
 import { issueStatuses } from './issueBuild'
-import { decodeLines } from './issuedLines'
+import { decodeAnyLines } from './issuedLines'
 import { pendingChecks, type AcceptedChecks, type ReconcileCheck } from './payslip'
 import { ratesForCrossCheck } from './ratesStore'
 import { ratesFor, type RatesVersion } from './statutoryRates'
@@ -55,7 +56,7 @@ export type CompanyOutcome =
       template: string
       /** The company's own rates in force for the month, used for the cross-check; null: none. */
       ratesUsed: RatesVersion | null
-      documents: PayslipDocument[]
+      documents: (PayslipDocument | SheetDocument)[]
       leftOut: LeftOut[]
       rounding: AcceptedRounding[]
       fromIssued: FromIssued[]
@@ -116,7 +117,7 @@ export function buildCompany(bundle: CompanyBundle, { issueDate, acceptRounding 
   const rates = ratesForCrossCheck({ status: 'loaded', versions: bundle.rates, company: { name: bundle.company, brn: bundle.brn } }, bundle.period)
   const prepared = preparePayslips(data, { template, mapping, rateVersions: rates.versions, whyNoRates: rates.whyNone, period: bundle.period }, issueDate)
 
-  const documents: PayslipDocument[] = []
+  const documents: (PayslipDocument | SheetDocument)[] = []
   const leftOut: LeftOut[] = []
   const rounding: AcceptedRounding[] = []
   const fromIssued: FromIssued[] = []
@@ -143,7 +144,7 @@ export function buildCompany(bundle: CompanyBundle, { issueDate, acceptRounding 
   const statuses = issueStatuses(data, prepared, bundle.issued, accepted, {})
   for (const item of ready) {
     const status = statuses.get(item.computation.rowIndex)
-    const stored = status?.kind === 'issued' && status.same ? decodeLines(status.issued.lines) : null
+    const stored = status?.kind === 'issued' && status.same ? decodeAnyLines(status.issued.lines) : null
     if (stored?.ok && status?.kind === 'issued') {
       documents.push(stored.document)
       fromIssued.push({ name: item.computation.employeeName, revision: status.revision })
@@ -187,7 +188,7 @@ export function folderNames(outcomes: readonly { company: string; brn: string }[
 }
 
 /** What goes into the zip for one company, by path. The bytes are written elsewhere. */
-export function companyPaths(folder: string, company: string, period: string, documents: readonly PayslipDocument[]) {
+export function companyPaths(folder: string, company: string, period: string, documents: readonly (PayslipDocument | SheetDocument)[]) {
   const base = exportBaseName(company, period)
   return {
     payslips: payslipFileNames(

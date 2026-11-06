@@ -102,7 +102,7 @@ const pieceSchema = z.union([
 ])
 export type DateFormatPiece = z.infer<typeof pieceSchema>
 
-const formatSchema = z.discriminatedUnion('type', [
+export const formatSchema = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('text'), capitals: z.boolean() }),
   z.strictObject({
     type: z.literal('number'),
@@ -123,7 +123,7 @@ const edge = z.strictObject({
 })
 export type BorderEdge = z.infer<typeof edge>
 
-const styleSchema = z.strictObject({
+export const styleSchema = z.strictObject({
   font: z.strictObject({
     name: z.string().min(1).max(60),
     size: z.number().min(1).max(100),
@@ -162,7 +162,7 @@ const cellSchema = z.strictObject({
 })
 export type SheetCell = z.infer<typeof cellSchema>
 
-const mergeSchema = z.strictObject({
+export const mergeSchema = z.strictObject({
   row: z.number().int().min(0),
   col: z.number().int().min(0),
   rows: z.number().int().min(1).max(MAX_SHEET_ROWS),

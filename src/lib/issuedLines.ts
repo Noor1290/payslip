@@ -10,6 +10,8 @@ import { canonicalJson } from './hubWire'
 import { KNOWN_DRAWINGS, sameLookAs, unknownDrawing, type DocCell, type DocRow, type PayslipDocument } from './layoutModel'
 import type { PayslipComputation } from './payslip'
 import { addressParts } from '../writers/pageGeometry'
+import type { SheetDocument } from './sheetDocument'
+import { decodeSheetLines, SHEET_LINES_FORMAT, sameSheetLines, type SheetFigures } from './sheetIssued'
 
 /** Goes up when the shape changes. A payslip in a format this app does not know is never guessed at. */
 export const LINES_FORMAT = 1
@@ -169,6 +171,17 @@ function decodeCell(cell: z.infer<typeof cellSchema>): DocCell {
 
 export type DecodedLines = { ok: true; document: PayslipDocument; figures: IssuedFigures } | { ok: false; problem: string }
 
+/** Either format: format 2 is a payslip of a layout from the owner's own file (sheetIssued.ts). */
+export type DecodedAnyLines = DecodedLines | { ok: true; document: SheetDocument; figures: SheetFigures }
+
+/** Reads stored lines of either format. What the screens use; the Table's own code reads format 1 only. */
+export function decodeAnyLines(lines: unknown): DecodedAnyLines {
+  if (Array.isArray(lines) && lines.length >= 3 && lines.length <= MAX_LINE_OBJECTS && (lines[0] as { format?: unknown } | null)?.format === SHEET_LINES_FORMAT) {
+    return decodeSheetLines(lines)
+  }
+  return decodeLines(lines)
+}
+
 /** Reads stored lines back into the layout model they were made from. Untrusted: checked first. */
 export function decodeLines(lines: unknown): DecodedLines {
   if (!Array.isArray(lines) || lines.length < 3 || lines.length > MAX_LINE_OBJECTS) {
@@ -179,8 +192,8 @@ export function decodeLines(lines: unknown): DecodedLines {
     return {
       ok: false,
       problem:
-        typeof format === 'number' && format > LINES_FORMAT
-          ? `This payslip was issued by a newer version of the app (format ${format}). This version reads format ${LINES_FORMAT}.`
+        typeof format === 'number' && format > SHEET_LINES_FORMAT
+          ? `This payslip was issued by a newer version of the app (format ${format}). This version reads formats ${LINES_FORMAT} and ${SHEET_LINES_FORMAT}.`
           : 'This payslip was not issued by this app, or its format is not known. It is not shown, rather than guessed at.',
     }
   }
@@ -241,6 +254,11 @@ function withNameOnOneLine(lines: unknown): unknown {
  * does where the name is broken over two lines, or the address over lines 3 and 4.
  */
 export function sameLines(a: unknown, b: unknown): boolean {
+  // A payslip of the owner's own layout (format 2) is only ever the same as another of format 2.
+  const formatOf = (lines: unknown) => (Array.isArray(lines) ? (lines[0] as { format?: unknown } | null)?.format : undefined)
+  if (formatOf(a) === SHEET_LINES_FORMAT || formatOf(b) === SHEET_LINES_FORMAT) {
+    return formatOf(a) === formatOf(b) && sameSheetLines(a as unknown[], b as unknown[])
+  }
   const read = (lines: unknown) => withoutAddress(withNameOnOneLine(withLook(withDrawing(lines))))
   const [first, second] = [read(a), read(b)]
   return canonicalJson(first.lines) === canonicalJson(second.lines) && sameAddress(first.address, second.address)

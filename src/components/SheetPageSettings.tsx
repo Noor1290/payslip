@@ -21,6 +21,17 @@ export function scaleWords(body: SheetBody): { text: string; warning: string | n
   }
 }
 
+/**
+ * Said once on the Payslips page, before the payslips are downloaded or issued, when the layout
+ * prints below 85%. Null otherwise.
+ */
+export function smallPrintNotice(body: SheetBody): string | null {
+  const page = pageOf(body)
+  if (!page.fits || page.scale >= SMALL_PRINT_SCALE) return null
+  const eleven = (Math.round(11 * page.scale * 10) / 10).toFixed(1).replace(/\.0$/, '')
+  return `This layout prints at ${percentOf(page.scale)}% of its size in Excel: 11-point text prints at about ${eleven} points. Its page settings are on the Template page.`
+}
+
 /** Orientation, margins and fitting to one page, with the size the sheet prints at. */
 export function SheetPageSettings({ body, locked, onChange }: { body: SheetBody; locked: boolean; onChange: (change: (body: SheetBody) => SheetBody) => void }) {
   const words = scaleWords(body)

@@ -1,4 +1,5 @@
 import { Building2, CircleAlert, Download, FileCheck2, Inbox, LayoutTemplate, Moon, Percent, ReceiptText, Sun } from 'lucide-react'
+import { smallPrintNotice } from './components/SheetPageSettings'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ImportDialog, type IncomingPayroll } from './components/ImportDialog'
 import { preparePayslips } from './lib/build'
@@ -371,6 +372,7 @@ export default function App() {
             prepared={prepared}
             mapping={mapping}
             templateChip={templates.active.chip}
+            smallPrint={templates.active.sheet ? smallPrintNotice(templates.active.sheet.body) : null}
             templateKind={templates.active.kind}
             exportBlock={templates.active.exportBlock}
             onOpenTemplate={() => setScreen('template')}

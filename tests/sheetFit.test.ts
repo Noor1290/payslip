@@ -4,7 +4,7 @@
 import ExcelJS from 'exceljs'
 import { unzipSync } from 'fflate'
 import { describe, expect, it } from 'vitest'
-import { scaleWords } from '../src/components/SheetPageSettings'
+import { scaleWords, smallPrintNotice } from '../src/components/SheetPageSettings'
 import { formatFor, readSheetBody, sheetProblems, type SheetBody, type Source } from '../src/lib/sheetBody'
 import { buildSheetDocument, prepareSheetPayslips, TOO_LARGE_AT_FULL_SIZE, type SheetDocument, type SheetInUse } from '../src/lib/sheetDocument'
 import { evaluateSheet } from '../src/lib/sheetEvaluate'
@@ -236,6 +236,14 @@ describe('the page settings', () => {
     const fine = scaleWords(layout([{ type: 'text', value: 'Small' }], 10))
     expect(fine).toEqual({ text: 'It prints at 100% of its size in Excel.', warning: null, tooLarge: null })
     expect(scaleWords(wide({ fit: false })).tooLarge).toBe(TOO_LARGE_AT_FULL_SIZE)
+  })
+
+  it('the Payslips page says it once, before a download or an issue, only below 85%', () => {
+    const percent = Math.floor(pageOf(wide()).scale * 100)
+    expect(smallPrintNotice(wide())).toMatch(new RegExp(`^This layout prints at ${percent}% of its size in Excel: 11-point text prints at about \\d+(\\.\\d)? points\\. Its page settings are on the Template page\\.$`))
+    expect(smallPrintNotice(layout([{ type: 'text', value: 'Small' }], 10))).toBeNull()
+    // At 100% and too large, the payslip itself is refused instead.
+    expect(smallPrintNotice(wide({ fit: false }))).toBeNull()
   })
 
   it('the warning starts just below 85%, not at it', () => {

@@ -5,12 +5,14 @@ import { PayslipPreview } from '../components/PayslipPreview'
 import { formatPeriod, formatShortDate, isIsoDate } from '../lib/dates'
 import { buildPdfZip, buildWorkbook, download, exportBaseName } from '../lib/exports'
 import type { HubPort } from '../lib/hubWire'
-import { decodeLines } from '../lib/issuedLines'
+import { decodeAnyLines } from '../lib/issuedLines'
 import { formatCents } from '../lib/money'
 import { isMonth } from '../lib/statutoryRates'
 import { loadVersion } from '../lib/templateStore'
 import type { Issuing } from '../lib/useIssuing'
+import { isSheetDocument } from '../lib/sheetDocument'
 import { layoutPage } from '../writers/pageGeometry'
+import { layoutSheet } from '../writers/sheetGeometry'
 
 interface Props {
   issuing: Issuing
@@ -39,12 +41,12 @@ export function IssuedScreen({ issuing, port, company, readOnly, period: payMont
 
   const month = isMonth(period) ? issuing.months[period] : undefined
   const payslips = useMemo(
-    () => (month?.status === 'loaded' ? month.payslips.map((issued) => ({ issued, read: decodeLines(issued.lines) })) : []),
+    () => (month?.status === 'loaded' ? month.payslips.map((issued) => ({ issued, read: decodeAnyLines(issued.lines) })) : []),
     [month],
   )
   const readable = payslips.flatMap(({ read }) => (read.ok ? [read.document] : []))
   const shown = payslips[current] as (typeof payslips)[number] | undefined
-  const page = useMemo(() => (shown?.read.ok ? layoutPage(shown.read.document) : null), [shown])
+  const page = useMemo(() => (shown?.read.ok ? (isSheetDocument(shown.read.document) ? layoutSheet(shown.read.document) : layoutPage(shown.read.document)) : null), [shown])
 
   useEffect(() => setCurrent(0), [month])
 

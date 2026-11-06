@@ -12,7 +12,8 @@
 import type { AnyPayslip } from './build'
 import { formatPeriod, formatShortDate } from './dates'
 import { canonicalJson } from './hubWire'
-import { decodeLines, type IssuedFigure, type IssuedFigures } from './issuedLines'
+import { isSheetDocument, type SheetDocument } from './sheetDocument'
+import { decodeAnyLines, type IssuedFigure, type IssuedFigures } from './issuedLines'
 import type { IssuedPayslip, RatesSnapshot } from './issueStore'
 import type { PayslipDocument } from './layoutModel'
 import { formatCents } from './money'
@@ -67,7 +68,8 @@ export interface Baseline {
 const UNREADABLE_NAME = 'An employee whose payslip cannot be read'
 
 /** The date of employment printed on a payslip, read from the row that holds it. */
-function dateOfEmploymentOf(document: PayslipDocument): string | null {
+function dateOfEmploymentOf(document: PayslipDocument | SheetDocument): string | null {
+  if (isSheetDocument(document)) return document.dateOfEmployment ?? null
   const row = document.rows.find((found) => found.id === 'employee-name')
   return row?.cells.find((cell) => cell.kind === 'date')?.isoDate ?? null
 }
@@ -90,7 +92,7 @@ export function baselineFromIssued(period: string, payslips: readonly IssuedPays
     source: 'issued',
     payslips: payslips.map((payslip): BaselinePayslip => {
       const nationalId = payslip.nationalId.trim()
-      const decoded = decodeLines(payslip.lines)
+      const decoded = decodeAnyLines(payslip.lines)
       if (!decoded.ok) return { nationalId, employeeName: storedName(payslip.lines), revision: payslip.revision, side: null, problem: decoded.problem }
       if (decoded.document.period !== period) {
         return {

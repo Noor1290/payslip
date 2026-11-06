@@ -7,10 +7,12 @@ import { canonicalJson } from './hubWire'
 import { encodeLines, figuresOf, sameLines } from './issuedLines'
 import { ratesSnapshot, type IssuedPayslip, type PayslipToIssue } from './issueStore'
 import type { ImportedPayroll } from './payrollFile'
-import { isReady, type AcceptedChecks } from './payslip'
+import { isReady, type AcceptedChecks, type PayslipComputation } from './payslip'
 import { acceptedDifferences, type Reasons } from './reasons'
 import type { RatesVersion } from './statutoryRates'
-import { isSheetDocument } from './sheetDocument'
+import { isSheetDocument, type SheetDocument } from './sheetDocument'
+import { encodeSheetLines } from './sheetIssued'
+import type { PayslipDocument } from './layoutModel'
 import { cellsOf, isSheetBody, TOTALS } from './sheetBody'
 import type { TemplateChoice } from './templateUse'
 
@@ -86,13 +88,20 @@ export function monthProblems(input: Pick<IssueInput, 'data' | 'period' | 'choic
   else if (input.choice.kind !== 'published') {
     problems.push('Payslips are issued with a published template version of the company. Choose one on the Template page, or publish the built-in template there.')
   } else if (isSheetBody(input.choice.body)) {
-    problems.push('Payslips from your own file can be previewed and downloaded. Issuing them comes in the next stage.')
     const marked = new Set(cellsOf(input.choice.body).flatMap(({ cell }) => (cell.total ? [cell.total] : [])))
     if (TOTALS.some((total) => !marked.has(total))) problems.push(UNMARKED_TOTALS)
   }
   if (input.data.period === null) problems.push('The payroll data does not say which month it is for, so it cannot be issued. Get the month from the dashboard.')
   else if (input.data.period !== input.period) problems.push('The pay month chosen is not the month of the payroll data. They must be the same to issue.')
   return problems
+}
+
+/** What is stored for a payslip: format 1 for the Table template, format 2 for a layout from a file. */
+export function storedLines(document: PayslipDocument | SheetDocument, computation: PayslipComputation, zeroReasons: Readonly<Record<string, string>>): Record<string, unknown>[] {
+  const figures = figuresOf(computation, zeroReasons)
+  if (!isSheetDocument(document)) return encodeLines(document, figures)
+  const zero = (computation.zeroCells ?? []).map((cell) => ({ ...cell, reason: zeroReasons[cell.id] ?? '' }))
+  return encodeSheetLines(document, { ...figures, zero })
 }
 
 export function buildIssue(input: IssueInput): IssueBuild {
@@ -119,10 +128,6 @@ export function buildIssue(input: IssueInput): IssueBuild {
       problems.push(`${name}: ${empty.length === 1 ? 'a required cell is' : 'required cells are'} empty: ${empty.join(', ')}.`)
       continue
     }
-    if (isSheetDocument(document)) {
-      problems.push(`${name}: the payslip has an error to fix.`)
-      continue
-    }
     if (!isReady(computation, accepted)) {
       problems.push(`${name}: a difference from the payroll totals is not accepted yet.`)
       continue
@@ -145,8 +150,9 @@ export function buildIssue(input: IssueInput): IssueBuild {
       expectedRevision: issued?.revision ?? 0,
       templateId: choice.templateId,
       templateVersion: choice.version,
-      rates: ratesSnapshot(input.rates),
-      lines: encodeLines(document, figuresOf(computation, zeroReasons)),
+      // A layout from a file is not cross-checked against the statutory rates (owner, 6 November 2026).
+      rates: isSheetDocument(document) ? null : ratesSnapshot(input.rates),
+      lines: storedLines(document, computation, zeroReasons),
       acceptedDifferences: differences,
     }
     payslips.push(payslip)
@@ -180,9 +186,9 @@ export function issueStatuses(
       continue
     }
     let same = false
-    if (document && !isSheetDocument(document) && computation.errors.length === 0) {
+    if (document && computation.errors.length === 0) {
       const { zeroReasons } = acceptedDifferences(computation, accepted[rowIndex] ?? {}, reasons[rowIndex])
-      same = sameLines(encodeLines(document, figuresOf(computation, zeroReasons)), issued.lines)
+      same = sameLines(storedLines(document, computation, zeroReasons), issued.lines)
     }
     statuses.set(rowIndex, { kind: 'issued', revision: issued.revision, same, issued })
   }

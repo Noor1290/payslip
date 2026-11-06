@@ -69,7 +69,7 @@ export interface CompanyFiles {
   payslips: readonly string[]
   combined: string
   workbook: string
-  documents: readonly PayslipDocument[]
+  documents: readonly (PayslipDocument | SheetDocument)[]
 }
 
 /**
@@ -84,14 +84,17 @@ export async function buildCompaniesZip(
   onCompany: (done: number) => void = () => {},
 ): Promise<Uint8Array> {
   const [regular, bold] = await Promise.all([fontBytes(regularFontUrl), fontBytes(boldFontUrl)])
-  return writeCompaniesZip(companies, report, { regular, bold }, onCompany)
+  // Only a layout from a file can print italics.
+  const sheets = companies.some((company) => company.documents.some(isSheetDocument))
+  const italics = sheets ? { italic: await fontBytes(italicFontUrl), boldItalic: await fontBytes(boldItalicFontUrl) } : {}
+  return writeCompaniesZip(companies, report, { regular, bold, ...italics }, onCompany)
 }
 
 /** buildCompaniesZip with the font files given: the tests read them from disk. */
 export async function writeCompaniesZip(
   companies: readonly CompanyFiles[],
   report: { path: string; text: string },
-  fonts: { regular: Uint8Array; bold: Uint8Array },
+  fonts: { regular: Uint8Array; bold: Uint8Array; italic?: Uint8Array; boldItalic?: Uint8Array },
   onCompany: (done: number) => void = () => {},
 ): Promise<Uint8Array> {
   const [{ writePayslipPdf }, { writePayslipWorkbook }, { zipSync, strToU8 }, { PDFDocument }] = await Promise.all([
@@ -100,12 +103,15 @@ export async function writeCompaniesZip(
     import('fflate'),
     import('pdf-lib'),
   ])
-  const { regular, bold } = fonts
+  const { regular, bold, italic, boldItalic } = fonts
   const files: Record<string, Uint8Array> = {}
   for (const [index, company] of companies.entries()) {
     const combined = await PDFDocument.create()
     for (let n = 0; n < company.documents.length; n++) {
-      const single = await writePayslipPdf(company.documents[n], { regular, bold })
+      const doc = company.documents[n]
+      const single = isSheetDocument(doc)
+        ? await writePayslipPdf(doc, { regular, bold, ...(italic && boldItalic ? { italic, boldItalic } : {}) }, new Date(`${doc.period}-01T00:00:00Z`))
+        : await writePayslipPdf(doc, { regular, bold })
       files[company.payslips[n]] = single
       const source = await PDFDocument.load(single)
       for (const page of await combined.copyPages(source, source.getPageIndices())) combined.addPage(page)

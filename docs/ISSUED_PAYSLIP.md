@@ -8,7 +8,7 @@ When a month is issued, the app sends one message to the Payroll Hub dashboard (
 
 ## Format number
 
-`lines[0].format` is `1`. It goes up whenever the shape changes. A payslip whose format this app does not know is not shown: the app says so, and never guesses.
+`lines[0].format` is `1` for the Table template and `2` for a layout from the owner's own file ("From your file", below). It goes up whenever the shape changes. A payslip whose format this app does not know is not shown: the app says so, and never guesses.
 
 ## Drawing version
 
@@ -93,6 +93,16 @@ When a month is issued, the app sends one message to the Payroll Hub dashboard (
      | `formula` | none (a total has it: `{ "op": "sum" or "subtract", "lineIds": [...] }`, used for the live Excel formula) |
 
 The company name, address and BRN, the employee's name and NIC, the pay period, the date of employment and the date on the payslip are all in the rows, as the text that was printed. They are personal data: `lines` exists only in the bridge message, in the dashboard's database and in this tab's memory.
+
+## Shape (format 2): a layout from the owner's own file
+
+Added 6 November 2026 (PAYSLIP_FROM_FILE_STAGE2_PROMPT.md, Stage 3). The code is `src/lib/sheetIssued.ts`; the tests are `tests/sheetIssue.test.ts`. Its drawings are a list of their own (sheet drawing 1, `src/writers/sheetGeometry.ts`): nothing of it touches the Table drawings above. A list of objects, in this order:
+
+1. **One `document` object**: `{ kind: "document", format: 2, template: { id, version }, drawing, orientation, margins?, fit?, firstRow, firstColumn, columns, merges, styles, employeeName, period, dateOfEmployment? }`. The page settings, the column widths (Excel's unit), the merged blocks and the table of styles (fonts, fills, borders, alignment) exactly as the layout had them when the payslip was made. `margins` is there only for `"narrow"`, `fit` only for `false` (printed at 100%), `dateOfEmployment` (YYYY-MM-DD) only when the payroll had one.
+2. **One `figures` object**: `{ kind: "figures", lines, totals, zero? }`. `lines` are the cells marked Earnings or Deductions, with their id, label, side, amount in whole cents and payroll column, as in format 1 (with `status: "treated-as-zero"` and its `reason` for a figure accepted as zero). `totals` add them up. `zero` lists a cell on neither side that was treated as zero, with its reason.
+3. **One object per row**: `{ height, cells? }`, the row's height in points (taller than the layout's when a long name or the address needed two lines) and its cells: `{ col, style, text?, number?, iso?, format?, places?, size?, today? }`. `text` is exactly what is printed (a name or an address on two lines holds its line break); `number` and `iso` are what the Excel cell holds, with its `format`; `size` is the size, in points of the sheet, a long name or the address was fitted to; `today` marks the cell of today's date.
+
+A reopened payslip is drawn from this alone: the same document, so the same PDF and the same Excel file, byte for byte (the Excel file of these payslips takes the first day of the pay month for every date inside it). Two stored payslips are the same payslip (`sameLines`, "Changed since") when everything is the same except the text of the cell of today's date (owner's decision, 2 November 2026). A payslip of format 2 is never the same as one of format 1. No statutory rates are stored with them (`rates: null`): this option is not cross-checked against the rates (owner, 6 November 2026). A payslip of the owner's layout (31 rows, 4 columns, 30 styles), measured on a fake copy: about 12,500 bytes as sent, under the dashboard's 16,000.
 
 ## What is NOT in `lines`
 

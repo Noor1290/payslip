@@ -68,7 +68,7 @@ Stage 1, approved by the owner on 2 November 2026. `...` stands for a name, numb
 ## Saving and the Payslips page
 - This company's own values are saved.
 - Chip: From your file (not saved) (opened on its own, outside the dashboard)
-- Payslips from your own file can be previewed and downloaded. Issuing them comes in the next stage. (Temporary: goes away with Stage 2.)
+- ~~Payslips from your own file can be previewed and downloaded. Issuing them comes in the next stage.~~ (Temporary; removed 6 November 2026, when issuing came.)
 
 ## Problems shown for a layout or an employee
 - Cell ...: the payroll data has no "..." for this employee.

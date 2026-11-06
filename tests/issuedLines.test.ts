@@ -133,9 +133,10 @@ describe('stored lines are refused, never guessed at', () => {
   }
 
   it('in a format this app does not know', () => {
-    expect(change((lines) => (lines[0].format = LINES_FORMAT + 1))).toEqual({
+    // Format 2 is a payslip of a layout from a file (sheetIssued.ts); 3 is not known yet.
+    expect(change((lines) => (lines[0].format = LINES_FORMAT + 2))).toEqual({
       ok: false,
-      problem: 'This payslip was issued by a newer version of the app (format 2). This version reads format 1.',
+      problem: 'This payslip was issued by a newer version of the app (format 3). This version reads formats 1 and 2.',
     })
     expect(decodeLines([{ kind: 'note', text: 'issued elsewhere' }, { kind: 'figures' }, { id: 'title' }])).toMatchObject({ ok: false, problem: expect.stringContaining('not issued by this app') })
     expect(decodeLines('lines')).toMatchObject({ ok: false })

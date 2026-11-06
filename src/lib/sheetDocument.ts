@@ -34,6 +34,8 @@ export interface SheetDocCell {
    * lines of `text`, or refused. Left out for every other text, which is set smaller only as needed.
    */
   size?: number
+  /** Today's date: the day the payslip was made. Not a change to it ("Changed since"). */
+  today?: true
 }
 
 export interface SheetDocRow {
@@ -49,6 +51,8 @@ export interface SheetDocument {
   orientation: 'portrait' | 'landscape'
   margins?: 'narrow'
   fit?: false
+  /** YYYY-MM-DD, for the month review's notes. Left out when the payroll has none. */
+  dateOfEmployment?: string
   firstRow: number
   firstColumn: number
   columns: number[]
@@ -134,6 +138,7 @@ export function buildSheetDocument(
       if (cell.required && !value.problem && value.text.trim() === '') facts.requiredEmpty.push(title)
 
       const printed: SheetDocCell = { col: cell.col, style: cell.style, text: value.text }
+      if (cell.source.type === 'date' && cell.source.of === 'today') printed.today = true
       if (value.kind === 'number') {
         printed.number = Number(`${value.number!.units}e-${value.number!.scale}`)
         printed.format = cell.format
@@ -163,6 +168,8 @@ export function buildSheetDocument(
     employeeName: employeeName(row),
     period,
   }
+  const employed = typeof row[DATE_KEY] === 'string' ? readDateOfEmployment(row[DATE_KEY] as string) : null
+  if (employed) document.dateOfEmployment = employed
   fitSheetDocument(document, body, row, companyOf(row).address)
   return { document, errors, lines: facts.lines, facts }
 }

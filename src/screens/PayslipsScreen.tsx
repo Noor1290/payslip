@@ -21,7 +21,7 @@ import type { AnyPayslip } from '../lib/build'
 import { formatPeriod } from '../lib/dates'
 import { buildPdfZip, buildWorkbook, download, exportBaseName } from '../lib/exports'
 import { buildIssue, issueStatuses } from '../lib/issueBuild'
-import { decodeLines } from '../lib/issuedLines'
+import { decodeAnyLines } from '../lib/issuedLines'
 import { formatCents } from '../lib/money'
 import { withReview } from '../lib/monthReview'
 import { importPayrollText, type ImportError, type ImportedPayroll } from '../lib/payrollFile'
@@ -46,6 +46,8 @@ interface Props {
   mapping: TemplateMapping
   /** Which template and version the payslips are built with: always shown. */
   templateChip: string
+  /** A layout from a file that prints below 85%: said once, before the payslips are downloaded or issued. */
+  smallPrint?: string | null
   templateKind: 'built-in' | 'built-in-edited' | 'published' | 'draft'
   /** Why this template cannot be exported (a draft, or a choice still to make). Null when it can. */
   exportBlock: string | null
@@ -375,7 +377,7 @@ export function PayslipsScreen(props: Props) {
       // A payslip that is exactly the one issued is made from what was stored when it was issued.
       const docs = selectedItems.map((p) => {
         const status = issueStatus.get(p.computation.rowIndex)
-        const stored = status?.kind === 'issued' && status.same ? decodeLines(status.issued.lines) : null
+        const stored = status?.kind === 'issued' && status.same ? decodeAnyLines(status.issued.lines) : null
         return stored?.ok ? stored.document : p.document!
       })
       const base = exportBaseName(data.company.name, period)
@@ -556,6 +558,12 @@ export function PayslipsScreen(props: Props) {
                   </tbody>
                 </table>
               </div>
+              {props.smallPrint && (
+                <div className="panel tone-warn mx-4 mt-3" role="status" data-testid="small-print-notice">
+                  <TriangleAlert aria-hidden="true" />
+                  <p className="m-0 text-sm">{props.smallPrint}</p>
+                </div>
+              )}
               <div className="flex flex-wrap items-center gap-2 border-t border-line px-4 py-3">
                 <button
                   type="button"

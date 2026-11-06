@@ -294,10 +294,10 @@ describe('a rates change', () => {
 describe('what cannot be compared is said, never guessed', () => {
   it('a stored payslip in a format this app does not know', async () => {
     const issued = await issuedAugust()
-    const broken = issued.map((payslip, index) => (index === 0 ? { ...payslip, lines: [{ ...(payslip.lines[0] as object), format: 2 }, ...payslip.lines.slice(1)] } : payslip))
+    const broken = issued.map((payslip, index) => (index === 0 ? { ...payslip, lines: [{ ...(payslip.lines[0] as object), format: 3 }, ...payslip.lines.slice(1)] } : payslip))
     const row = rowOf(await review(september(), broken), 'DOE JANE')
     expect(row).toMatchObject({ status: 'cannot-compare', lines: [], totals: [], baselineRevision: 1 })
-    expect(row.problem).toBe('This payslip was issued by a newer version of the app (format 2). This version reads format 1.')
+    expect(row.problem).toBe('This payslip was issued by a newer version of the app (format 3). This version reads formats 1 and 2.')
   })
 
   it('a stored payslip that fails its checks, even by one unknown key', async () => {
