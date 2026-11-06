@@ -131,3 +131,9 @@ Stage 1, approved by the owner on 2 November 2026. `...` stands for a name, numb
 ### Issuing
 - Before payslips from your own file are issued, mark the cells of Total earnings, Total deductions and Net pay in the layout, on the Template page.
 - ...: a required cell is empty: .... / ...: required cells are empty: ..., ....
+
+## Stage 2 prompt, Stage 3: issuing and the month review (approved 6 November 2026)
+
+- (Payslips page, one notice above the downloads and the issue, only below 85%) This layout prints at ...% of its size in Excel: 11-point text prints at about ... points. Its page settings are on the Template page.
+- (changed) This payslip was issued by a newer version of the app (format ...). This version reads formats 1 and 2.
+- (removed) The temporary "Issuing them comes in the next stage." sentence.
