@@ -158,7 +158,7 @@ const changes = [
   ['A month is never split, whatever its size', 'src/lib/issueStore.ts', 'if (current.length > 0 && (current.length >= ISSUE_MAX_PAYSLIPS || used + size > budget)) {', 'if (false) {'],
   ['An answer about another month is used', 'src/lib/issueStore.ts', "if (answer.period !== period) return { ok: false, failure: failure('bad-answer') }", ''],
   ['The month load is cut off after 15 seconds', 'src/lib/hubWire.ts', "const reply = options.timeoutMs === null ? await asked.catch(() => NO_ANSWER) :", 'const reply = false ? await asked.catch(() => NO_ANSWER) :'],
-  ['A payslip changed since it was issued still shows as the issued one', 'src/lib/issueBuild.ts', 'same = sameLines(encodeLines(document, figuresOf(computation, zeroReasons)), issued.lines)', 'same = true'],
+  ['A payslip changed since it was issued still shows as the issued one', 'src/lib/issueBuild.ts', 'same = sameLines(storedLines(document, computation, zeroReasons), issued.lines)', 'same = true'],
   ['An identical re-issue is not asked about a second time', 'src/lib/issueBuild.ts', 'if (issued && sameAsIssued(payslip, issued)) identical.push(', 'if (false) identical.push('],
   ['A payslip issued with another template version counts as identical', 'src/lib/issueBuild.ts', '    issued.templateVersion === payslip.templateVersion &&\n', ''],
   ['A payslip with another reason for a difference counts as identical', 'src/lib/issueBuild.ts', '    canonicalJson(issued.acceptedDifferences) === canonicalJson(payslip.acceptedDifferences) &&\n', ''],

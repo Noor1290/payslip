@@ -358,6 +358,12 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **Decided (6 November 2026, owner).** The 9-point rule for long names is measured in points of the sheet. The layout has page settings (Portrait or Landscape, Excel's Normal or Narrow margins, fitted to one page or at 100%); the Template page shows the scale it prints at and warns below 85%.
 
+## 47. "From your file": a date format cannot start with a text
+
+**What happens.** Found in the rehearsal with the owner's layout (6 November 2026, fake copy). Its cell E9 holds "Pay period: September 2026" in one cell. The pieces of a date format always start with a part of the date (D, MM, MMMM...) and the separators only go between them, so "Pay period: " cannot be written before the month: the editor offers no place for it. The stored layout could hold it (a piece of text may come first); only the editor does not offer it. Today: "Pay period:" goes in its own cell beside the pay month, as the rehearsal did (and as the BRN line does).
+
+**To decide.** Whether to add a "Text before the date" box to the date format (one new text to approve), or keep the label in its own cell.
+
 ## Three entries of the proof no longer applied (fixed 1 Nov 2026)
 
 `scripts/prove-tests-can-fail.mjs` reported "3 of 175 changes were not caught". All three were skipped, not missed: the text they looked for had moved on in src/lib/templateBody.ts, src/lib/payslip.ts and src/writers/excelWriter.ts, so those breaks were never tried. They now aim at the current code, and each is caught.
