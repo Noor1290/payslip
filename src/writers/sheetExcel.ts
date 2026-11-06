@@ -57,10 +57,9 @@ export function addSheetPage(workbook: ExcelJS.Workbook, name: string, doc: Shee
     pageSetup: {
       paperSize: 9, // A4
       orientation: doc.orientation,
-      fitToPage: true,
-      fitToWidth: 1,
-      fitToHeight: 1,
-      margins: { left: 0.4, right: 0.4, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 },
+      ...(doc.fit === false ? { fitToPage: false, scale: 100 } : { fitToPage: true, fitToWidth: 1, fitToHeight: 1 }),
+      // Excel's own Normal and Narrow margins, in inches.
+      margins: { left: doc.margins === 'narrow' ? 0.25 : 0.7, right: doc.margins === 'narrow' ? 0.25 : 0.7, top: 0.75, bottom: 0.75, header: 0.3, footer: 0.3 },
     },
   })
   const excelColumn = (col: number) => doc.firstColumn + col + 1
@@ -86,7 +85,13 @@ export function addSheetPage(workbook: ExcelJS.Workbook, name: string, doc: Shee
     }
   }
   doc.rows.forEach((row, rowIndex) => {
-    for (const cell of row.cells) value(sheet.getCell(address(rowIndex, cell.col)), cell)
+    for (const cell of row.cells) {
+      const target = sheet.getCell(address(rowIndex, cell.col))
+      value(target, cell)
+      // A name or an address fitted to its cell: the size chosen, and its two lines kept as two.
+      if (cell.size !== undefined) target.font = { ...target.font, size: cell.size }
+      if (cell.text.includes('\n')) target.alignment = { ...target.alignment, wrapText: true }
+    }
   })
 }
 

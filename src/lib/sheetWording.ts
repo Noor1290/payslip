@@ -18,7 +18,15 @@ export const SOURCE_LABELS: Record<SourceChoice, string> = {
   empty: 'Empty',
 }
 
-export const COMPANY_LABELS: Record<CompanyField, string> = { name: 'Company name', address: 'Address', brn: 'BRN', vat: 'VAT' }
+export const COMPANY_LABELS: Record<CompanyField, string> = {
+  name: 'Company name',
+  address: 'Address',
+  address1: 'Address, before the last comma',
+  address2: 'Address, after the last comma',
+  addressLines: 'Address on two lines, split at the last comma',
+  brn: 'BRN',
+  vat: 'VAT',
+}
 
 const DATE_CHOICE: Record<DateOf, SourceChoice> = { employment: 'employment', month: 'month', today: 'today', field: 'field' }
 

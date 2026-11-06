@@ -11,7 +11,8 @@ import type { ComputedLine, Issue, PayslipComputation } from './payslip'
 import { formatCents } from './money'
 import { labelOf, type CellFormat, type OwnValues, type SheetBody, type SheetMerge, type SheetStyle } from './sheetBody'
 import { evaluateSheet, problemText, type SheetContext } from './sheetEvaluate'
-import { layoutSheet } from '../writers/sheetGeometry'
+import { fitSheetDocument } from './sheetFit'
+import { layoutSheet, pageOf } from '../writers/sheetGeometry'
 
 /** The drawing version of these payslips, a list of its own: nothing here touches the Table drawings. */
 export const SHEET_DRAWING = 1
@@ -27,9 +28,15 @@ export interface SheetDocCell {
   iso?: string
   format?: CellFormat
   places?: 0 | 2
+  /**
+   * A name or an address fitted to its cell: printed at this size, in points of the sheet, on the
+   * lines of `text`, or refused. Left out for every other text, which is set smaller only as needed.
+   */
+  size?: number
 }
 
 export interface SheetDocRow {
+  /** In points. Taller than the layout's row when a long name or an address needs two lines. */
   height: number
   cells: SheetDocCell[]
 }
@@ -39,6 +46,8 @@ export interface SheetDocument {
   template: { id: string; version: string }
   drawing: number
   orientation: 'portrait' | 'landscape'
+  margins?: 'narrow'
+  fit?: false
   firstRow: number
   firstColumn: number
   columns: number[]
@@ -95,25 +104,29 @@ export function buildSheetDocument(sheet: SheetInUse, row: PayrollRow, period: s
     }),
   }))
 
-  return {
-    document: {
-      kind: 'sheet',
-      template: { id: sheet.id, version: sheet.version },
-      drawing: SHEET_DRAWING,
-      orientation: body.orientation,
-      firstRow: body.firstRow,
-      firstColumn: body.firstColumn,
-      columns: body.columns,
-      rows,
-      merges: body.merges,
-      styles: body.styles,
-      employeeName: employeeName(row),
-      period,
-    },
-    errors,
-    lines,
+  const document: SheetDocument = {
+    kind: 'sheet',
+    template: { id: sheet.id, version: sheet.version },
+    drawing: SHEET_DRAWING,
+    orientation: body.orientation,
+    ...(body.margins ? { margins: body.margins } : {}),
+    ...(body.fit === false ? { fit: false as const } : {}),
+    firstRow: body.firstRow,
+    firstColumn: body.firstColumn,
+    columns: body.columns,
+    rows,
+    merges: body.merges,
+    styles: body.styles,
+    employeeName: employeeName(row),
+    period,
   }
+  fitSheetDocument(document, body, row, companyOf(row).address)
+  return { document, errors, lines }
 }
+
+/** Said when the sheet, printed at 100%, is larger than the page. */
+export const TOO_LARGE_AT_FULL_SIZE =
+  'At 100%, the sheet is larger than one A4 page. On the Template page, tick "Fit the sheet on one page", or make the sheet smaller in Excel.'
 
 const DATE_KEY = 'Date of Employment'
 
@@ -122,6 +135,7 @@ export function prepareSheetPayslips(data: ImportedPayroll, sheet: SheetInUse, p
   return data.rows.map((row, rowIndex) => {
     const { document, errors, lines } = buildSheetDocument(sheet, row, period, today)
     const page = layoutSheet(document)
+    if (!pageOf(document).fits) errors.push({ code: 'page-too-small', message: TOO_LARGE_AT_FULL_SIZE })
     if (page.unsupported.length > 0) errors.push({ code: 'unsupported-character', message: `The payslip font cannot print these characters: ${page.unsupported.join(' ')}` })
     for (const text of page.overflow) errors.push({ code: 'too-long', message: `"${text}" is too long to fit on the payslip, even at the smallest size.` })
     const sum = (side: 'earnings' | 'deductions') => lines.filter((line) => line.side === side).reduce((total, line) => total + line.cents, 0)

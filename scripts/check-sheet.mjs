@@ -43,7 +43,10 @@ const DASHBOARD = `<!doctype html><meta charset="utf-8"><title>Fake dashboard (t
   })
 </script>`
 
-const fixture = JSON.parse(readFileSync(join(root, 'tests/fixtures/ABC Co Ltd-pdf-fill-2026-09.json'), 'utf8'))
+const sample = JSON.parse(readFileSync(join(root, 'tests/fixtures/ABC Co Ltd-pdf-fill-2026-09.json'), 'utf8'))
+// One more fake employee, with a name too long for its cell on one line at 9 points.
+const LONG = { surname: 'SAMPLELONGSURNAME', other: 'Annabelle Marie-Claire Josephine' }
+const fixture = [...sample, { ...sample[0], ID: 'X0000000000077', Surname: LONG.surname, 'Other names': LONG.other }]
 const browser = await chromium.launch()
 try {
   const context = await browser.newContext({ viewport: { width: 1600, height: 1040 }, acceptDownloads: true })
@@ -106,9 +109,12 @@ try {
   await goes('company')
   await open('B6')
   await goes('company')
-  await field(app, 'Detail').selectOption('address')
+  await field(app, 'Detail').selectOption('addressLines')
+  check((await app.getByTestId('address-hint').count()) === 1, 'The address on two lines says nothing of how it is split.')
+  await shot('9-address-on-two-lines')
   await open('C10')
   await goes('employee')
+  check((await app.getByTestId('name-hint').count()) === 1, 'A name cell does not say how a long name is fitted.')
   await open('E10')
   await goes('employment')
   check((await app.getByTestId('date-preview').textContent()).includes('15-Mar-21'), 'The date format has no live preview.')
@@ -164,6 +170,21 @@ try {
   check((await app.getByRole('button', { name: /^Cell B25:/ }).count()) === 0, 'A row was not removed.')
   await shot('6-grid-with-values')
 
+  // The page settings: the scale shown, the warning below 85%, Narrow margins print larger.
+  const scaleText = async () => (await app.getByTestId('sheet-scale').textContent()).trim()
+  const percent = (text) => Number(/(\d+)%/.exec(text)?.[1])
+  const normal = percent(await scaleText())
+  check(normal > 0 && normal < 85, `The fake layout prints at ${normal}% with Normal margins.`)
+  check((await app.getByTestId('sheet-small-print').count()) === 1, 'Below 85% there is no warning.')
+  await app.getByTestId('sheet-page').scrollIntoViewIfNeeded()
+  await shot('10-page-settings')
+  await field(app.getByTestId('sheet-page'), 'Margins').selectOption('narrow')
+  const narrow = percent(await scaleText())
+  check(narrow > normal, `Narrow margins do not print larger (${normal}% then ${narrow}%).`)
+  await field(app.getByTestId('sheet-page'), 'Orientation').selectOption('landscape')
+  check(percent(await scaleText()) > narrow, 'Landscape does not print larger.')
+  await field(app.getByTestId('sheet-page'), 'Orientation').selectOption('portrait')
+
   // Save, publish, use.
   await app.getByRole('button', { name: 'Save draft' }).click()
   await app.getByTestId('template-saved').waitFor()
@@ -188,18 +209,29 @@ try {
   if (shots) await app.getByTestId('payslip-page').screenshot({ path: join(shots, '7-preview.png'), animations: 'disabled' })
   await shot('7b-payslips-page')
 
+  // The long name: on two lines, the surname whole on the first, nothing cut.
+  await app.getByRole('button', { name: `${LONG.surname} ${LONG.other}` }).click()
+  const longPaper = await app.getByTestId('payslip-page').textContent()
+  check(longPaper.includes(LONG.surname) && longPaper.includes('Josephine'), 'The long name is not all on the payslip.')
+  check(!(await app.getByTestId('payslip-page').textContent()).includes(`${LONG.surname} ${LONG.other}`), 'The long name was not put on two lines.')
+  if (shots) await app.getByTestId('payslip-page').screenshot({ path: join(shots, '11-long-name.png'), animations: 'disabled' })
+
   const download = async (name) => {
     const [file] = await Promise.all([page.waitForEvent('download'), app.getByRole('button', { name }).first().click()])
     return readFileSync(await file.path())
   }
   const zip = await download(/PDF/)
   const pdfs = Object.entries(unzipSync(zip))
-  check(pdfs.length === 7, `The PDF zip holds ${pdfs.length} files.`)
+  check(pdfs.length === fixture.length, `The PDF zip holds ${pdfs.length} files.`)
   check(pdfs.every(([, bytes]) => new TextDecoder('latin1').decode(bytes.slice(0, 5)) === '%PDF-'), 'A file in the zip is not a PDF.')
   const xlsx = await download(/Excel/)
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.load(xlsx)
-  check(workbook.worksheets.length === 7, `The workbook has ${workbook.worksheets.length} sheets.`)
+  check(workbook.worksheets.length === fixture.length, `The workbook has ${workbook.worksheets.length} sheets.`)
+  const longSheet = workbook.worksheets.at(-1)
+  check(String(longSheet.getCell('C10').value).includes('\n') && longSheet.getCell('C10').alignment?.wrapText === true, 'In Excel, the long name is not on two lines.')
+  check(longSheet.getRow(10).height > workbook.worksheets[0].getRow(10).height, "In Excel, the long name's row did not grow.")
+  check(workbook.worksheets[0].pageSetup.margins?.left === 0.25, 'The Excel sheet does not have Narrow margins.')
   check(workbook.worksheets[0].getCell('C14').value === fixture[0]['Basic Salary'], 'The Excel figure is wrong.')
   if (shots) {
     writeFileSync(join(shots, 'DOE JANE - 2026-09.pdf'), pdfs[0][1])
@@ -228,4 +260,4 @@ if (problems.length > 0) {
   console.error(`\nFrom your file check FAILED:\n- ${problems.join('\n- ')}`)
   process.exit(1)
 }
-console.log('From your file check passed: upload, cells, save, own value, publish, use, preview, PDF, Excel, history.')
+console.log('From your file check passed: upload, cells, address on two lines, page settings, save, own value, publish, use, preview, long name, PDF, Excel, history.')

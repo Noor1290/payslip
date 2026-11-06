@@ -12,6 +12,7 @@ import type { Templates } from '../lib/useTemplates'
 import { FailurePanel } from './FailurePanel'
 import { SheetCellEditor, type SheetKeys } from './SheetCellEditor'
 import { SheetGrid, type SheetPlace } from './SheetGrid'
+import { SheetPageSettings } from './SheetPageSettings'
 
 const when = (stamp: string) => {
   const day = stamp.slice(0, 10)
@@ -191,6 +192,8 @@ export function SheetEditor({ body, data, templates: t, issueDate }: { body: She
           </section>
         )}
       </div>
+
+      <SheetPageSettings body={body} locked={locked} onChange={t.editSheet} />
     </div>
   )
 }

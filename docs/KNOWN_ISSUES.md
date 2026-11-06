@@ -342,7 +342,7 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 ## 44. "From your file": what Stage 1 leaves out
 
-**What happens.** A layout from a file can be uploaded, set up, saved, published, previewed and downloaded. It cannot be issued yet: the Payslips page says so. Long names, the address split, the cross-checks, required cells, "Publish to" with own values kept, the month review and several companies come in Stage 2. Until then: a name too wide for its cell is set smaller down to 8 points of the sheet, then refused; the Payslips page has no "Treat as zero" for a cell; `payslip-batch` does not read a layout yet, and a company whose payslips use one is listed as not usable there.
+**What happens.** A layout from a file can be uploaded, set up, saved, published, previewed and downloaded. It cannot be issued yet: the Payslips page says so. Long names, the address split and the page settings are built (6 November 2026, PAYSLIP_FROM_FILE_STAGE2_PROMPT.md, Stage 1). The cross-checks, required cells, "Publish to" with own values kept, the month review and several companies come in its later stages. Until then: the Payslips page has no "Treat as zero" for a cell; `payslip-batch` does not read a layout yet, and a company whose payslips use one is listed as not usable there.
 
 **To decide.** Nothing. Stage 2 of PAYSLIP_FROM_FILE_PROMPT.md.
 
@@ -356,7 +356,7 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **What happens.** As Excel's "fit to one page" does, the whole sheet is scaled to the page, keeping its proportions. The reference's four columns are 738 points wide, so on A4 (28 points of white edge) the page is at 73% and 11-point text prints at about 8 points. The Table payslip is not so: it was drawn for the page. Narrower columns in the file print larger, up to 100%.
 
-**To decide.** In Stage 2, how the 9-point rule for long names reads on such a page (the owner's rule is about the name cell). It is measured in points of the sheet in this drawing.
+**Decided (6 November 2026, owner).** The 9-point rule for long names is measured in points of the sheet. The layout has page settings (Portrait or Landscape, Excel's Normal or Narrow margins, fitted to one page or at 100%); the Template page shows the scale it prints at and warns below 85%.
 
 ## Three entries of the proof no longer applied (fixed 1 Nov 2026)
 

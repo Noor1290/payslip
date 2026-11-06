@@ -276,6 +276,9 @@ export async function readSheetFile(fileName: string, bytes: Uint8Array): Promis
     schema: SHEET_SCHEMA,
     kind: SHEET_KIND,
     orientation: sheet.pageSetup.orientation === 'landscape' ? 'landscape' : 'portrait',
+    // The file's margins, as the nearer of Excel's two settings (Narrow is 0.25 inch, Normal 0.7).
+    // The sheet starts fitted to one page, whatever the file says.
+    ...((sheet.pageSetup.margins?.left ?? 0.7) <= 0.45 ? { margins: 'narrow' as const } : {}),
     firstRow: top,
     firstColumn: left,
     columns,

@@ -347,7 +347,8 @@ describe('a payslip from the fake layout', () => {
     expect(page.texts.some((text) => text.font === 'italic' && text.text === 'CSG')).toBe(true)
     const full = document.columns.reduce((sum, width) => sum + columnPoints(width), 0)
     const band = page.rects[0]
-    expect(band.w / full).toBeCloseTo(Math.min(1, (595.28 - 56) / full), 2)
+    // Excel's Normal margins: 0.7 inch left and right.
+    expect(band.w / full).toBeCloseTo(Math.min(1, (595.28 - 100.8) / full), 2)
   })
 
   it('a text flows over the empty cells beside it; a text with no room is set smaller, then refused', () => {

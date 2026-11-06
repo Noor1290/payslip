@@ -376,7 +376,7 @@ export function addressParts(address: string): string[] {
  * comma; then the last parts of line 3 moved down to line 4, at a comma (the fewest first); then
  * its last words moved down, between words (the fewest first). `atComma` is false for the last kind.
  */
-function addressSplits(parts: readonly string[]): { lines: [string, string]; atComma: boolean }[] {
+export function addressSplits(parts: readonly string[]): { lines: [string, string]; atComma: boolean }[] {
   if (parts.length === 0) return [{ lines: ['', ''], atComma: true }]
   const last = parts.length > 1 ? parts[parts.length - 1] : ''
   const head = parts.length > 1 ? parts.slice(0, -1) : [...parts]

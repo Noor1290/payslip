@@ -31,7 +31,11 @@ export const cellIdSchema = z.string().regex(/^[a-z0-9]{1,12}$/)
 /** A decimal number written as text, so it is exact: "0.045", "29710", "-1". */
 const decimalText = z.string().regex(/^-?\d{1,12}(\.\d{1,8})?$/)
 
-export const COMPANY_FIELDS = ['name', 'address', 'brn', 'vat'] as const
+/**
+ * The address can also be split at its last comma: the part before it and the part after it in
+ * two cells (address1, address2), or both on two lines of one cell (addressLines).
+ */
+export const COMPANY_FIELDS = ['name', 'address', 'address1', 'address2', 'addressLines', 'brn', 'vat'] as const
 export type CompanyField = (typeof COMPANY_FIELDS)[number]
 
 const operandSchema = z.discriminatedUnion('type', [
@@ -168,6 +172,10 @@ const sheetSchema = z.strictObject({
   schema: z.literal(SHEET_SCHEMA),
   kind: z.literal(SHEET_KIND),
   orientation: z.enum(['portrait', 'landscape']),
+  /** Excel's "Narrow" margins. Left out for "Normal". */
+  margins: z.literal('narrow').optional(),
+  /** Printed at 100%, not fitted to one page. Left out when the sheet is fitted to the page. */
+  fit: z.literal(false).optional(),
   /** Where the grid starts in the file, so a cell keeps its Excel name (B4), from 0. */
   firstRow: z.number().int().min(0).max(10_000),
   firstColumn: z.number().int().min(0).max(1_000),
@@ -279,6 +287,11 @@ export function sheetProblems(body: SheetBody): string[] {
       }
     }
     if (cell.source.type === 'date' && cell.source.of === 'field' && !cell.source.key) problems.push(`Cell ${cellName(body, row, cell.col)} does not say which date field it shows.`)
+  }
+  const parts = (field: CompanyField) => cellsOf(body).filter(({ cell }) => cell.source.type === 'company' && cell.source.field === field).length
+  const [before, after] = [parts('address1'), parts('address2')]
+  if ((before > 0 || after > 0) && (before !== 1 || after !== 1)) {
+    problems.push('The address split at its last comma needs one cell for the part before the comma and one cell for the part after it.')
   }
 
   if (hasEmbeddedFile(body)) problems.push('A template cannot contain images or other embedded files.')

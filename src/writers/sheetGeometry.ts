@@ -1,9 +1,12 @@
 // Turns a "From your file" payslip into drawing instructions for one A4 page, laid out like the
-// Excel sheet: the whole sheet scaled to fit the page, as Excel's "fit to one page" does, never
-// made larger. The preview (SVG) and the PDF writer both draw this list. Text widths come from
+// Excel sheet, with the layout's page settings: portrait or landscape, Excel's Normal or Narrow
+// margins, and the whole sheet scaled to fit the page (Excel's "fit to one page", never made
+// larger) or printed at 100%. The preview (SVG) and the PDF writer both draw this list. Text widths come from
 // the bundled font metrics, not from the browser.
 //
-// SHEET DRAWING VERSION 1. A change to any rule here is a new version, added beside this one.
+// SHEET DRAWING VERSION 1. Frozen once payslips are issued with it: a change to any rule here is
+// then a new version, added beside this one. (Its rules for long names, the split address and the
+// page settings were added in November 2026, before any payslip was issued with it.)
 // None of this touches the Table drawings in pageGeometry.ts.
 
 import italicMetricsJson from '../assets/fonts/metrics-italic.json'
@@ -13,8 +16,13 @@ import { FONT_METRICS, PAGE, type DrawLine, type DrawList, type DrawRect, type D
 
 const METRICS: Record<SheetFontName, FontMetrics> = { ...FONT_METRICS, ...(italicMetricsJson as unknown as Record<'italic' | 'boldItalic', FontMetrics>) }
 
-/** The page's white edge, in points. */
-const MARGIN = 28
+/**
+ * The page's white edges, in points, as Excel's two margin settings have them: "Normal" is 0.7 inch
+ * left and right, 0.75 inch top and bottom; "Narrow" is 0.25 inch left and right.
+ */
+export const MARGINS = { normal: { x: 50.4, y: 54 }, narrow: { x: 18, y: 54 } } as const
+/** Below this print scale, the Template page warns that the payslip prints small. */
+export const SMALL_PRINT_SCALE = 0.85
 /** Excel's own column unit: pixels of the digit 0 in Calibri 11, and points per pixel. */
 const DIGIT_PIXELS = 7
 const POINTS_PER_PIXEL = 0.75
@@ -62,19 +70,84 @@ function wrapped(text: string, font: SheetFontName, size: number, width: number)
   return lines
 }
 
-export function layoutSheet(doc: SheetDocument): DrawList<SheetFontName> {
-  const landscape = doc.orientation === 'landscape'
+/** What the page settings need of a layout or of a payslip. */
+export interface PageInput {
+  orientation: 'portrait' | 'landscape'
+  margins?: 'narrow'
+  fit?: false
+  columns: readonly number[]
+  rows: readonly { height: number }[]
+}
+
+/**
+ * The page and how large the sheet prints on it. Fitted to one page, the sheet is made smaller
+ * until it fits, never larger (Excel's "fit to one page"); otherwise it prints at 100%, and
+ * `fits` says whether the page holds it then.
+ */
+export function pageOf(input: PageInput): { width: number; height: number; x: number; y: number; scale: number; fits: boolean } {
+  const landscape = input.orientation === 'landscape'
   const width = landscape ? PAGE.height : PAGE.width
   const height = landscape ? PAGE.width : PAGE.height
+  const margin = MARGINS[input.margins ?? 'normal']
+  const fullWidth = input.columns.reduce((sum, value) => sum + columnPoints(value), 0)
+  const fullHeight = input.rows.reduce((sum, row) => sum + row.height, 0)
+  const fitted = Math.min(1, (width - 2 * margin.x) / (fullWidth || 1), (height - 2 * margin.y) / (fullHeight || 1))
+  const scale = input.fit === false ? 1 : fitted
+  return { width, height, x: margin.x, y: margin.y, scale, fits: input.fit !== false || fitted >= 1 }
+}
+
+/** The merged block that holds a place of the payslip, if any. */
+function blockOf(doc: SheetDocument, row: number, col: number) {
+  return doc.merges.find((merge) => row >= merge.row && row < merge.row + merge.rows && col >= merge.col && col < merge.col + merge.cols) ?? null
+}
+
+/**
+ * The columns and rows a cell's text may use. A text flows over the empty cells beside it, as in
+ * Excel, unless it is wrapped or on several lines (Excel then keeps it in its cell); a figure, a
+ * date and a merged block keep to their place.
+ */
+function spanOf(doc: SheetDocument, rowIndex: number, cell: SheetDocCell, flow = true) {
+  const style = doc.styles[cell.style]
+  const merge = blockOf(doc, rowIndex, cell.col)
+  const [rows, cols] = merge ? [merge.rows, merge.cols] : [1, 1]
+  const figure = cell.number !== undefined || cell.iso !== undefined
+  const align = style.horizontal ?? (figure ? 'right' : 'left')
+  const empty = (col: number) => col >= 0 && col < doc.columns.length && !blockOf(doc, rowIndex, col) && (doc.rows[rowIndex].cells.find((found) => found.col === col)?.text ?? '') === ''
+  let first = cell.col
+  let after = cell.col + cols
+  if (flow && !merge && !figure && !style.wrap && !cell.text.includes('\n')) {
+    if (align !== 'right') while (after < doc.columns.length && empty(after)) after += 1
+    if (align !== 'left') while (first > 0 && empty(first - 1)) first -= 1
+  }
+  return { first, after, rows, cols, align, figure }
+}
+
+/** The room for a cell's text, in points of the sheet: the width inside its padding, and the height. */
+export function cellRoom(doc: SheetDocument, rowIndex: number, cell: SheetDocCell, flow = true): { width: number; height: number } {
+  const span = spanOf(doc, rowIndex, cell, flow)
+  let width = 0
+  for (let col = span.first; col < span.after; col++) width += columnPoints(doc.columns[col])
+  let height = 0
+  for (let row = rowIndex; row < rowIndex + span.rows; row++) height += doc.rows[row].height
+  return { width: width - 2 * CELL_PADDING, height }
+}
+
+/** The height lines of text need, in points of the sheet, at a size in points of the sheet. */
+export const linesHeight = (count: number, size: number) => count * size * LINE_FACTOR
+
+/** Whether lines fit a room, in points of the sheet, at that size. */
+export function linesFit(lines: readonly string[], font: SheetFontName, size: number, room: { width: number; height: number }): boolean {
+  return lines.every((line) => textWidth(line, font, size) <= room.width) && (lines.length === 1 || linesHeight(lines.length, size) <= room.height)
+}
+
+export function layoutSheet(doc: SheetDocument): DrawList<SheetFontName> {
+  const page = pageOf(doc)
+  const { width, height, scale } = page
 
   const columnWidths = doc.columns.map(columnPoints)
-  const fullWidth = columnWidths.reduce((sum, value) => sum + value, 0)
-  const fullHeight = doc.rows.reduce((sum, row) => sum + row.height, 0)
-  const scale = Math.min(1, (width - 2 * MARGIN) / (fullWidth || 1), (height - 2 * MARGIN) / (fullHeight || 1))
-
-  const lefts: number[] = [MARGIN]
+  const lefts: number[] = [page.x]
   for (const value of columnWidths) lefts.push(lefts.at(-1)! + value * scale)
-  const tops: number[] = [MARGIN]
+  const tops: number[] = [page.y]
   for (const row of doc.rows) tops.push(tops.at(-1)! + row.height * scale)
 
   const rects: DrawRect[] = []
@@ -83,7 +156,7 @@ export function layoutSheet(doc: SheetDocument): DrawList<SheetFontName> {
   const overflow: string[] = []
   const unsupported = new Set<string>()
 
-  const block = (row: number, col: number) => doc.merges.find((merge) => row >= merge.row && row < merge.row + merge.rows && col >= merge.col && col < merge.col + merge.cols) ?? null
+  const block = (row: number, col: number) => blockOf(doc, row, col)
   const master = (row: number, col: number) => {
     const merge = block(row, col)
     const place = merge ? { row: merge.row, col: merge.col } : { row, col }
@@ -137,30 +210,14 @@ export function layoutSheet(doc: SheetDocument): DrawList<SheetFontName> {
     }
   }
 
-  const empty = (row: number, col: number) => {
-    if (col < 0 || col >= doc.columns.length) return false
-    if (block(row, col)) return false
-    return (doc.rows[row].cells.find((found) => found.col === col)?.text ?? '') === ''
-  }
-
   const drawCell = (cell: SheetDocCell, rowIndex: number) => {
     const style = doc.styles[cell.style]
-    const merge = block(rowIndex, cell.col)
-    const [rows, cols] = merge ? [merge.rows, merge.cols] : [1, 1]
-    const figure = cell.number !== undefined || cell.iso !== undefined
-    const align = style.horizontal ?? (figure ? 'right' : 'left')
+    const { first, after, rows, cols, align } = spanOf(doc, rowIndex, cell)
     const font = fontOf(style)
     for (const char of cell.text) {
       if (char !== '\n' && !(String(char.codePointAt(0)) in METRICS[font].widths)) unsupported.add(char)
     }
 
-    // A text flows over the empty cells beside it, as in Excel. A figure keeps to its cell.
-    let first = cell.col
-    let after = cell.col + cols
-    if (!merge && !figure && !style.wrap) {
-      if (align !== 'right') while (after < doc.columns.length && empty(rowIndex, after)) after += 1
-      if (align !== 'left') while (first > 0 && empty(rowIndex, first - 1)) first -= 1
-    }
     const left = lefts[first] + CELL_PADDING * scale
     const right = lefts[after] - CELL_PADDING * scale
     const room = right - left
@@ -169,12 +226,20 @@ export function layoutSheet(doc: SheetDocument): DrawList<SheetFontName> {
 
     let size = style.font.size
     let printed: string[] | null = null
-    const lowest = Math.min(MIN_SIZE, style.font.size)
-    for (; size >= lowest; size -= 0.25) {
-      const candidate = style.wrap || cell.text.includes('\n') ? wrapped(cell.text, font, size * scale, room) : textWidth(cell.text, font, size * scale) <= room ? [cell.text] : null
-      if (candidate && (candidate.length === 1 || candidate.length * size * scale * LINE_FACTOR <= bottom - top)) {
-        printed = candidate
-        break
+    if (cell.size !== undefined) {
+      // A name or an address already fitted to its cell (sheetDocument.ts): at this size and on
+      // these lines, or not at all. It is never set smaller here.
+      size = cell.size
+      const given = cell.text.split('\n')
+      printed = linesFit(given, font, size, cellRoom(doc, rowIndex, cell)) ? given : null
+    } else {
+      const lowest = Math.min(MIN_SIZE, style.font.size)
+      for (; size >= lowest; size -= 0.25) {
+        const candidate = style.wrap || cell.text.includes('\n') ? wrapped(cell.text, font, size * scale, room) : textWidth(cell.text, font, size * scale) <= room ? [cell.text] : null
+        if (candidate && (candidate.length === 1 || candidate.length * size * scale * LINE_FACTOR <= bottom - top)) {
+          printed = candidate
+          break
+        }
       }
     }
     if (!printed) {

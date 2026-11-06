@@ -399,6 +399,16 @@ export function SheetCellEditor(props: SheetCellEditorProps) {
           </select>
         </label>
       )}
+      {source.type === 'company' && (source.field === 'address1' || source.field === 'address2') && (
+        <p className="m-0 text-sm text-muted" data-testid="address-hint">
+          The address is split at its last comma: one cell shows the part before it, another cell the part after it.
+        </p>
+      )}
+      {source.type === 'company' && source.field === 'addressLines' && (
+        <p className="m-0 text-sm text-muted" data-testid="address-hint">
+          The address is split at its last comma onto two lines; the row grows when the two lines need more height.
+        </p>
+      )}
 
       {(source.type === 'name' || source.type === 'employee') && (
         <label className="field">
@@ -417,6 +427,12 @@ export function SheetCellEditor(props: SheetCellEditorProps) {
             ))}
           </select>
         </label>
+      )}
+
+      {(source.type === 'name' || (source.type === 'employee' && ['surname', 'other names'].includes(source.key.trim().replace(/\s+/g, ' ').toLowerCase()))) && (
+        <p className="m-0 text-sm text-muted" data-testid="name-hint">
+          A long name is set smaller, never below 9 points, then put on two lines; its row grows when it needs to. It is never cut off.
+        </p>
       )}
 
       {source.type === 'payroll' && <KeyInput label="Payroll figure" value={source.key} options={keys.figures} disabled={locked} onChange={(key) => setSource({ type: 'payroll', key })} />}

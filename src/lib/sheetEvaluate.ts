@@ -13,9 +13,31 @@ import type { PayrollRow } from './payrollFile'
 import { employeeName } from './payrollFile'
 import { cellName, cellsOf, type CompanyField, type OwnValues, type SheetBody, type SheetCell, type Term } from './sheetBody'
 import { writeDate, writeNumber } from './sheetFormats'
+import { addressParts } from '../writers/pageGeometry'
+
+/** The company details the payroll data repeats on every row. */
+export type CompanyDetails = Record<'name' | 'address' | 'brn' | 'vat', string>
+
+/**
+ * The address split at its last comma: everything before it, and the part after it. An address
+ * without a comma is all in the first part. Commas and line breaks of the payroll's address are
+ * read as drawing 3 of the Table payslip reads them (addressParts).
+ */
+export function addressAtLastComma(address: string): [string, string] {
+  const parts = addressParts(address)
+  return parts.length > 1 ? [parts.slice(0, -1).join(', '), parts[parts.length - 1]] : [parts[0] ?? '', '']
+}
+
+/** What a company detail of a cell prints, before it is fitted to its cell. */
+export function companyText(company: CompanyDetails, field: CompanyField): string {
+  if (field === 'address1') return addressAtLastComma(company.address)[0]
+  if (field === 'address2') return addressAtLastComma(company.address)[1]
+  if (field === 'addressLines') return addressAtLastComma(company.address).filter((line) => line !== '').join('\n')
+  return company[field]
+}
 
 export interface SheetContext {
-  company: Record<CompanyField, string>
+  company: CompanyDetails
   /** "YYYY-MM". */
   period: string
   /** The date on the payslip, YYYY-MM-DD. */
@@ -114,7 +136,7 @@ class Evaluator {
       case 'fixed':
         return this.plain(this.context.own[cell.id] ?? source.value, cell)
       case 'company':
-        return this.plain(this.context.company[source.field], cell)
+        return this.plain(companyText(this.context.company, source.field), cell)
       case 'name':
         return this.plain(employeeName(this.row), cell)
       case 'employee':
