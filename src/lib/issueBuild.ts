@@ -11,7 +11,7 @@ import { isReady, type AcceptedChecks } from './payslip'
 import { acceptedDifferences, type Reasons } from './reasons'
 import type { RatesVersion } from './statutoryRates'
 import { isSheetDocument } from './sheetDocument'
-import { isSheetBody } from './sheetBody'
+import { cellsOf, isSheetBody, TOTALS } from './sheetBody'
 import type { TemplateChoice } from './templateUse'
 
 export interface IssueInput {
@@ -75,6 +75,10 @@ export function identicalAsk(identical: readonly IdenticalReissue[]): { title: s
   }
 }
 
+/** Said when a layout from a file does not mark all three totals. */
+export const UNMARKED_TOTALS =
+  'Before payslips from your own file are issued, mark the cells of Total earnings, Total deductions and Net pay in the layout, on the Template page.'
+
 /** Why the month cannot be issued as a whole, before looking at any employee. Empty when it can. */
 export function monthProblems(input: Pick<IssueInput, 'data' | 'period' | 'choice' | 'previewingDraft'>): string[] {
   const problems: string[] = []
@@ -83,6 +87,8 @@ export function monthProblems(input: Pick<IssueInput, 'data' | 'period' | 'choic
     problems.push('Payslips are issued with a published template version of the company. Choose one on the Template page, or publish the built-in template there.')
   } else if (isSheetBody(input.choice.body)) {
     problems.push('Payslips from your own file can be previewed and downloaded. Issuing them comes in the next stage.')
+    const marked = new Set(cellsOf(input.choice.body).flatMap(({ cell }) => (cell.total ? [cell.total] : [])))
+    if (TOTALS.some((total) => !marked.has(total))) problems.push(UNMARKED_TOTALS)
   }
   if (input.data.period === null) problems.push('The payroll data does not say which month it is for, so it cannot be issued. Get the month from the dashboard.')
   else if (input.data.period !== input.period) problems.push('The pay month chosen is not the month of the payroll data. They must be the same to issue.')
@@ -104,7 +110,16 @@ export function buildIssue(input: IssueInput): IssueBuild {
     const { computation, document } = item
     const name = computation.employeeName
     const accepted = input.accepted[rowIndex] ?? {}
-    if (!document || isSheetDocument(document) || computation.errors.length > 0) {
+    if (!document || computation.errors.length > 0) {
+      problems.push(`${name}: the payslip has an error to fix.`)
+      continue
+    }
+    const empty = computation.requiredEmpty ?? []
+    if (empty.length > 0) {
+      problems.push(`${name}: ${empty.length === 1 ? 'a required cell is' : 'required cells are'} empty: ${empty.join(', ')}.`)
+      continue
+    }
+    if (isSheetDocument(document)) {
       problems.push(`${name}: the payslip has an error to fix.`)
       continue
     }

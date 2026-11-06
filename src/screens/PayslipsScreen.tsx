@@ -110,6 +110,8 @@ export function PayslipsScreen(props: Props) {
   const [current, setCurrent] = useState(0)
   const [busy, setBusy] = useState<'pdf' | 'excel' | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
+  /** A download asked for while a required cell is empty: the list is shown first. */
+  const [requiredAsk, setRequiredAsk] = useState<'pdf' | 'excel' | null>(null)
   const [roundingOpen, setRoundingOpen] = useState(false)
   /** A difference waiting for its reason before it is accepted. */
   const [asking, setAsking] = useState<{ title: string; description: string; confirmLabel: string; apply: (reason: string) => void } | null>(null)
@@ -337,10 +339,15 @@ export function PayslipsScreen(props: Props) {
     setRoundingOpen(false)
   }
   const treatLineAsZero = (rowIndex: number, lineId: string, name: string) => {
-    const label = prepared[rowIndex]?.computation.lines.find((line) => line.id === lineId)?.label ?? 'this line'
+    const computation = prepared[rowIndex]?.computation
+    // A layout from a file names the cell; its format decides how the zero is written.
+    const cell = computation?.zeroable?.[lineId]
+    const label = cell ?? computation?.lines.find((line) => line.id === lineId)?.label ?? 'this line'
     setAsking({
-      title: `Treat ${label} as zero?`,
-      description: `${name}: the payroll data has no figure for ${label}. The line will show "-". No other figure is changed.`,
+      title: cell ? `Treat cell ${cell} as zero?` : `Treat ${label} as zero?`,
+      description: cell
+        ? `${name}: the payroll data has no figure for cell ${cell}. The cell will show 0, written as its format writes it. No other figure is changed.`
+        : `${name}: the payroll data has no figure for ${label}. The line will show "-". No other figure is changed.`,
       confirmLabel: 'Treat as zero',
       apply: (reason) => {
         onTreatAsZero((previous) => {
@@ -352,6 +359,13 @@ export function PayslipsScreen(props: Props) {
         setAsking(null)
       },
     })
+  }
+
+  /** The empty required cells of the selected payslips, one line each: who, then which cell. */
+  const requiredLines = selectedItems.flatMap((p) => (p.computation.requiredEmpty ?? []).map((cell) => `${p.computation.employeeName}: cell ${cell}`))
+  const startExport = (kind: 'pdf' | 'excel') => {
+    if (requiredLines.length > 0) setRequiredAsk(kind)
+    else void runExport(kind)
   }
 
   const runExport = async (kind: 'pdf' | 'excel') => {
@@ -504,7 +518,7 @@ export function PayslipsScreen(props: Props) {
                   <tbody>
                     {prepared.map((p, index) => {
                       const c = p.computation
-                      const warnings = c.warnings.filter((w) => w.code.startsWith('cross-check') || w.code === 'old-name').length
+                      const warnings = c.warnings.filter((w) => w.code.startsWith('cross-check') || w.code === 'old-name' || w.code === 'required-empty').length
                       return (
                         <tr key={c.rowIndex} className={index === current ? 'row-current' : undefined}>
                           <td>
@@ -547,7 +561,7 @@ export function PayslipsScreen(props: Props) {
                   type="button"
                   className="btn btn-primary"
                   disabled={blockReason !== null || busy !== null}
-                  onClick={() => void runExport('pdf')}
+                  onClick={() => startExport('pdf')}
                 >
                   <FileArchive aria-hidden="true" />
                   {busy === 'pdf' ? 'Creating PDFs' : 'Download PDFs (zip)'}
@@ -556,7 +570,7 @@ export function PayslipsScreen(props: Props) {
                   type="button"
                   className="btn"
                   disabled={blockReason !== null || busy !== null}
-                  onClick={() => void runExport('excel')}
+                  onClick={() => startExport('excel')}
                 >
                   <FileSpreadsheet aria-hidden="true" />
                   {busy === 'excel' ? 'Creating Excel file' : 'Download Excel'}
@@ -705,6 +719,40 @@ export function PayslipsScreen(props: Props) {
         </Dialog>
       )}
 
+      {requiredAsk && (
+        <Dialog
+          title={requiredLines.length === 1 ? '1 required cell is empty' : `${requiredLines.length} required cells are empty`}
+          description="Fill them in, or download anyway. A payslip with an empty required cell cannot be issued."
+          icon={<TriangleAlert />}
+          tone="warn"
+          onClose={() => setRequiredAsk(null)}
+          actions={
+            <>
+              <button type="button" className="btn" onClick={() => setRequiredAsk(null)}>
+                Go back
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  const kind = requiredAsk
+                  setRequiredAsk(null)
+                  void runExport(kind)
+                }}
+              >
+                Download anyway
+              </button>
+            </>
+          }
+        >
+          <ul className="m-0 max-h-[46vh] list-disc overflow-auto pl-5 text-sm" data-testid="required-list">
+            {requiredLines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </Dialog>
+      )}
+
       {asking && (
         <ReasonDialog
           title={asking.title}
@@ -730,7 +778,7 @@ interface ChecksProps {
 function ChecksCard({ item, mapping, accepted, reasons, onAccept, onTreatAsZero }: ChecksProps) {
   const c = item.computation
   const canTreatAsZero = (lineId: string | undefined) =>
-    lineId !== undefined && lineId in mapping.lines && !mapping.lines[lineId].required
+    lineId !== undefined && (c.zeroable ? lineId in c.zeroable : lineId in mapping.lines && !mapping.lines[lineId].required)
 
   return (
     <section className="card" aria-label={`Checks for ${c.employeeName}`}>
@@ -825,6 +873,14 @@ function ChecksCard({ item, mapping, accepted, reasons, onAccept, onTreatAsZero 
               </p>
             </div>
           ))}
+        {(c.zeroCells ?? []).map((cell) => (
+          <div key={`z${cell.id}`} className="panel tone-sky">
+            <Info aria-hidden="true" />
+            <p className="m-0 text-sm">
+              <span className="font-medium">Treated as zero.</span> Cell {cell.label}: {reasons[zeroKey(cell.id)] ?? 'no reason given'}
+            </p>
+          </div>
+        ))}
         {c.warnings.map((warning, index) => (
           <div key={`w${index}`} className={`panel ${warning.code === 'to-confirm' ? 'tone-sky' : 'tone-warn'}`}>
             {warning.code === 'to-confirm' ? <Info aria-hidden="true" /> : <TriangleAlert aria-hidden="true" />}

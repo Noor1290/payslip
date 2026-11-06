@@ -59,8 +59,8 @@ export function acceptedDifferences(
     // Whole cents to an amount with 2 decimals: exact for any amount a payslip holds.
     differences.push({ what: check.label, payroll: check.payrollCents / 100, payslip: check.payslipCents / 100, reason })
   }
-  for (const line of computation.lines) {
-    if (line.status !== 'treated-as-zero') continue
+  const zeroed = [...computation.lines.filter((line) => line.status === 'treated-as-zero'), ...(computation.zeroCells ?? [])]
+  for (const line of zeroed) {
     const reason = reasons[zeroKey(line.id)]?.trim()
     if (reason) zeroReasons[line.id] = reason
     else missing.push(`${line.label} was treated as zero without a reason`)

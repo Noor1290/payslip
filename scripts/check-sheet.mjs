@@ -46,7 +46,9 @@ const DASHBOARD = `<!doctype html><meta charset="utf-8"><title>Fake dashboard (t
 const sample = JSON.parse(readFileSync(join(root, 'tests/fixtures/ABC Co Ltd-pdf-fill-2026-09.json'), 'utf8'))
 // One more fake employee, with a name too long for its cell on one line at 9 points.
 const LONG = { surname: 'SAMPLELONGSURNAME', other: 'Annabelle Marie-Claire Josephine' }
-const fixture = [...sample, { ...sample[0], ID: 'X0000000000077', Surname: LONG.surname, 'Other names': LONG.other }]
+// Its payroll has no Allowances: a figure missing, to be treated as zero for this employee.
+const { Allowances: _allowances, ...withoutAllowances } = sample[0]
+const fixture = [...sample, { ...withoutAllowances, ID: 'X0000000000077', Surname: LONG.surname, 'Other names': LONG.other }]
 const browser = await chromium.launch()
 try {
   const context = await browser.newContext({ viewport: { width: 1600, height: 1040 }, acceptDownloads: true })
@@ -141,8 +143,11 @@ try {
   await figure('E14', 'Employee CSG', 'deductions')
   await figure('E15', 'Employee NSF', 'deductions')
   await figure('E16', 'PAYE', 'deductions')
+  const total = (which) => field(app, "This cell is the payslip's").selectOption(which)
   await figure('C18', 'Gross Pay')
+  await total('earnings')
   await figure('E18', 'Total deductions')
+  await total('deductions')
   await open('E20')
   await goes('calc')
   await shot('5-calculation')
@@ -150,6 +155,8 @@ try {
   await app.getByRole('button', { name: 'Add a part' }).click()
   await field(app.getByTestId('calc-part').nth(1), 'Part 2').selectOption('-1')
   await field(app.getByTestId('calc-part').nth(1), 'Figure').fill('Total deductions')
+  await total('net')
+  await shot('12-net-pay-total')
   await open('C23')
   await goes('today')
 
@@ -160,6 +167,15 @@ try {
   await app.getByLabel('ABC Co Ltd has its own value').check()
   await field(app, 'Value for ABC Co Ltd only').fill('National ID :')
   check((await app.getByTestId('applies').textContent()).includes('ABC Co Ltd only'), 'The cell does not say whose value applies.')
+
+  // A required cell that stays empty: beside "Signature Employer :", a fixed value left blank.
+  await app.getByRole('button', { name: /^Cell E22:/ }).click()
+  if ((await app.getByTestId('sheet-cell-new').count()) > 0) await app.getByRole('button', { name: 'Use this cell' }).click()
+  await app.getByTestId('sheet-cell-editor').waitFor()
+  await goes('fixed')
+  await field(app, 'Value for all companies').fill('')
+  await app.getByRole('checkbox', { name: /^Required/ }).check()
+  await shot('13-required-cell')
 
   // A row added and removed.
   await open('B22')
@@ -211,13 +227,41 @@ try {
 
   // The long name: on two lines, the surname whole on the first, nothing cut.
   await app.getByRole('button', { name: `${LONG.surname} ${LONG.other}` }).click()
+  // Its Allowances are missing: an error, until treated as zero for this employee, with a reason.
+  const checks = app.getByRole('region', { name: `Checks for ${LONG.surname} ${LONG.other}` })
+  check((await checks.textContent()).includes('Cell C16: the payroll data has no "Allowances" for this employee.'), 'The missing figure is not named by its cell.')
+  if (shots) await checks.screenshot({ path: join(shots, '14-missing-figure.png') })
+  await checks.getByRole('button', { name: 'Treat as zero for this employee' }).click()
+  const zeroDialog = app.getByRole('dialog', { name: 'Treat cell C16 (Allowances) as zero?' })
+  await zeroDialog.waitFor()
+  if (shots) await zeroDialog.screenshot({ path: join(shots, '15-treat-as-zero.png') })
+  await zeroDialog.getByLabel('Reason').fill('No allowance this month')
+  await zeroDialog.getByRole('button', { name: 'Treat as zero' }).click()
+  await app.getByTestId('payslip-page').waitFor()
+  check((await checks.textContent()).includes('Treated as zero.'), 'The cell treated as zero is not shown with its reason.')
+  if (shots) await checks.screenshot({ path: join(shots, '16-checks-card.png') })
   const longPaper = await app.getByTestId('payslip-page').textContent()
   check(longPaper.includes(LONG.surname) && longPaper.includes('Josephine'), 'The long name is not all on the payslip.')
   check(!(await app.getByTestId('payslip-page').textContent()).includes(`${LONG.surname} ${LONG.other}`), 'The long name was not put on two lines.')
   if (shots) await app.getByTestId('payslip-page').screenshot({ path: join(shots, '11-long-name.png'), animations: 'disabled' })
 
+  // The Net Pay check: the payroll's net pay is a cent away for some employees; accepted as rounding.
+  await app.getByRole('button', { name: /^Accept \d+ rounding difference/ }).click()
+  await app.getByRole('dialog', { name: 'Accept the rounding differences?' }).getByRole('button', { name: /^Accept \d+$/ }).click()
+
+  // The required cell is empty for everyone: listed first, then downloaded anyway.
   const download = async (name) => {
-    const [file] = await Promise.all([page.waitForEvent('download'), app.getByRole('button', { name }).first().click()])
+    const [file] = await Promise.all([
+      page.waitForEvent('download'),
+      (async () => {
+        await app.getByRole('button', { name }).first().click()
+        const asked = app.getByRole('dialog', { name: /required cells? (is|are) empty/ })
+        await asked.waitFor()
+        check((await asked.getByTestId('required-list').textContent()).includes('DOE JANE: cell E22'), 'The empty required cell is not listed by employee and cell.')
+        if (shots && name.source === 'PDF') await asked.screenshot({ path: join(shots, '17-required-before-download.png') })
+        await asked.getByRole('button', { name: 'Download anyway' }).click()
+      })(),
+    ])
     return readFileSync(await file.path())
   }
   const zip = await download(/PDF/)
@@ -260,4 +304,4 @@ if (problems.length > 0) {
   console.error(`\nFrom your file check FAILED:\n- ${problems.join('\n- ')}`)
   process.exit(1)
 }
-console.log('From your file check passed: upload, cells, address on two lines, page settings, save, own value, publish, use, preview, long name, PDF, Excel, history.')
+console.log('From your file check passed: upload, cells, address on two lines, page settings, totals, required cell, save, own value, publish, use, preview, long name, treat as zero, rounding, required before download, PDF, Excel, history.')

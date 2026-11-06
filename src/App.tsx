@@ -153,7 +153,7 @@ export default function App() {
   const prepared = useMemo(
     () =>
       data && isMonth(period) && templates.active.sheet
-        ? prepareSheetPayslips(data, templates.active.sheet, period, issueDate)
+        ? prepareSheetPayslips(data, templates.active.sheet, period, issueDate, treatAsZero)
         : data && isMonth(period)
         ? preparePayslips(
             data,

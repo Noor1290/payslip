@@ -16,7 +16,14 @@ import {
   type SheetCell,
   type Source,
   type Term,
+  type SheetTotal,
+  TOTAL_LABELS,
+  TOTALS,
 } from '../lib/sheetBody'
+import { DEFAULT_TABLE_MAPPING } from '../lib/template'
+
+/** Which of the payroll's totals each total of the payslip is checked against. */
+const TOTAL_CHECK = { earnings: 'gross', deductions: 'deductions', net: 'net' } as const
 import { writeDate, writeNumber } from '../lib/sheetFormats'
 import { choiceOf, COMPANY_LABELS, SOURCE_LABELS, type SourceChoice } from '../lib/sheetWording'
 
@@ -329,7 +336,7 @@ export function SheetCellEditor(props: SheetCellEditorProps) {
   const setChoice = (next: SourceChoice) => {
     const text = source.type === 'text' || source.type === 'fixed' ? source.value : ''
     const made = sourceFor(next, keys, text)
-    const { side: _side, label: _label, ...plain } = cell
+    const { side: _side, label: _label, total: _total, ...plain } = cell
     onChange({ ...plain, source: made, format: formatFor(made) })
   }
   const figure = source.type === 'payroll' || source.type === 'calc'
@@ -489,6 +496,47 @@ export function SheetCellEditor(props: SheetCellEditorProps) {
             />
           </label>
         </fieldset>
+      )}
+
+      {figure && (
+        <label className="field">
+          <span className="field-label">This cell is the payslip's</span>
+          <select
+            className="input input-sm"
+            value={cell.total ?? ''}
+            disabled={locked}
+            onChange={(event) => {
+              const { total: _total, ...plain } = cell
+              onChange(event.target.value === '' ? plain : { ...plain, total: event.target.value as SheetTotal })
+            }}
+          >
+            <option value="">Not a total</option>
+            {TOTALS.map((total) => (
+              <option key={total} value={total}>
+                {TOTAL_LABELS[total]}, checked against {DEFAULT_TABLE_MAPPING.checks[TOTAL_CHECK[total]]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {source.type !== 'empty' && (
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={cell.required === true}
+            disabled={locked}
+            onChange={(event) => {
+              const { required: _required, ...plain } = cell
+              onChange(event.target.checked ? { ...plain, required: true } : plain)
+            }}
+          />
+          <span>
+            Required
+            <span className="block text-xs text-muted">When it is empty, it is listed before a download, and the payslip is not issued.</span>
+          </span>
+        </label>
       )}
 
       <div className="flex flex-col gap-1 rounded-lg border border-line p-3" data-testid="sheet-cell-preview">

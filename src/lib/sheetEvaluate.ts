@@ -10,9 +10,10 @@ import { add, fromNumber, multiply, parseDecimal, roundHalfUp, subtract, ZERO, t
 import { readDateOfEmployment } from './dates'
 import { parseMoney } from './money'
 import type { PayrollRow } from './payrollFile'
-import { employeeName } from './payrollFile'
+import { employeeName, normaliseKey } from './payrollFile'
 import { cellName, cellsOf, type CompanyField, type OwnValues, type SheetBody, type SheetCell, type Term } from './sheetBody'
 import { writeDate, writeNumber } from './sheetFormats'
+import { DEFAULT_TABLE_MAPPING } from './template'
 import { addressParts } from '../writers/pageGeometry'
 
 /** The company details the payroll data repeats on every row. */
@@ -43,7 +44,20 @@ export interface SheetContext {
   /** The date on the payslip, YYYY-MM-DD. */
   today: string
   own: OwnValues
+  /** The cells whose missing payroll figure the user accepted as zero, for this employee. */
+  zero?: ReadonlySet<string>
 }
+
+/**
+ * The payroll columns a missing figure of which is never accepted as zero: employee CSG and NSF,
+ * as the Table payslip has them (template.ts, "required").
+ */
+const NEVER_ZERO = new Set(
+  [DEFAULT_TABLE_MAPPING.lines.csg, DEFAULT_TABLE_MAPPING.lines.nsf].flatMap((line) => [line.key!, ...(line.aliases ?? [])]).map(normaliseKey),
+)
+
+/** Whether a missing figure of this column may be treated as zero. */
+export const canBeZero = (key: string) => !NEVER_ZERO.has(normaliseKey(key))
 
 export type CellProblem =
   | 'self-reference'
@@ -68,6 +82,8 @@ export interface CellValue {
   problem: CellProblem | null
   /** Which payroll column the problem is about. */
   key?: string
+  /** A missing payroll figure of this cell was accepted as zero. */
+  zeroed?: true
 }
 
 const NOTHING: CellValue = { text: '', kind: 'text', problem: null }
@@ -142,8 +158,9 @@ class Evaluator {
       case 'employee':
         return this.plain(this.field(source.key), cell)
       case 'payroll': {
-        const money = this.money(source.key)
-        return 'problem' in money ? { ...NOTHING, problem: money.problem, key: source.key } : this.number(money.value, cell)
+        const money = this.money(source.key, cell.id)
+        if ('problem' in money) return { ...NOTHING, problem: money.problem, key: source.key }
+        return money.zeroed ? { ...this.number(money.value, cell), zeroed: true } : this.number(money.value, cell)
       }
       case 'date': {
         if (source.of === 'today') return this.date(this.context.today, cell)
@@ -158,17 +175,21 @@ class Evaluator {
     }
   }
 
-  private money(key: string): { value: Decimal } | { problem: CellProblem } {
+  private money(key: string, cellId: string): { value: Decimal; zeroed?: true } | { problem: CellProblem } {
     const money = parseMoney(this.row[key])
+    // Only a figure that is not there at all, and only in a cell the user accepted it for.
+    if (!money.ok && money.reason === 'missing' && this.context.zero?.has(cellId) && canBeZero(key)) return { value: ZERO, zeroed: true }
     if (!money.ok) return { problem: money.reason === 'missing' ? 'missing-key' : money.reason }
     return { value: fromNumber(money.cents / 100)! }
   }
 
   private calc(cell: SheetCell, terms: Term[], once: boolean): CellValue & { exact?: Decimal } {
     let total = ZERO
+    let zeroed = false
     for (const term of terms) {
-      const part = this.operand(term, once)
+      const part = this.operand(term, once, cell.id)
       if ('problem' in part) return { ...NOTHING, problem: part.problem, key: part.key }
+      if ('zeroed' in part && part.zeroed) zeroed = true
       let value = part.value
       if (term.times !== null) {
         const product = multiply(value, parseDecimal(term.times)!)
@@ -179,14 +200,14 @@ class Evaluator {
       else if (!once && term.round === 'two') value = roundHalfUp(value, 2)
       total = term.sign === 1 ? add(total, value) : subtract(total, value)
     }
-    return this.number(total, cell)
+    return zeroed ? { ...this.number(total, cell), zeroed: true } : this.number(total, cell)
   }
 
-  private operand(term: Term, once: boolean): { value: Decimal } | { problem: CellProblem; key?: string } {
+  private operand(term: Term, once: boolean, cellId: string): { value: Decimal; zeroed?: true } | { problem: CellProblem; key?: string } {
     const of = term.of
     if (of.type === 'number') return { value: parseDecimal(of.value)! }
     if (of.type === 'column') {
-      const money = this.money(of.key)
+      const money = this.money(of.key, cellId)
       return 'problem' in money ? { problem: money.problem, key: of.key } : money
     }
     const found = this.where.get(of.id)

@@ -54,6 +54,12 @@ export interface PayslipComputation {
   errors: Issue[]
   /** Shown, never blocking. */
   warnings: Issue[]
+  /** "From your file": the cells whose missing figure may be treated as zero, by cell id, with their names. */
+  zeroable?: Record<string, string>
+  /** "From your file": cells treated as zero that are on neither side of the payslip (those on a side are lines). */
+  zeroCells?: { id: string; label: string }[]
+  /** "From your file": the required cells that are empty, by name ("C11 (NIC)"). Listed before a download; never issued. */
+  requiredEmpty?: string[]
 }
 
 export interface ComputeInput {
@@ -69,21 +75,21 @@ export interface ComputeInput {
   treatAsZero: ReadonlySet<string>
 }
 
-const PROBLEM_TEXT: Record<MoneyProblem, (key: string) => string> = {
+export const PROBLEM_TEXT: Record<MoneyProblem, (key: string) => string> = {
   missing: (key) => `the payroll data has no "${key}" for this employee`,
   'not-a-number': (key) => `"${key}" is text, not a number`,
   'too-many-decimals': (key) => `"${key}" has more than 2 decimals; it is not rounded here, so fix it in the payroll app`,
   'out-of-range': (key) => `"${key}" is too large to be an amount`,
 }
 
-const PROBLEM_CODE: Record<MoneyProblem, string> = {
+export const PROBLEM_CODE: Record<MoneyProblem, string> = {
   missing: 'missing-key',
   'not-a-number': 'not-a-number',
   'too-many-decimals': 'too-many-decimals',
   'out-of-range': 'out-of-range',
 }
 
-const CHECK_LABEL: Record<CheckId, string> = {
+export const CHECK_LABEL: Record<CheckId, string> = {
   gross: 'Total Earnings',
   deductions: 'Total Deductions',
   net: 'Net Pay',

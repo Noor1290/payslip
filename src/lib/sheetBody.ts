@@ -59,6 +59,11 @@ const termSchema = z.strictObject({
 })
 export type Term = z.infer<typeof termSchema>
 
+/** The payslip's three totals, each checked against the payroll's own. */
+export const TOTALS = ['earnings', 'deductions', 'net'] as const
+export type SheetTotal = (typeof TOTALS)[number]
+export const TOTAL_LABELS: Record<SheetTotal, string> = { earnings: 'Total earnings', deductions: 'Total deductions', net: 'Net pay' }
+
 export const DATE_OF = ['employment', 'month', 'today', 'field'] as const
 export type DateOf = (typeof DATE_OF)[number]
 
@@ -150,6 +155,10 @@ const cellSchema = z.strictObject({
   side: z.enum(['earnings', 'deductions']).optional(),
   /** For the month review: the figure's name. Left out to use the text to its left. */
   label: z.string().min(1).max(60).optional(),
+  /** This figure is the payslip's total, checked against the payroll's own. Left out for none. */
+  total: z.enum(['earnings', 'deductions', 'net']).optional(),
+  /** Listed before a download, and the payslip is not issued, when this cell is empty. */
+  required: z.literal(true).optional(),
 })
 export type SheetCell = z.infer<typeof cellSchema>
 
@@ -287,6 +296,15 @@ export function sheetProblems(body: SheetBody): string[] {
       }
     }
     if (cell.source.type === 'date' && cell.source.of === 'field' && !cell.source.key) problems.push(`Cell ${cellName(body, row, cell.col)} does not say which date field it shows.`)
+  }
+  for (const total of TOTALS) {
+    const marked = cellsOf(body).filter(({ cell }) => cell.total === total)
+    for (const { cell, row } of marked) {
+      if (cell.source.type !== 'payroll' && cell.source.type !== 'calc') {
+        problems.push(`Cell ${cellName(body, row, cell.col)} is marked as ${TOTAL_LABELS[total]}, but it shows no payroll figure or calculation.`)
+      }
+    }
+    if (marked.length > 1) problems.push(`Only one cell can be ${TOTAL_LABELS[total]}: ${marked.map(({ cell, row }) => cellName(body, row, cell.col)).join(', ')} are.`)
   }
   const parts = (field: CompanyField) => cellsOf(body).filter(({ cell }) => cell.source.type === 'company' && cell.source.field === field).length
   const [before, after] = [parts('address1'), parts('address2')]
