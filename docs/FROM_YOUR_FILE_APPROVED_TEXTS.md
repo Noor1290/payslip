@@ -82,3 +82,20 @@ Stage 1, approved by the owner on 2 November 2026. `...` stands for a name, numb
 - Cell ...: the calculation has too many decimals.
 - Cell ... uses "...", a column that must never be on a payslip (employer side, or the second PAYE column).
 - Cell ... does not say which date field it shows.
+
+## Stage 2 prompt, Stage 1: long names, the split address, page settings (approved 6 November 2026)
+
+### Cell panel
+- Detail: Address, before the last comma / Address, after the last comma / Address on two lines, split at the last comma
+- The address is split at its last comma: one cell shows the part before it, another cell the part after it.
+- The address is split at its last comma onto two lines; the row grows when the two lines need more height.
+- A long name is set smaller, never below 9 points, then put on two lines; its row grows when it needs to. It is never cut off.
+
+### Template page: the Page card
+- Page / Orientation: Portrait, Landscape / Margins: Normal, Narrow / Fit the sheet on one page
+- It prints at ...% of its size in Excel.
+- Below 85%, the payslip prints small: 11-point text prints at about ... points. Try narrow margins or landscape, or make the columns narrower in Excel.
+- At 100%, the sheet is larger than one A4 page. On the Template page, tick "Fit the sheet on one page", or make the sheet smaller in Excel.
+
+### Problems shown for a layout
+- The address split at its last comma needs one cell for the part before the comma and one cell for the part after it.
