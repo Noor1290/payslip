@@ -140,6 +140,14 @@ describe('issuing payslips of a layout from a file', () => {
     ])
   })
 
+  it("the payslip's totals are the cells it marks, as printed, not only the figures marked Earnings or Deductions", async () => {
+    const input = await issueInput()
+    const { computation } = input.prepared[0]
+    // DOE JANE: Gross Pay 21,085 includes figures the layout does not show on a side (Travelling).
+    expect(computation.totals).toEqual({ earnings: 2_108_500, deductions: 49_038, net: 2_059_463 })
+    expect((built(input)[0].lines[1] as { totals: unknown }).totals).toEqual({ earnings: 2_108_500, deductions: 49_038, net: 2_059_463 })
+  })
+
   it('no statutory rates are stored with them: this option is not cross-checked against the rates', async () => {
     const input = await issueInput()
     const payslips = built({ ...input, rates: DEFAULT_STATUTORY_RATES[0] })

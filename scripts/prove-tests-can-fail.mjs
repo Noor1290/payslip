@@ -60,6 +60,7 @@ const changes = [
   ['From your file: the Excel file takes the time of the clock', 'src/writers/excelWriter.ts', '{ level: 6, mtime: new Date(year, month - 1, 1) }', '{ level: 6 }'],
   ['From your file: a stored payslip of a layout is read as a Table one', 'src/lib/issuedLines.ts', "(lines[0] as { format?: unknown } | null)?.format === SHEET_LINES_FORMAT) {\n    return decodeSheetLines(lines)", "(lines[0] as { format?: unknown } | null)?.format === -1) {\n    return decodeSheetLines(lines)"],
   ['From your file: issuing still waits for the next stage', 'src/lib/issueBuild.ts', "  } else if (isSheetBody(input.choice.body)) {\n", "  } else if (isSheetBody(input.choice.body)) {\n    problems.push('Issuing them comes in the next stage.')\n"],
+  ['From your file: the totals are only the sum of the figures on a side', 'src/lib/sheetDocument.ts', "        earnings: facts.totals.earnings?.cents ?? sum('earnings'),", "        earnings: sum('earnings'),"],
   ['From your file: the PDF takes the date of the clock', 'src/writers/pdfWriter.ts', '  pdf.setModificationDate(fileDate)\n', '  pdf.setModificationDate(new Date())\n'],
   ['From your file: Excel loses the number format', 'src/writers/sheetExcel.ts', 'target.numFmt = excelNumberFormat(format, cell.places ?? 0)', ''],
   ['From your file: a removed row leaves its merged block where it was', 'src/lib/sheetEdit.ts', 'if (at < start) return [start - 1, length]', 'if (at < start) return [start, length]'],

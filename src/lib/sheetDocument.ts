@@ -242,7 +242,13 @@ export function prepareSheetPayslips(
       employeeName: employeeName(row),
       dateOfEmployment: typeof raw === 'string' ? readDateOfEmployment(raw) : null,
       lines,
-      totals: { earnings: sum('earnings'), deductions: sum('deductions'), net: sum('earnings') - sum('deductions') },
+      // The totals the layout marks, as printed: the payslip's own. Only a total it does not mark
+      // is added up from the cells marked Earnings or Deductions.
+      totals: {
+        earnings: facts.totals.earnings?.cents ?? sum('earnings'),
+        deductions: facts.totals.deductions?.cents ?? sum('deductions'),
+        net: facts.totals.net?.cents ?? (facts.totals.earnings?.cents ?? sum('earnings')) - (facts.totals.deductions?.cents ?? sum('deductions')),
+      },
       checks,
       errors,
       warnings,
