@@ -5,6 +5,10 @@ import type { ManyPublish } from '../lib/useTemplates'
 import { Dialog } from './Dialog'
 import { FailurePanel } from './FailurePanel'
 
+/** Publishing a layout copies its cells, never a company's own values. */
+export const OWN_VALUES_NOTE =
+  'A value for one company only is not copied: each ticked company keeps its own, and a company that has none shows the value for all companies.'
+
 interface Props {
   many: ManyPublish
   /** The template being published, as saved. */
@@ -12,6 +16,8 @@ interface Props {
   onTick: (brn: string, on: boolean) => void
   onPublish: () => void
   onClose: () => void
+  /** A layout from a file with fixed values: say that each company keeps its own. */
+  ownValues?: boolean
 }
 
 const companies = (count: number) => `${count} ${count === 1 ? 'company' : 'companies'}`
@@ -36,7 +42,7 @@ function outcomeBadge(result: CompanyResult) {
  * Publishing a template to several companies: the dashboard's check of each company where the
  * user is an admin, the ticks, the progress company by company, and what happened to each.
  */
-export function PublishManyDialog({ many, name, onTick, onPublish, onClose }: Props) {
+export function PublishManyDialog({ many, name, onTick, onPublish, onClose, ownValues = false }: Props) {
   const title = `Publish "${name}" to several companies`
   const [query, setQuery] = useState('')
 
@@ -156,6 +162,11 @@ export function PublishManyDialog({ many, name, onTick, onPublish, onClose }: Pr
       {publishing && (
         <p className="m-0 mb-3 text-sm font-medium" role="status" aria-live="polite" data-testid="many-progress">
           {many.company ? `Company ${many.done + 1} of ${many.total}: ${many.company}...` : `${many.done} of ${many.total} done.`}
+        </p>
+      )}
+      {ownValues && (
+        <p className="m-0 mb-3 text-sm text-muted" data-testid="many-own-values">
+          {OWN_VALUES_NOTE}
         </p>
       )}
       {searchable && (

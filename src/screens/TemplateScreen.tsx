@@ -7,7 +7,7 @@ import { SheetEditor } from '../components/SheetEditor'
 import { formatShortDate, isIsoDate } from '../lib/dates'
 import type { PublishTarget } from '../lib/publishMany'
 import type { ImportedPayroll } from '../lib/payrollFile'
-import { isSheetBody } from '../lib/sheetBody'
+import { cellsOf, isSheetBody } from '../lib/sheetBody'
 import { readSheetFile, SheetProblem } from '../lib/sheetRead'
 import { DEFAULT_TABLE_MAPPING, EMPLOYER_CONTRIBUTION_SUFFIX, FIXED_LINES, mappableKeys, NEVER_MAP } from '../lib/template'
 import { bodyChanges, bodyRows, LABEL_MAX, MAX_BODY_ROWS, NAME_MAX, type BodyLine, type TemplateBody } from '../lib/templateBody'
@@ -785,7 +785,14 @@ export function TemplateScreen({ data, templates: t, embedded, issueDate }: Prop
       )}
 
       {t.many && editor?.saved && (
-        <PublishManyDialog many={t.many} name={editor.saved.name} onTick={t.tickCompany} onPublish={() => void t.publishMany()} onClose={t.closeMany} />
+        <PublishManyDialog
+          many={t.many}
+          name={editor.saved.name}
+          onTick={t.tickCompany}
+          onPublish={() => void t.publishMany()}
+          onClose={t.closeMany}
+          ownValues={isSheetBody(editor.saved.body) && cellsOf(editor.saved.body).some(({ cell }) => cell.source.type === 'fixed')}
+        />
       )}
 
       {t.justPublished && (

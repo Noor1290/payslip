@@ -96,7 +96,7 @@ The month review needs nothing new from the hub. It uses two requests the hub al
 
 ## From your file, Stage 1 (2 November 2026)
 
-16. **A company's own values for a template.** BUILT on the hub's branch `payslip-from-file`, not merged. Migration `0022_payslip_template_own_values.sql`, NOT run. Request `values` and save `values`, outside the body. The contract is in `docs/INTEGRATION.md`, "A company's own values". Stage 2 adds them to `payslip-batch`.
+16. **A company's own values for a template.** BUILT on the hub's branch `payslip-from-file`, not merged. Migration `0022_payslip_template_own_values.sql`, NOT run. Request `values` and save `values`, outside the body. The contract is in `docs/INTEGRATION.md`, "A company's own values". Since 6 November 2026 (Stage 2 prompt, Stage 4), `payslip-batch` `load` also gives them: `template.own_values`, `{}` when there are none or before 0022 is run. No new migration.
 
 ## Later change to the bridge file (13 October 2026)
 

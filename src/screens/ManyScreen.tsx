@@ -12,6 +12,7 @@ import {
   notLoaded,
   reportFileName,
   reportText,
+  requiredText,
   roundingText,
   summaryLine,
   zipFileName,
@@ -50,7 +51,7 @@ function summarise(outcome: CompanyOutcome): Summary {
   const base = { brn: outcome.brn, company: outcome.company, kind: outcome.kind, leftOut: outcome.leftOut }
   if (outcome.kind === 'skipped') return { ...base, text: outcome.reason, notes: [] }
   const made = `${payslips(outcome.documents.length)}, with ${outcome.template}.`
-  const notes = [...outcome.rounding.map(roundingText), ...outcome.fromIssued.map(fromIssuedText)]
+  const notes = [...outcome.rounding.map(roundingText), ...outcome.fromIssued.map(fromIssuedText), ...outcome.required.map(requiredText), ...(outcome.smallPrint ? [outcome.smallPrint] : [])]
   return { ...base, text: outcome.kind === 'done' ? made : `${made} ${outcome.leftOut.length} left out.`, notes }
 }
 

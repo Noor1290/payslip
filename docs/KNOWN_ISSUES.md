@@ -342,7 +342,7 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 ## 44. "From your file": what Stage 1 leaves out
 
-**What happens.** A layout from a file can be uploaded, set up, saved, published, previewed, downloaded and, since 6 November 2026, issued (lines format 2) and compared in the month review. Long names, the address split and the page settings are built (6 November 2026, PAYSLIP_FROM_FILE_STAGE2_PROMPT.md, Stage 1), and the cross-checks of the three totals the layout marks, required cells and "Treat as zero" for a cell (its Stage 2). "Publish to" with own values kept and several companies come in its Stage 4. Until then: `payslip-batch` does not read a layout yet, and a company whose payslips use one is listed as not usable there.
+**What happens.** A layout from a file can be uploaded, set up, saved, published, previewed, downloaded and, since 6 November 2026, issued (lines format 2) and compared in the month review. Long names, the address split and the page settings are built (6 November 2026, PAYSLIP_FROM_FILE_STAGE2_PROMPT.md, Stage 1), and the cross-checks of the three totals the layout marks, required cells and "Treat as zero" for a cell (its Stage 2). Several companies and "Publish to" work with a layout too (its Stage 4): each company prints its own values, and publishing never copies them.
 
 **To decide.** Nothing. Stage 2 of PAYSLIP_FROM_FILE_PROMPT.md.
 

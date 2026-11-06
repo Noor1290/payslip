@@ -21,7 +21,11 @@ import { decodeAnyLines } from './issuedLines'
 import { pendingChecks, type AcceptedChecks, type ReconcileCheck } from './payslip'
 import { ratesForCrossCheck } from './ratesStore'
 import { ratesFor, type RatesVersion } from './statutoryRates'
-import { readBody, templateOf } from './templateBody'
+import { readAnyBody, templateOf } from './templateBody'
+import { isSheetBody } from './sheetBody'
+import { prepareSheetPayslips } from './sheetDocument'
+import { smallPrintNotice } from '../components/SheetPageSettings'
+import type { AnyPayslip } from './build'
 
 export interface LeftOut {
   name: string
@@ -38,6 +42,12 @@ export interface AcceptedRounding {
 export interface FromIssued {
   name: string
   revision: number
+}
+
+/** A required cell left empty on a payslip of a layout from a file: whose, and which cell. */
+export interface RequiredEmpty {
+  name: string
+  cell: string
 }
 
 export interface BuildOptions {
@@ -60,6 +70,10 @@ export type CompanyOutcome =
       leftOut: LeftOut[]
       rounding: AcceptedRounding[]
       fromIssued: FromIssued[]
+      /** A layout from a file: each empty required cell, downloaded anyway. */
+      required: RequiredEmpty[]
+      /** A layout from a file that prints below 85%: said once for the company. */
+      smallPrint: string | null
     }
   | {
       brn: string
@@ -106,16 +120,25 @@ export function buildCompany(bundle: CompanyBundle, { issueDate, acceptRounding 
     )
   }
   const { templateId, name, version, body } = bundle.template
-  const read = readBody(body)
+  const read = readAnyBody(body)
   if (!read.ok) return skipped(bundle, `Its template "${name}", version ${version}, cannot be used: ${read.problems[0] ?? 'it is not valid'}`)
   if (!bundle.run) return skipped(bundle, `No saved payroll for ${month}.`)
   const imported = importPayrollRows(bundle.employees, { period: bundle.period })
   if (!imported.ok) return skipped(bundle, `Its payroll for ${month} could not be used: ${imported.errors[0]?.message ?? 'it is not valid.'}`)
   const data = imported.data
 
-  const { template, mapping } = templateOf(read.body, { id: templateId, name, version: `v${version}` })
   const rates = ratesForCrossCheck({ status: 'loaded', versions: bundle.rates, company: { name: bundle.company, brn: bundle.brn } }, bundle.period)
-  const prepared = preparePayslips(data, { template, mapping, rateVersions: rates.versions, whyNoRates: rates.whyNone, period: bundle.period }, issueDate)
+  const chosen = read.body
+  const sheet = isSheetBody(chosen) ? chosen : null
+  // A layout from a file has its own payslips, with the company's own values; it is not
+  // cross-checked against the rates.
+  let prepared: AnyPayslip[]
+  if (isSheetBody(chosen)) {
+    prepared = prepareSheetPayslips(data, { body: chosen, own: bundle.template.own, id: templateId, version: `v${version}` }, bundle.period, issueDate)
+  } else {
+    const { template, mapping } = templateOf(chosen, { id: templateId, name, version: `v${version}` })
+    prepared = preparePayslips(data, { template, mapping, rateVersions: rates.versions, whyNoRates: rates.whyNone, period: bundle.period }, issueDate)
+  }
 
   const documents: (PayslipDocument | SheetDocument)[] = []
   const leftOut: LeftOut[] = []
@@ -158,11 +181,13 @@ export function buildCompany(bundle: CompanyBundle, { issueDate, acceptRounding 
     company: bundle.company,
     kind: leftOut.length === 0 ? 'done' : 'partly',
     template: `${name}, version ${version}`,
-    ratesUsed: ratesFor(rates.versions, bundle.period),
+    ratesUsed: sheet ? null : ratesFor(rates.versions, bundle.period),
     documents,
     leftOut,
     rounding,
     fromIssued,
+    required: ready.flatMap((item) => (item.computation.requiredEmpty ?? []).map((cell) => ({ name: item.computation.employeeName, cell }))),
+    smallPrint: sheet ? smallPrintNotice(sheet) : null,
   }
 }
 
@@ -207,6 +232,7 @@ const plural = (count: number, one: string, many = `${one}s`) => `${count} ${cou
 
 export const roundingText = (item: AcceptedRounding) => `Accepted a 0.01 rounding difference: ${item.name}, ${item.line}`
 export const fromIssuedText = (item: FromIssued) => `Taken from the issued copy (revision ${item.revision}): ${item.name}`
+export const requiredText = (item: RequiredEmpty) => `A required cell is empty, downloaded anyway: ${item.name}, cell ${item.cell}`
 
 /** The counts at the top of the report, also shown on screen. */
 export function summaryLine(outcomes: readonly CompanyOutcome[]): string {
@@ -236,6 +262,8 @@ export function reportText(outcomes: readonly CompanyOutcome[], period: string, 
     if (outcome.kind === 'skipped') continue
     for (const item of outcome.rounding) lines.push(`  ${roundingText(item)}`)
     for (const item of outcome.fromIssued) lines.push(`  ${fromIssuedText(item)}`)
+    for (const item of outcome.required) lines.push(`  ${requiredText(item)}`)
+    if (outcome.smallPrint) lines.push(`  ${outcome.smallPrint}`)
   }
   return `${lines.join('\r\n')}\r\n`
 }

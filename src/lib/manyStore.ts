@@ -4,6 +4,7 @@
 // then answers one company at a time: its saved run of that month, the template its payslips
 // use and its statutory rates. The rows are per-employee data: memory only, never stored.
 
+import { readOwnValues } from './sheetBody'
 import { z } from 'zod'
 import { ask, failure, normaliseBrn, type Failure, type HubPort } from './hubWire'
 import { issuedSchema, type IssuedPayslip } from './issueStore'
@@ -68,7 +69,14 @@ const bundleSchema = z
     run: z.boolean(),
     employees: z.array(z.record(z.string(), z.unknown())).max(10_000),
     template: z
-      .object({ template_id: z.uuid(), name: z.string().min(1).max(200), version: z.number().int().min(1), body: z.record(z.string(), z.unknown()) })
+      .object({
+        template_id: z.uuid(),
+        name: z.string().min(1).max(200),
+        version: z.number().int().min(1),
+        body: z.record(z.string(), z.unknown()),
+        /** The company's own values for a layout from a file ("this company only"); none from an older dashboard. */
+        own_values: z.unknown().optional(),
+      })
       .nullable(),
     template_reason: z.enum(['none', 'several']).nullable(),
     rates: z.array(ratesRowSchema).max(1_000),
@@ -81,7 +89,13 @@ const bundleSchema = z
     period: row.period,
     run: row.run,
     employees: row.employees,
-    template: row.template && { templateId: row.template.template_id, name: row.template.name, version: row.template.version, body: row.template.body as unknown },
+    template: row.template && {
+      templateId: row.template.template_id,
+      name: row.template.name,
+      version: row.template.version,
+      body: row.template.body as unknown,
+      own: readOwnValues(row.template.own_values),
+    },
     templateReason: row.template_reason,
     rates: row.rates as RatesVersion[],
     issued: row.issued as IssuedPayslip[],

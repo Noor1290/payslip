@@ -7,7 +7,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, extname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ExcelJS from 'exceljs'
-import { unzipSync } from 'fflate'
+import { strFromU8, unzipSync } from 'fflate'
 import { chromium } from 'playwright'
 import { createFakeHub } from './lib/fake-hub.mjs'
 import { fakeLayoutBytes } from './lib/fake-layout.mjs'
@@ -344,6 +344,77 @@ try {
   await nav('Payslips')
   await app.getByLabel('Date on the payslip').fill('2026-09-30')
 
+  // Publish to: two TEST companies, then several companies at once. Fake data only.
+  await page.evaluate((rows) => {
+    const columns = Object.keys(rows[0])
+    const company = (name, brn) => ({
+      name,
+      brn,
+      role: 'admin',
+      templates: [],
+      versions: [],
+      inUse: null,
+      payroll: { period: '2026-09', employees: rows.length, columns },
+      runs: { '2026-09': rows.map((row) => ({ ...row, 'Company Name': name, BRN: brn, Address: `${name} House, Fake Road, Port Louis` })) },
+      rates: [],
+    })
+    window.hub.state.others.push(company('TEST LAYOUT Ltd', 'C4444444'), company('TEST NEW Ltd', 'C6666666'))
+  }, fixture)
+  await nav('Template')
+  const target = app.getByTestId('publish-target')
+  await target.getByRole('radio', { name: 'All my companies' }).check()
+  await app.getByRole('button', { name: 'Check the companies' }).click()
+  const manyDialog = app.getByRole('dialog', { name: 'Publish "Monthly payslip" to several companies' })
+  await manyDialog.getByRole('table', { name: 'Companies to publish to' }).waitFor()
+  check((await manyDialog.getByTestId('many-own-values').count()) === 1, 'Publish to: the dialog does not say that own values are not copied.')
+  if (shots) await manyDialog.screenshot({ path: join(shots, '22-publish-to.png') })
+  await manyDialog.getByRole('button', { name: /^Publish to \d+ companies$/ }).click()
+  await manyDialog.getByTestId('many-results').waitFor()
+  const outcomeOf = async (company) => (await manyDialog.getByTestId('many-results').getByRole('row').filter({ hasText: company }).getAttribute('data-outcome')) ?? ''
+  check((await outcomeOf('TEST LAYOUT Ltd')) === 'updated' && (await outcomeOf('TEST NEW Ltd')) === 'updated', 'Publish to: a TEST company was not updated.')
+  await manyDialog.getByRole('button', { name: 'Close' }).click()
+  // TEST LAYOUT Ltd has its own value for the cell that says "National ID :" here; TEST NEW Ltd has none.
+  const copied = await page.evaluate(() => {
+    const own = Object.values(window.hub.state.ownValues)[0].own_values
+    const [layoutCo, newCo] = window.hub.state.others.filter((other) => other.brn === 'C4444444' || other.brn === 'C6666666')
+    const cell = Object.keys(own)[0]
+    layoutCo.ownValues = { [layoutCo.templates[0].id]: { own_values: { [cell]: 'Identity card :' }, values_revision: 2 } }
+    return { body: JSON.stringify(layoutCo.versions.at(-1).body) === JSON.stringify(newCo.versions.at(-1).body), ownCopied: JSON.stringify(newCo).includes('National ID') }
+  })
+  check(copied.body, 'Publish to: the two companies did not get the same layout.')
+  check(!copied.ownCopied, "Publish to: this company's own value was copied to another company.")
+
+  // Several companies: each with its own values, one zip and the report.
+  await nav('Several companies')
+  const companyList = app.getByRole('list', { name: 'Your companies' })
+  await companyList.waitFor()
+  await app.getByRole('button', { name: 'Select all', exact: true }).click()
+  await app.getByLabel('Pay month').fill('2026-09')
+  const [manyZip] = await Promise.all([page.waitForEvent('download'), app.getByRole('button', { name: 'Download payslips (zip)' }).click()])
+  const manyReport = app.getByTestId('many-report')
+  await manyReport.waitFor()
+  const manyFiles = unzipSync(new Uint8Array(readFileSync(await manyZip.path())))
+  const manyNames = Object.keys(manyFiles)
+  for (const folder of ['TEST LAYOUT Ltd', 'TEST NEW Ltd']) {
+    check(manyNames.includes(`${folder}/${folder} - all payslips - 2026-09.pdf`), `Several companies: ${folder} has no combined PDF.`)
+    check(manyNames.includes(`${folder}/${folder} - payslips - 2026-09.xlsx`), `Several companies: ${folder} has no Excel file.`)
+  }
+  const workbookOf = async (folder) => {
+    const book = new ExcelJS.Workbook()
+    await book.xlsx.load(manyFiles[`${folder}/${folder} - payslips - 2026-09.xlsx`])
+    return book.worksheets[0]
+  }
+  check((await workbookOf('TEST LAYOUT Ltd')).getCell('B11').value === 'Identity card :', 'Several companies: TEST LAYOUT Ltd does not print its own value.')
+  check((await workbookOf('TEST NEW Ltd')).getCell('B11').value === 'NIC :', 'Several companies: TEST NEW Ltd does not print the value for all companies.')
+  const manyText = strFromU8(manyFiles['Report - 2026-09.txt'] ?? new Uint8Array())
+  for (const folder of ['TEST LAYOUT Ltd', 'TEST NEW Ltd']) check(manyText.includes(`${folder} (BRN `) && manyText.includes('with Monthly payslip, version'), `Several companies: the report does not cover ${folder}.`)
+  const smallLines = manyText.split('\r\n').filter((line) => line.includes('This layout prints at'))
+  check(smallLines.length === 2, `Several companies: the small print is not said once per company (${smallLines.length}).`)
+  if (shots) {
+    await manyReport.scrollIntoViewIfNeeded()
+    await shot('23-several-companies-report')
+  }
+
   // History and Restore.
   await nav('Template')
   await app.getByRole('button', { name: 'History' }).click()
@@ -362,4 +433,4 @@ if (problems.length > 0) {
   console.error(`\nFrom your file check FAILED:\n- ${problems.join('\n- ')}`)
   process.exit(1)
 }
-console.log('From your file check passed: upload, cells, address on two lines, page settings, totals, required cell, save, own value, publish, use, preview, long name, treat as zero, rounding, required before download, PDF, Excel, small print said once, issue blocked by a required cell, version 2, issue, the date on the payslip not a change, issued reopened, history.')
+console.log('From your file check passed: upload, cells, address on two lines, page settings, totals, required cell, save, own value, publish, use, preview, long name, treat as zero, rounding, required before download, PDF, Excel, small print said once, issue blocked by a required cell, version 2, issue, the date on the payslip not a change, issued reopened, Publish to with own values kept, several companies, history.')

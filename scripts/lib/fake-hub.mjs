@@ -671,7 +671,14 @@ export function createFakeHub() {
           period: params.period,
           run: rows !== undefined,
           employees: copy(rows ?? []),
-          template: chosen.template && { template_id: chosen.template.templateId, name: chosen.template.name, version: chosen.template.version, body: sortKeys(copy(chosen.template.body)) },
+          template: chosen.template && {
+            template_id: chosen.template.templateId,
+            name: chosen.template.name,
+            version: chosen.template.version,
+            body: sortKeys(copy(chosen.template.body)),
+            // The company's own values for that template, as the dashboard sends them since November 2026.
+            own_values: copy((isOwn ? state.ownValues : target.ownValues)?.[chosen.template.templateId]?.own_values ?? {}),
+          },
           template_reason: chosen.reason,
           rates,
           issued,

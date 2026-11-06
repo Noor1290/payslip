@@ -26,7 +26,11 @@ export interface FakeHubState {
     rates?: Record<string, unknown>[]
     /** Its issued payslips, as for the selected company (`issued`). */
     issued?: (Record<string, unknown> & { national_id: string; period: string; revision: number; by: 'you' | 'other' })[]
+    /** Its own values for its templates ("this company only"), by template id. */
+    ownValues?: Record<string, { own_values: Record<string, string>; values_revision: number }>
   }[]
+  /** The selected company's own values for its templates, by template id. */
+  ownValues?: Record<string, { own_values: Record<string, string>; values_revision: number }>
   /** A publish-copy to these BRNs is refused with that code. */
   refuseCopy: Record<string, string>
   /** The last template id handed out. */
