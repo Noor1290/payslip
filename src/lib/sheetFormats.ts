@@ -7,7 +7,7 @@ import type { CellFormat, DateFormatPiece, DatePiece } from './sheetBody'
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
-/** "2021-03-15" with the pieces D - MMM - YY -> "15-Mar-21". */
+/** "2020-03-22" with the pieces D - MMM - YY -> "22-Mar-20". */
 export function writeDate(pieces: readonly DateFormatPiece[], iso: string): string {
   const [year, month, day] = iso.split('-')
   const write = (piece: DatePiece): string => {

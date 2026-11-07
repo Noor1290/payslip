@@ -20,22 +20,22 @@ const check = (c: PayslipComputation, id: string) => c.checks.find((k) => k.id =
 const codes = (issues: { code: string; lineId?: string }[]) => issues.map((i) => `${i.code}:${i.lineId ?? ''}`)
 
 describe('totals are plain addition of the lines shown, in whole cents', () => {
-  // DOE JANE, hand-calculated: earnings 18,000 + 635 + 0 + 2,450 = 21,085.00
-  // deductions 279.52 + 210.85 + 0 = 490.37 ; net 21,085.00 - 490.37 = 20,594.63
+  // DOE JANE, hand-calculated: earnings 23,600 + 635 + 0 + 3,150 = 27,385.00
+  // deductions 363.52 + 273.85 + 0 = 637.37 ; net 27,385.00 - 637.37 = 26,747.63
   const c = compute(fixtureRow('DOE'))
 
   it('copies every line exactly', () => {
-    expect(line(c, 'basic').cents).toBe(1800000)
+    expect(line(c, 'basic').cents).toBe(2360000)
     expect(line(c, 'increment').cents).toBe(63500)
     expect(line(c, 'allowances').cents).toBe(0)
-    expect(line(c, 'transport').cents).toBe(245000)
-    expect(line(c, 'csg').cents).toBe(27952)
-    expect(line(c, 'nsf').cents).toBe(21085)
+    expect(line(c, 'transport').cents).toBe(315000)
+    expect(line(c, 'csg').cents).toBe(36352)
+    expect(line(c, 'nsf').cents).toBe(27385)
     expect(line(c, 'paye').cents).toBe(0)
   })
 
   it('adds them up', () => {
-    expect(c.totals).toEqual({ earnings: 2108500, deductions: 49037, net: 2059463 })
+    expect(c.totals).toEqual({ earnings: 2738500, deductions: 63737, net: 2674763 })
   })
 
   it('takes CSG and NSF from the employee columns, never from the employer columns', () => {
@@ -49,18 +49,18 @@ describe('totals are plain addition of the lines shown, in whole cents', () => {
     expect(line(c, 'paye').display).toBe('-')
     expect(line(c, 'allowances').display).toBe('-')
     expect(line(c, 'advance')).toMatchObject({ status: 'unmapped', display: '-', cents: 0 })
-    expect(line(c, 'basic').display).toBe('18,000')
-    expect(line(c, 'csg').display).toBe('279.52')
+    expect(line(c, 'basic').display).toBe('23,600')
+    expect(line(c, 'csg').display).toBe('363.52')
   })
 })
 
 describe('reconciliation with the payroll totals', () => {
   it('matches Gross Pay and Net Pay, and reports the 0.01 on Total deductions as rounding', () => {
-    // Payroll Total deductions is 490.375 rounded once (490.38); the lines shown add to 490.37.
+    // Payroll Total deductions is 637.375 rounded once (637.38); the lines shown add to 637.37.
     const c = compute(fixtureRow('DOE'))
-    expect(check(c, 'gross')).toMatchObject({ kind: 'match', diffCents: 0, payrollCents: 2108500 })
-    expect(check(c, 'deductions')).toMatchObject({ kind: 'rounding', diffCents: -1, payrollCents: 49038 })
-    expect(check(c, 'net')).toMatchObject({ kind: 'match', diffCents: 0, payrollCents: 2059463 })
+    expect(check(c, 'gross')).toMatchObject({ kind: 'match', diffCents: 0, payrollCents: 2738500 })
+    expect(check(c, 'deductions')).toMatchObject({ kind: 'rounding', diffCents: -1, payrollCents: 63738 })
+    expect(check(c, 'net')).toMatchObject({ kind: 'match', diffCents: 0, payrollCents: 2674763 })
   })
 
   it('is not ready until the rounding difference is accepted', () => {
@@ -142,7 +142,7 @@ describe('mapping errors are visible, never a blank or a zero', () => {
   })
 
   it('a figure with more than 2 decimals is an error and is never rounded', () => {
-    const c = compute({ ...fixtureRow('DOE'), Travelling: 2450.125 })
+    const c = compute({ ...fixtureRow('DOE'), Travelling: 3150.125 })
     expect(codes(c.errors)).toEqual(['too-many-decimals:transport'])
     expect(c.totals).toBeNull()
   })
@@ -170,7 +170,7 @@ describe('cross-check: a warning only, the copied figure is never replaced', () 
   // of its CSG figures sit on an exact half cent rounded the old way. It stays as it is (the
   // recordings and the frozen format-1 payslip are made from it); today's export of those rows has
   // the figures below. Rehearsal fix F8.
-  const TODAYS_CSG: Record<string, number> = { DOE: 279.53, PALMYRE: 301.73, SAMPLE: 474.53 }
+  const TODAYS_CSG: Record<string, number> = { DOE: 363.53, PLACEBO: 301.73, SAMPLE: 474.53 }
   const asExportedToday = (row: PayrollRow): PayrollRow =>
     typeof row.Surname === 'string' && row.Surname in TODAYS_CSG ? { ...row, 'Employee CSG': TODAYS_CSG[row.Surname] } : row
 

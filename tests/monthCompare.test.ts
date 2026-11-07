@@ -59,7 +59,7 @@ describe('one row per employee, with a status', () => {
     const comparison = await review()
     expect(comparison.rows.map((row) => [row.employeeName, row.status])).toEqual([
       ['DOE JANE', 'unchanged'],
-      ['PALMYRE JEAN MARC', 'changed'],
+      ['PLACEBO LUC HENRI', 'changed'],
       ['SAMPLE ALEX', 'changed'],
       ['TESTER SAM', 'unchanged'],
       ['EXEMPLE PRIYA', 'new'],
@@ -76,15 +76,15 @@ describe('one row per employee, with a status', () => {
     expect(row.lines).toHaveLength(12)
     expect(row.lines.every((line) => line.match === 'id' && line.difference === 0 && !line.changed)).toBe(true)
     expect(row.totals.map((total) => [total.id, total.last, total.current, total.difference, total.changed])).toEqual([
-      ['earnings', 2108500, 2108500, 0, false],
-      ['deductions', 49037, 49037, 0, false],
-      ['net', 2059463, 2059463, 0, false],
+      ['earnings', 2738500, 2738500, 0, false],
+      ['deductions', 63737, 63737, 0, false],
+      ['net', 2674763, 2674763, 0, false],
     ])
     expect(row).toMatchObject({ matchedBy: 'id', baselineRevision: 1, notes: [], problem: null })
   })
 
   it('Changed: each changed line has last month, this month and the difference (hand-calculated)', async () => {
-    const row = rowOf(await review(), 'PALMYRE JEAN MARC')
+    const row = rowOf(await review(), 'PLACEBO LUC HENRI')
     expect(changedLabels(row)).toEqual(['Basic Salary', 'CSG', 'NSF'])
     // 19,480 - 18,365 = 1,115. CSG 301.72 - 285 = 16.72. NSF 201.15 - 190 = 11.15.
     expect(lineOf(row, 'Basic Salary')).toMatchObject({ last: 1836500, current: 1948000, difference: 111500, changed: true })
@@ -131,7 +131,7 @@ describe('one row per employee, with a status', () => {
     const comparison = await review(fewer)
     expect(comparison.rows.map((row) => [row.employeeName, row.status])).toEqual([
       ['DOE JANE', 'unchanged'],
-      ['PALMYRE JEAN MARC', 'changed'],
+      ['PLACEBO LUC HENRI', 'changed'],
       ['SAMPLE ALEX', 'left'],
       ['TESTER SAMUEL', 'left'],
       ['FICTIF MARIE', 'left'],
@@ -163,7 +163,7 @@ describe('a template change', () => {
     const comparison = await review(september(V2_RENAMED))
     const row = rowOf(comparison, 'DOE JANE')
     expect(row).toMatchObject({ status: 'unchanged', matchedBy: 'id' })
-    expect(lineOf(row, 'Travelling allowance')).toMatchObject({ match: 'id', lastLabel: 'Transport Allowance', last: 245000, current: 245000, changed: false })
+    expect(lineOf(row, 'Travelling allowance')).toMatchObject({ match: 'id', lastLabel: 'Transport Allowance', last: 315000, current: 315000, changed: false })
     expect(row.notes).toEqual(['"Transport Allowance" last month is "Travelling allowance" now.', 'Template: version 1 last month, version 2 now.'])
     expect(comparison.banner).toEqual([
       {
@@ -204,12 +204,12 @@ describe('a template change', () => {
   it('ANOTHER template: lines are matched by label, not by id, and the banner says so', async () => {
     const comparison = await review(september(OTHER))
     const row = rowOf(comparison, 'DOE JANE')
-    // In the other template the id "allowances" is the line called Transport Allowance (2,450).
+    // In the other template the id "allowances" is the line called Transport Allowance (3,150).
     expect(row).toMatchObject({ status: 'unchanged', matchedBy: 'label' })
-    expect(lineOf(row, 'Transport Allowance')).toMatchObject({ match: 'label', last: 245000, current: 245000, difference: 0 })
+    expect(lineOf(row, 'Transport Allowance')).toMatchObject({ match: 'label', last: 315000, current: 315000, difference: 0 })
     expect(lineOf(row, 'Allowances')).toMatchObject({ match: 'label', last: 0, current: 0 })
     // Capitals and extra spaces are ignored; the label shown is this month's, the old one is a note.
-    expect(lineOf(row, 'basic  SALARY')).toMatchObject({ match: 'label', lastLabel: 'Basic Salary', last: 1800000, current: 1800000, changed: false })
+    expect(lineOf(row, 'basic  SALARY')).toMatchObject({ match: 'label', lastLabel: 'Basic Salary', last: 2360000, current: 2360000, changed: false })
     expect(row.notes).toContain('Template: another template last month, so the lines are matched by label.')
     expect(comparison.banner[0]).toEqual({
       kind: 'template',
@@ -303,7 +303,7 @@ describe('what cannot be compared is said, never guessed', () => {
   it('a stored payslip that fails its checks, even by one unknown key', async () => {
     const issued = await issuedAugust()
     const broken = issued.map((payslip, index) => (index === 1 ? { ...payslip, lines: [payslip.lines[0], { ...(payslip.lines[1] as object), extra: 1 }, ...payslip.lines.slice(2)] } : payslip))
-    const row = rowOf(await review(september(), broken), 'PALMYRE JEAN MARC')
+    const row = rowOf(await review(september(), broken), 'PLACEBO LUC HENRI')
     expect(row.status).toBe('cannot-compare')
     expect(row.problem).toBe('The stored payslip does not match its format. It is not shown, rather than guessed at.')
   })
@@ -319,7 +319,7 @@ describe('what cannot be compared is said, never guessed', () => {
     const rows = now.data.rows.map((row, index) => (index === 0 ? Object.fromEntries(Object.entries(row).filter(([key]) => key !== 'Employee CSG')) : row))
     const broken = { ...now, data: { ...now.data, rows } }
     const { template, mapping } = templateOf(V1.body, { id: V1.id, name: V1.name, version: 'v1' })
-    broken.prepared = preparePayslips(broken.data, { template, mapping, rateVersions: DEFAULT_STATUTORY_RATES, period: PERIOD }, '2026-09-28')
+    broken.prepared = preparePayslips(broken.data, { template, mapping, rateVersions: DEFAULT_STATUTORY_RATES, period: PERIOD }, '2026-09-30')
     const row = rowOf(await review(broken), 'DOE JANE')
     expect(row.status).toBe('cannot-compare')
     expect(row.problem).toBe("This month's payslip has a figure to fix first, so there is nothing to compare yet.")

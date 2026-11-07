@@ -58,7 +58,7 @@
                     "id": "basic",
                     "label": "Basic Salary",
                     "side": "earnings",
-                    "cents": 1800000,
+                    "cents": 2360000,
                     "source": "Basic Salary"
                   },
                   {
@@ -79,7 +79,7 @@
                     "id": "transport",
                     "label": "Transport Allowance",
                     "side": "earnings",
-                    "cents": 245000,
+                    "cents": 315000,
                     "source": "Travelling"
                   },
                   {
@@ -110,14 +110,14 @@
                     "id": "csg",
                     "label": "CSG",
                     "side": "deductions",
-                    "cents": 27952,
+                    "cents": 36352,
                     "source": "Employee CSG"
                   },
                   {
                     "id": "nsf",
                     "label": "NSF",
                     "side": "deductions",
-                    "cents": 21085,
+                    "cents": 27385,
                     "source": "Employee NSF"
                   },
                   {
@@ -145,9 +145,9 @@
                   }
                 ],
                 "totals": {
-                  "earnings": 2108500,
-                  "deductions": 49037,
-                  "net": 2059463
+                  "earnings": 2738500,
+                  "deductions": 63737,
+                  "net": 2674763
                 }
               },
               {
@@ -266,9 +266,9 @@
                   },
                   {
                     "col": 3,
-                    "text": "15-Mar-21",
+                    "text": "22-Mar-20",
                     "kind": "date",
-                    "isoDate": "2021-03-15"
+                    "isoDate": "2020-03-22"
                   }
                 ]
               },
@@ -334,9 +334,9 @@
                   },
                   {
                     "col": 1,
-                    "text": "18,000",
+                    "text": "23,600",
                     "kind": "money",
-                    "cents": 1800000,
+                    "cents": 2360000,
                     "lineId": "basic"
                   },
                   {
@@ -381,9 +381,9 @@
                   },
                   {
                     "col": 3,
-                    "text": "279.52",
+                    "text": "363.52",
                     "kind": "money",
-                    "cents": 27952,
+                    "cents": 36352,
                     "lineId": "csg"
                   }
                 ]
@@ -397,9 +397,9 @@
                   },
                   {
                     "col": 1,
-                    "text": "2,450",
+                    "text": "3,150",
                     "kind": "money",
-                    "cents": 245000,
+                    "cents": 315000,
                     "lineId": "transport"
                   },
                   {
@@ -408,9 +408,9 @@
                   },
                   {
                     "col": 3,
-                    "text": "210.85",
+                    "text": "273.85",
                     "kind": "money",
-                    "cents": 21085,
+                    "cents": 27385,
                     "lineId": "nsf"
                   }
                 ]
@@ -522,9 +522,9 @@
                   },
                   {
                     "col": 1,
-                    "text": "21,085",
+                    "text": "27,385",
                     "kind": "money",
-                    "cents": 2108500,
+                    "cents": 2738500,
                     "lineId": "totalEarnings",
                     "formula": {
                       "op": "sum",
@@ -545,9 +545,9 @@
                   },
                   {
                     "col": 3,
-                    "text": "490.37",
+                    "text": "637.37",
                     "kind": "money",
-                    "cents": 49037,
+                    "cents": 63737,
                     "lineId": "totalDeductions",
                     "formula": {
                       "op": "sum",
@@ -577,9 +577,9 @@
                   },
                   {
                     "col": 3,
-                    "text": "20,594.63",
+                    "text": "26,747.63",
                     "kind": "money",
-                    "cents": 2059463,
+                    "cents": 2674763,
                     "lineId": "netPay",
                     "formula": {
                       "op": "subtract",
@@ -616,10 +616,10 @@
                   },
                   {
                     "col": 1,
-                    "text": "28-Sep-26",
+                    "text": "30-Sep-26",
                     "kind": "date",
                     "align": "right",
-                    "isoDate": "2026-09-28"
+                    "isoDate": "2026-09-30"
                   }
                 ]
               },
@@ -633,8 +633,8 @@
             "accepted_differences": [
               {
                 "what": "Total Deductions",
-                "payroll": 490.38,
-                "payslip": 490.37,
+                "payroll": 637.38,
+                "payslip": 637.37,
                 "reason": "Rounding"
               }
             ]
@@ -679,7 +679,7 @@
                 ],
                 "firstExcelRow": 4,
                 "dividerFromRowId": "headings",
-                "employeeName": "PALMYRE JEAN MARC",
+                "employeeName": "PLACEBO LUC HENRI",
                 "period": "2026-09"
               },
               {
@@ -889,7 +889,7 @@
                   },
                   {
                     "col": 1,
-                    "text": "PALMYRE JEAN MARC"
+                    "text": "PLACEBO LUC HENRI"
                   },
                   {
                     "col": 2,
@@ -1247,10 +1247,10 @@
                   },
                   {
                     "col": 1,
-                    "text": "28-Sep-26",
+                    "text": "30-Sep-26",
                     "kind": "date",
                     "align": "right",
-                    "isoDate": "2026-09-28"
+                    "isoDate": "2026-09-30"
                   }
                 ]
               },

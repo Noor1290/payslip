@@ -175,7 +175,7 @@ try {
   if (!(await page.getByRole('button', { name: 'Download PDFs (zip)' }).isDisabled())) {
     problems.push('The download was not blocked for payslips with errors.')
   }
-  await page.getByRole('button', { name: 'PALMYRE JEAN MARC' }).click()
+  await page.getByRole('button', { name: 'PLACEBO LUC HENRI' }).click()
   const missing = await page.getByRole('alert').filter({ hasText: 'Employee CSG' }).count()
   if (missing !== 1) problems.push('The missing Employee CSG was not shown as an error for that employee.')
   if ((await page.getByTestId('payslip-page').count()) !== 0) problems.push('A payslip with an error was still drawn.')
@@ -221,8 +221,8 @@ try {
   const address = longName.map((row) => ({ ...row, Address: 'Impasse Fictive 2, Avenue Exemple Remy Sample, Bonne Terre, Vacoas' }))
   await page.locator('input[type="file"]').setInputFiles({ name: 'ABC Co Ltd-pdf-fill-2026-09.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(address)) })
   await page.getByRole('dialog', { name: 'Import payroll data' }).getByRole('button', { name: 'Replace with 7 employees' }).click()
-  await page.getByRole('button', { name: 'PALMYRE JEAN MARC' }).click()
-  const header = await page.getByRole('img', { name: /Payslip of PALMYRE JEAN MARC/ }).evaluate(async (svg) => {
+  await page.getByRole('button', { name: 'PLACEBO LUC HENRI' }).click()
+  const header = await page.getByRole('img', { name: /Payslip of PLACEBO LUC HENRI/ }).evaluate(async (svg) => {
     await document.fonts.ready
     const width = Number(svg.getAttribute('viewBox').split(' ')[2])
     return [...svg.querySelectorAll('text')].slice(2, 4).map((text) => {

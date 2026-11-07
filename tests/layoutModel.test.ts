@@ -18,8 +18,8 @@ describe('layout model (recorded)', () => {
     const recorded = readRecorded<PayslipDocument[]>('layout-model')
     const changed = structuredClone(docs)
     const cell = changed[0].rows.flatMap((r) => r.cells).find((c) => c.lineId === 'csg')!
-    expect(cell.text).toBe('279.52')
-    cell.text = '279.53'
+    expect(cell.text).toBe('363.52')
+    cell.text = '363.53'
     expect(changed).not.toEqual(recorded)
     expect(docs).toEqual(recorded)
   })
@@ -42,17 +42,17 @@ describe('layout model (recorded)', () => {
         'BRN : C1234567',
         'Pay period: September 2026',
         'DOE JANE',
-        '15-Mar-21',
+        '22-Mar-20',
         'X0000000000001',
-        '18,000',
+        '23,600',
         '635',
-        '2,450',
-        '279.52',
-        '210.85',
-        '21,085',
-        '490.37',
-        '20,594.63',
-        '28-Sep-26',
+        '3,150',
+        '363.52',
+        '273.85',
+        '27,385',
+        '637.37',
+        '26,747.63',
+        '30-Sep-26',
       ]),
     )
     // Zero and unmapped lines show "-": allowances, 2 bonuses, advance, PAYE, absences, lateness.

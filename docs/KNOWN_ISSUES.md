@@ -6,7 +6,7 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **What happens.** As in the reference, the name sits in one column (about 115 points wide on the A4 page) because "Date of Employment :" starts in the next column. A name wider than that is set in a smaller size so it is never cut off; below 6 points the app stops and shows an error instead of printing over the next column.
 
-**Evidence.** "PALMYRE JEAN MARC" (17 capitals) fits at the normal size with 4 points to spare. "LONGSURNAME-EXAMPLE Marie Anne" is set smaller. "VERYLONGSURNAME-HYPHENATED Firstname Secondname Thirdname Fourthname Fifthname" is refused. Tests: `tests/layoutModel.test.ts`.
+**Evidence.** "PLACEBO LUC HENRI" (17 capitals) fits at the normal size with about 8 points to spare. "LONGSURNAME-EXAMPLE Marie Anne" is set smaller. "VERYLONGSURNAME-HYPHENATED Firstname Secondname Thirdname Fourthname Fifthname" is refused. Tests: `tests/layoutModel.test.ts`.
 
 **To decide.** Keep the reference layout, or move "Date of Employment" down to the NIC row so the name gets three columns.
 
@@ -18,7 +18,7 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **What happens.** The payroll app rounds each column on its own and adds unrounded figures for its totals. The payslip adds the lines it shows. So Total Deductions can differ by exactly 0.01. The app labels it "rounding" and lets all of them be accepted together.
 
-**Evidence.** In the fake fixture, 3 of 7 employees: DOE JANE has CSG 279.52 + NSF 210.85 = 490.37 on the payslip, and 490.38 in the payroll's `Total deductions` (279.525 + 210.85 = 490.375, rounded once).
+**Evidence.** In the fake fixture, 3 of 7 employees: DOE JANE has CSG 363.52 + NSF 273.85 = 637.37 on the payslip, and 637.38 in the payroll's `Total deductions` (363.525 + 273.85 = 637.375, rounded once).
 
 **To decide.** Nothing in this app. It goes away only if the payroll app rounds each column before adding (its own known issue 1).
 
@@ -367,3 +367,7 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 ## Three entries of the proof no longer applied (fixed 1 Nov 2026)
 
 `scripts/prove-tests-can-fail.mjs` reported "3 of 175 changes were not caught". All three were skipped, not missed: the text they looked for had moved on in src/lib/templateBody.ts, src/lib/payslip.ts and src/writers/excelWriter.ts, so those breaks were never tried. They now aim at the current code, and each is caught.
+
+## 48. (Fixed) Fake data that may have come from a real payslip (payroll TODO A8)
+
+**Fixed (7 November 2026, branch `cleanup`).** The second fake employee's surname and first names might have been a real person's, and DOE JANE's Basic Salary, Transport, date of employment and the payslip date were those of the owner's original workbook. They are replaced with invented ones everywhere: the samples (including "Try with fake sample data"), the fixtures, the recordings, the reference workbook and PDF, the example date of the date formats, and the four frozen payslips. The frozen ones were written again once, with the owner's approval: only the texts of those figures and dates changed, never a position, a size or a line (`tests/format1.test.ts`). Every behaviour the tests check is kept: DOE JANE's CSG is still an exact half cent, her Total deductions still 0.01 from the lines. `tests/noRealData.test.ts` keeps the old values out of every file; it holds only digests of them. Older commits still have them.

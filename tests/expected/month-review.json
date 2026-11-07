@@ -18,8 +18,8 @@
           "lastLabel": null,
           "match": "id",
           "unmatched": null,
-          "last": 1800000,
-          "current": 1800000,
+          "last": 2360000,
+          "current": 2360000,
           "difference": 0,
           "changed": false
         },
@@ -51,8 +51,8 @@
           "lastLabel": null,
           "match": "id",
           "unmatched": null,
-          "last": 245000,
-          "current": 245000,
+          "last": 315000,
+          "current": 315000,
           "difference": 0,
           "changed": false
         },
@@ -95,8 +95,8 @@
           "lastLabel": null,
           "match": "id",
           "unmatched": null,
-          "last": 27952,
-          "current": 27952,
+          "last": 36352,
+          "current": 36352,
           "difference": 0,
           "changed": false
         },
@@ -106,8 +106,8 @@
           "lastLabel": null,
           "match": "id",
           "unmatched": null,
-          "last": 21085,
-          "current": 21085,
+          "last": 27385,
+          "current": 27385,
           "difference": 0,
           "changed": false
         },
@@ -149,24 +149,24 @@
         {
           "id": "earnings",
           "label": "Total Earnings",
-          "last": 2108500,
-          "current": 2108500,
+          "last": 2738500,
+          "current": 2738500,
           "difference": 0,
           "changed": false
         },
         {
           "id": "deductions",
           "label": "Total Deductions",
-          "last": 49037,
-          "current": 49037,
+          "last": 63737,
+          "current": 63737,
           "difference": 0,
           "changed": false
         },
         {
           "id": "net",
           "label": "Net Pay",
-          "last": 2059463,
-          "current": 2059463,
+          "last": 2674763,
+          "current": 2674763,
           "difference": 0,
           "changed": false
         }
@@ -178,7 +178,7 @@
       "key": "row-1",
       "nationalId": "X0000000000002",
       "rowIndex": 1,
-      "employeeName": "PALMYRE JEAN MARC",
+      "employeeName": "PLACEBO LUC HENRI",
       "status": "changed",
       "problem": null,
       "matchedBy": "id",

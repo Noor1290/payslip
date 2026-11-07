@@ -1,5 +1,6 @@
 // Rebuilds the reference "Table" payslip template as docs/reference/payslip-table-reference.xlsx,
-// cell by cell, with FAKE data (ABC Co Ltd). It mirrors the owner's original workbook as it was:
+// cell by cell, with FAKE data (ABC Co Ltd, invented amounts and dates). It mirrors the layout of
+// the owner's original workbook as it was:
 // six earnings lines, whole-rupee formats, and its own formulas (CSG 1.5% and NSF 1% with no
 // ceiling, which is why the app does not follow them). The original file is never copied here.
 //
@@ -89,7 +90,7 @@ band(10, 'Employee Info ')
 put('B11', 'Name : ', { font: BODY, border: L })
 put('C11', 'DOE JANE', { font: BODY })
 put('D11', 'Date of Employment : ', { font: BODY })
-put('E11', date(2021, 3, 15), { font: BODY, border: R, align: 'left', numFmt: DATE })
+put('E11', date(2020, 3, 22), { font: BODY, border: R, align: 'left', numFmt: DATE })
 put('B12', 'NIC : ', { font: BODY, border: L })
 put('C12', 'X0000000000001', { font: BODY })
 put('D12', undefined, { font: BODY })
@@ -117,7 +118,7 @@ const label = (address, text) => put(address, text, { font: BODY, border: addres
 
 // Rows 16 to 24: earnings on the left, deductions on the right.
 label('B16', 'Basic Salary ')
-put('C16', 18000, { border: DIV, numFmt: '#,##0' })
+put('C16', 23600, { border: DIV, numFmt: '#,##0' })
 label('D16', 'Contributions ')
 put('E16', undefined, { border: R })
 label('B17', 'Govt Increment ')
@@ -125,13 +126,13 @@ amount('C17', 0, DIV)
 put('D17', undefined, { font: BODY })
 put('E17', undefined, { border: R })
 label('B18', 'Transport Allowance ')
-amount('C18', 2450, DIV)
+amount('C18', 3150, DIV)
 label('D18', 'CSG ')
-amount('E18', { formula: '(C16-E23-E24+C17)*1.5%', result: 270 }, R, FMT_WHOLE_2)
+amount('E18', { formula: '(C16-E23-E24+C17)*1.5%', result: 354 }, R, FMT_WHOLE_2)
 label('B19', 'Presence Bonus ')
 amount('C19', 0, DIV)
 label('D19', 'NSF ')
-amount('E19', { formula: '(C16-E23-E24+C17)*1%', result: 180 }, R, FMT_WHOLE_2)
+amount('E19', { formula: '(C16-E23-E24+C17)*1%', result: 236 }, R, FMT_WHOLE_2)
 label('B20', 'Productivity Bonus ')
 amount('C20', 0, DIV)
 label('D20', 'PAYE ')
@@ -161,21 +162,21 @@ for (const row of [25, 27, 28, 30, 33]) {
 }
 
 label('B26', 'Total Earnings ')
-amount('C26', { formula: 'C16+C18+C19+C20+C21+C17', result: 20450 }, DIV)
+amount('C26', { formula: 'C16+C18+C19+C20+C21+C17', result: 26750 }, DIV)
 label('D26', 'Total Deductions ')
-amount('E26', { formula: 'E18+E19+E23+E20+E24', result: 450 }, R, FMT_WHOLE_2)
+amount('E26', { formula: 'E18+E19+E23+E20+E24', result: 590 }, R, FMT_WHOLE_2)
 
 put('B29', undefined, { border: L })
 put('C29', undefined, { border: DIV })
 label('D29', 'Net Pay : ')
-amount('E29', { formula: 'C26-E26', result: 20000 }, R, FMT_WHOLE_2)
+amount('E29', { formula: 'C26-E26', result: 26160 }, R, FMT_WHOLE_2)
 
 label('B31', 'Signature Employee : ')
 put('C31', undefined, { border: DIV })
 label('D31', 'Signature Employer : ')
 put('E31', undefined, { border: R })
 label('B32', 'Date : ')
-put('C32', date(2026, 9, 28), { font: BODY, align: 'right', border: DIV, numFmt: DATE })
+put('C32', date(2026, 9, 30), { font: BODY, align: 'right', border: DIV, numFmt: DATE })
 put('D32', undefined)
 put('E32', undefined, { border: R })
 

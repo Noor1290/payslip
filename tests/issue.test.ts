@@ -121,7 +121,7 @@ describe('the issue message', () => {
   it('carries each accepted difference with its two amounts and its reason', () => {
     const jane = built()[0]
     expect(jane.name).toBe('DOE JANE')
-    expect(jane.acceptedDifferences).toEqual([{ what: 'Total Deductions', payroll: 490.38, payslip: 490.37, reason: 'Rounding' }])
+    expect(jane.acceptedDifferences).toEqual([{ what: 'Total Deductions', payroll: 637.38, payslip: 637.37, reason: 'Rounding' }])
     expect(built().filter((payslip) => payslip.acceptedDifferences.length > 0)).toHaveLength(3)
   })
 
@@ -461,7 +461,7 @@ describe('an identical re-issue is allowed, but asked about a second time', () =
     const { month } = await issuedMonth()
     expect(identicalOf({ month })).toHaveLength(7)
 
-    const later = preparePayslips(data, { template, mapping, rateVersions: DEFAULT_STATUTORY_RATES, period: PERIOD }, '2026-09-30')
+    const later = preparePayslips(data, { template, mapping, rateVersions: DEFAULT_STATUTORY_RATES, period: PERIOD }, '2026-10-01')
     expect(identicalOf({ month, prepared: later })).toEqual([])
     expect(identicalOf({ month, choice: { ...choice, version: 2 } })).toEqual([])
     expect(identicalOf({ month, rates: null })).toEqual([])
@@ -518,7 +518,7 @@ describe('where each employee stands, and how a run is summed up', () => {
     expect(statuses.get(2)).toEqual({ kind: 'not-issued' })
 
     // The same employee with another date on the payslip is no longer the payslip that was issued.
-    const later = preparePayslips(data, { template, mapping, rateVersions: DEFAULT_STATUTORY_RATES, period: PERIOD }, '2026-09-30')
+    const later = preparePayslips(data, { template, mapping, rateVersions: DEFAULT_STATUTORY_RATES, period: PERIOD }, '2026-10-01')
     expect(issueStatuses(data, later, month.payslips, accepted, reasons).get(0)).toMatchObject({ kind: 'issued', revision: 1, same: false })
   })
 

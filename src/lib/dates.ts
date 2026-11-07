@@ -1,4 +1,4 @@
-// Dates and months are handled as plain text ("2026-09-28", "2026-09") so no time zone can
+// Dates and months are handled as plain text ("2026-09-30", "2026-09") so no time zone can
 // move a date by a day.
 
 const MONTHS = [
@@ -40,7 +40,7 @@ export function readDateOfEmployment(value: string): string | null {
   return isIsoDate(iso) ? iso : null
 }
 
-/** "2026-09-28" -> "28-Sep-26", the reference's d-mmm-yy. */
+/** "2026-09-30" -> "30-Sep-26", the reference's d-mmm-yy. */
 export function formatShortDate(iso: string): string {
   const [year, month, day] = iso.split('-')
   return `${Number(day)}-${MONTHS[Number(month) - 1].slice(0, 3)}-${year.slice(2)}`

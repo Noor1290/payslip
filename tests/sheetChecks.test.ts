@@ -16,8 +16,8 @@ import { loadFixture } from './helpers'
 const PERIOD = '2026-09'
 const TODAY = '2026-09-30'
 const data = loadFixture()
-// The fixture's first employee: Gross Pay 21,085, Total deductions 490.38, Net Pay 20,594.63
-// (one cent more than 21,085 - 490.38, as a payroll that rounds its net pay can give).
+// The fixture's first employee: Gross Pay 27,385, Total deductions 637.38, Net Pay 26,747.63
+// (one cent more than 27,385 - 637.38, as a payroll that rounds its net pay can give).
 const first = data.rows[0]
 
 type Cell = Omit<SheetCell, 'id' | 'col' | 'style' | 'format'> & { format?: SheetCell['format'] }
@@ -57,10 +57,10 @@ describe('the cross-checks of the totals the layout marks', () => {
   it('each marked cell, as printed, against the payroll: Gross Pay, Total deductions and Net Pay', () => {
     const [{ computation }] = prepare(layout(TOTALS))
     expect(computation.checks.map(({ id, payrollKey, payslipCents, payrollCents, kind }) => ({ id, payrollKey, payslipCents, payrollCents, kind }))).toEqual([
-      { id: 'gross', payrollKey: 'Gross Pay', payslipCents: 2_108_500, payrollCents: 2_108_500, kind: 'match' },
-      { id: 'deductions', payrollKey: 'Total deductions', payslipCents: 49_038, payrollCents: 49_038, kind: 'match' },
-      // 21,085 - 490.38 = 20,594.62 on the payslip; the payroll says 20,594.63.
-      { id: 'net', payrollKey: 'Net Pay', payslipCents: 2_059_462, payrollCents: 2_059_463, kind: 'rounding' },
+      { id: 'gross', payrollKey: 'Gross Pay', payslipCents: 2_738_500, payrollCents: 2_738_500, kind: 'match' },
+      { id: 'deductions', payrollKey: 'Total deductions', payslipCents: 63_738, payrollCents: 63_738, kind: 'match' },
+      // 27,385 - 637.38 = 26,747.62 on the payslip; the payroll says 26,747.63.
+      { id: 'net', payrollKey: 'Net Pay', payslipCents: 2_674_762, payrollCents: 2_674_763, kind: 'rounding' },
     ])
     expect(computation.checks.map((check) => check.label)).toEqual(['Total Earnings, cell B1', 'Total Deductions, cell B2', 'Net Pay, cell B3'])
   })
@@ -74,18 +74,18 @@ describe('the cross-checks of the totals the layout marks', () => {
     expect(isReady(computation, { net: 1 })).toBe(false)
     const { differences, missing } = acceptedDifferences(computation, { net: -1 }, { 'check-net': ROUNDING_REASON })
     expect(missing).toEqual([])
-    expect(differences).toEqual([{ what: 'Net Pay, cell B3', payroll: 20_594.63, payslip: 20_594.62, reason: ROUNDING_REASON }])
+    expect(differences).toEqual([{ what: 'Net Pay, cell B3', payroll: 26_747.63, payslip: 26_747.62, reason: ROUNDING_REASON }])
   })
 
   it('only exactly 0.01 is rounding: 0.02 is a difference', () => {
-    const [{ computation }] = prepare(layout(TOTALS), [{ ...first, 'Net Pay': 20_594.64 }])
+    const [{ computation }] = prepare(layout(TOTALS), [{ ...first, 'Net Pay': 26_747.64 }])
     expect(computation.checks[2]).toMatchObject({ diffCents: -2, kind: 'difference' })
   })
 
-  it('the figure is compared as the cell prints it: in whole rupees, 490.38 is 490, a difference', () => {
+  it('the figure is compared as the cell prints it: in whole rupees, 637.38 is 637, a difference', () => {
     const whole: Cell = { source: payroll('Total deductions'), total: 'deductions', format: { type: 'number', decimals: 0, thousands: true, rs: false, dash: true } }
     const [{ computation }] = prepare(layout([whole]))
-    expect(computation.checks[0]).toMatchObject({ payslipCents: 49_000, payrollCents: 49_038, diffCents: -38, kind: 'difference' })
+    expect(computation.checks[0]).toMatchObject({ payslipCents: 63_700, payrollCents: 63_738, diffCents: -38, kind: 'difference' })
   })
 
   it('a payroll without the total to check against is an error, never a guess', () => {
@@ -106,7 +106,7 @@ describe('the cross-checks of the totals the layout marks', () => {
   })
 
   it('a total must be a figure, and only one cell can be each total', () => {
-    expect(sheetProblems(layout([{ source: { type: 'text', value: '21,085' }, total: 'earnings' }]))).toContain('Cell B1 is marked as Total earnings, but it shows no payroll figure or calculation.')
+    expect(sheetProblems(layout([{ source: { type: 'text', value: '27,385' }, total: 'earnings' }]))).toContain('Cell B1 is marked as Total earnings, but it shows no payroll figure or calculation.')
     expect(sheetProblems(layout([TOTALS[0], { source: payroll('Basic Salary'), total: 'earnings' }]))).toContain('Only one cell can be Total earnings: B1, B2 are.')
     expect(sheetProblems(layout(TOTALS))).toEqual([])
   })
@@ -193,7 +193,7 @@ describe('"Treat as zero" for a cell', () => {
     const calc: Cell = { source: { type: 'calc', terms: [{ sign: 1, of: { type: 'column', key: 'Basic Salary' }, times: null, round: 'none' }, { sign: 1, of: { type: 'column', key: 'Overtime' }, times: null, round: 'none' }] } }
     const [item] = prepare(layout([calc]), [first], zero(['c0']))
     expect(item.computation.errors).toEqual([])
-    expect(item.document!.rows[0].cells[1].text).toBe('18,000')
+    expect(item.document!.rows[0].cells[1].text).toBe('23,600')
   })
 
   it('text in a money field, or more than 2 decimals, is never treated as zero', () => {

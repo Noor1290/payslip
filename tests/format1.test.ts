@@ -5,6 +5,12 @@
 //
 // NEVER update these files. If this test fails, the drawing of format 1 has changed: put the old
 // drawing back, and add the change as a new drawing version beside it.
+//
+// The one exception, made once with the owner's approval (7 November 2026, payroll TODO A8): the
+// fake figures and dates of DOE JANE, which may have come from a real payslip, were replaced with
+// invented ones in this folder and in tests/frozen/format-1-drawing-2, -3 and -4, and the page, PDF
+// and Excel files were written again from the new lines. The drawing did not change: every
+// position, size and line is the same, only the texts of those figures and dates differ.
 import { beforeAll, describe, expect, it } from 'vitest'
 import { decodeLines, LINES_FORMAT } from '../src/lib/issuedLines'
 import { DRAWING_VERSION, type PayslipDocument } from '../src/lib/layoutModel'

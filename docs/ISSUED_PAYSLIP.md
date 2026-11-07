@@ -55,10 +55,10 @@ When a month is issued, the app sends one message to the Payroll Hub dashboard (
    {
      "kind": "figures",
      "lines": [
-       { "id": "basic", "label": "Basic Salary", "side": "earnings", "cents": 1800000, "source": "Basic Salary" },
+       { "id": "basic", "label": "Basic Salary", "side": "earnings", "cents": 2360000, "source": "Basic Salary" },
        { "id": "advance", "label": "Advance", "side": "earnings", "cents": 0, "source": null, "status": "unmapped" }
      ],
-     "totals": { "earnings": 2108500, "deductions": 49037, "net": 2059463 }
+     "totals": { "earnings": 2738500, "deductions": 63737, "net": 2674763 }
    }
    ```
 
@@ -73,7 +73,7 @@ When a month is issued, the app sends one message to the Payroll Hub dashboard (
    { "id": "title", "fill": "66CCFF", "rule": "black", "cells": [{ "col": 0, "text": "Payslip", "span": 4, "bold": true, "size": 12, "align": "center" }] }
    { "id": "body-1", "cells": [
        { "col": 0, "text": "Basic Salary" },
-       { "col": 1, "text": "18,000", "kind": "money", "cents": 1800000, "lineId": "basic" } ] }
+       { "col": 1, "text": "23,600", "kind": "money", "cents": 2360000, "lineId": "basic" } ] }
    { "id": "gap-1" }
    ```
 

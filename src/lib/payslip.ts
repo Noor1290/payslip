@@ -209,7 +209,7 @@ export function computePayslip(input: ComputeInput): PayslipComputation {
         errors.push({
           code: 'bad-date',
           lineId: 'dateOfEmployment',
-          message: `Date of Employment can't be read as a date. Write it as DD/MM/YYYY (for example 15/03/2021) or YYYY-MM-DD in the payroll app.`,
+          message: `Date of Employment can't be read as a date. Write it as DD/MM/YYYY (for example 22/03/2020) or YYYY-MM-DD in the payroll app.`,
         })
       }
     } else {

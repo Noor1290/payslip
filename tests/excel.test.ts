@@ -47,8 +47,8 @@ describe('Excel file read back (recorded)', () => {
   it('PROOF the recording can fail: one changed cell value, or one changed fill, no longer matches it', () => {
     const recorded = readRecorded<SheetRecord[]>('excel-workbook')
     const value = slim(structuredClone(sheets))
-    expect(value[0].cells.E18.value).toBe(279.52)
-    value[0].cells.E18.value = 279.53
+    expect(value[0].cells.E18.value).toBe(363.52)
+    value[0].cells.E18.value = 363.53
     expect(value).not.toEqual(recorded)
 
     const style = slim(structuredClone(sheets))
@@ -63,7 +63,7 @@ describe('Excel file read back (recorded)', () => {
   it('has one sheet per employee, named after the employee, on one A4 portrait page', () => {
     expect(sheets.map((s) => s.name)).toEqual([
       'DOE JANE',
-      'PALMYRE JEAN MARC',
+      'PLACEBO LUC HENRI',
       'SAMPLE ALEX',
       'TESTER SAM',
       'EXEMPLE PRIYA',
@@ -83,15 +83,15 @@ describe('Excel file read back (recorded)', () => {
 
   it('stores plain numbers for every figure and live formulas for the three totals only', () => {
     const { cells } = sheets[0]
-    expect(cells.C16.value).toBe(18000)
+    expect(cells.C16.value).toBe(23600)
     expect(cells.C17.value).toBe(635)
-    expect(cells.C19.value).toBe(2450)
-    expect(cells.E18.value).toBe(279.52)
-    expect(cells.E19.value).toBe(210.85)
+    expect(cells.C19.value).toBe(3150)
+    expect(cells.E18.value).toBe(363.52)
+    expect(cells.E19.value).toBe(273.85)
     expect(cells.E20.value).toBe(0)
-    expect(cells.C26).toMatchObject({ formula: 'C16+C17+C18+C19+C20+C21+C22', result: 21085 })
-    expect(cells.E26).toMatchObject({ formula: 'E18+E19+E20+E23+E24', result: 490.37 })
-    expect(cells.E29).toMatchObject({ formula: 'C26-E26', result: 20594.63 })
+    expect(cells.C26).toMatchObject({ formula: 'C16+C17+C18+C19+C20+C21+C22', result: 27385 })
+    expect(cells.E26).toMatchObject({ formula: 'E18+E19+E20+E23+E24', result: 637.37 })
+    expect(cells.E29).toMatchObject({ formula: 'C26-E26', result: 26747.63 })
     const formulas = Object.entries(cells)
       .filter(([, c]) => c.formula)
       .map(([address]) => address)
@@ -123,8 +123,8 @@ describe('Excel file read back (recorded)', () => {
 
   it('writes dates as real dates in d-mmm-yy', () => {
     const { cells } = sheets[0]
-    expect(cells.C32).toMatchObject({ value: '2026-09-28T00:00:00.000Z', numFmt: 'd-mmm-yy' })
-    expect(cells.E11).toMatchObject({ value: '2021-03-15T00:00:00.000Z', numFmt: 'd-mmm-yy' })
+    expect(cells.C32).toMatchObject({ value: '2026-09-30T00:00:00.000Z', numFmt: 'd-mmm-yy' })
+    expect(cells.E11).toMatchObject({ value: '2020-03-22T00:00:00.000Z', numFmt: 'd-mmm-yy' })
   })
 
   it('carries the display rule into conditional formats on the three totals', () => {

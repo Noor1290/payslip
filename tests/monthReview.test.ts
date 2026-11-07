@@ -37,7 +37,7 @@ describe('last month as the baseline', () => {
     expect(state.baseline).toMatchObject({ period: LAST_PERIOD, source: 'issued' })
     expect(state.baseline.payslips.map((payslip) => [payslip.employeeName, payslip.revision])).toEqual([
       ['DOE JANE', 1],
-      ['PALMYRE JEAN MARC', 1],
+      ['PLACEBO LUC HENRI', 1],
       ['SAMPLE ALEX', 1],
       ['TESTER SAMUEL', 1],
       ['FICTIF MARIE', 1],

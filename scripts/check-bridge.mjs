@@ -1305,7 +1305,7 @@ try {
 
   const expectedStatuses = [
     ['DOE JANE', 'Unchanged'],
-    ['PALMYRE JEAN MARC', 'Changed'],
+    ['PLACEBO LUC HENRI', 'Changed'],
     ['SAMPLE ALEX', 'Changed'],
     ['TESTER SAM', 'Unchanged'],
     ['EXEMPLE PRIYA', 'New'],
@@ -1320,23 +1320,23 @@ try {
   const counts = await reviewCard.getByTestId('review-counts').textContent()
   check(['4 Unchanged', '2 Changed', '1 New', '1 Left'].every((text) => counts.includes(text)), `The counts are wrong: ${counts}`)
   check((await reviewCard.getByTestId('review-banner-template').count()) === 0 && (await reviewCard.getByTestId('review-banner-rates').count()) === 0, 'A banner is shown although the template and the rates versions are the same.')
-  check((await cannotIssue()).includes('3 selected payslips are changed, new or not comparable and not reviewed yet: PALMYRE JEAN MARC, SAMPLE ALEX, EXEMPLE PRIYA.'), `The issue does not wait for the changed and new payslips: ${await cannotIssue()}`)
+  check((await cannotIssue()).includes('3 selected payslips are changed, new or not comparable and not reviewed yet: PLACEBO LUC HENRI, SAMPLE ALEX, EXEMPLE PRIYA.'), `The issue does not wait for the changed and new payslips: ${await cannotIssue()}`)
   check(await rvIssue.isDisabled(), 'Issue is enabled before the review is done.')
 
   // Expanding a row: each line with last month, this month and the difference; changed lines are marked.
-  await reviewCard.getByRole('button', { name: 'Show the lines of PALMYRE JEAN MARC' }).click()
-  const palmyre = reviewCard.getByTestId('review-details')
-  const basic = palmyre.locator('tr', { hasText: 'Basic Salary' })
+  await reviewCard.getByRole('button', { name: 'Show the lines of PLACEBO LUC HENRI' }).click()
+  const placebo = reviewCard.getByTestId('review-details')
+  const basic = placebo.locator('tr', { hasText: 'Basic Salary' })
   check((await basic.textContent()).replace(/\s+/g, ' ').includes('18,365') && (await basic.textContent()).includes('19,480') && (await basic.textContent()).includes('+1,115') && (await basic.textContent()).includes('Changed'), `The changed line is not shown with both months and the difference: ${await basic.textContent()}`)
   check((await basic.getAttribute('data-changed')) === 'true' && (await basic.locator('svg').count()) === 1, 'A changed line is not marked with an icon and text.')
-  const increment = palmyre.locator('tr', { hasText: 'Govt Increment' })
+  const increment = placebo.locator('tr', { hasText: 'Govt Increment' })
   check((await increment.getAttribute('data-changed')) === null && !(await increment.textContent()).includes('Changed'), 'An unchanged line is marked as changed.')
-  check((await palmyre.locator('tr[data-changed="true"]').count()) === 6, 'Not exactly the three changed lines and the three changed totals are marked.')
+  check((await placebo.locator('tr[data-changed="true"]').count()) === 6, 'Not exactly the three changed lines and the three changed totals are marked.')
   if (shots) {
-    await reviewCard.getByRole('button', { name: 'Hide the lines of PALMYRE JEAN MARC' }).scrollIntoViewIfNeeded()
+    await reviewCard.getByRole('button', { name: 'Hide the lines of PLACEBO LUC HENRI' }).scrollIntoViewIfNeeded()
     await rv.seededPage.locator('#app').screenshot({ path: join(shots, 'month-review.png') })
   }
-  await reviewCard.getByRole('button', { name: 'Hide the lines of PALMYRE JEAN MARC' }).click()
+  await reviewCard.getByRole('button', { name: 'Hide the lines of PLACEBO LUC HENRI' }).click()
   // One cent.
   await reviewCard.getByRole('button', { name: 'Show the lines of SAMPLE ALEX' }).click()
   const transport = reviewCard.getByTestId('review-details').locator('tr', { hasText: 'Transport Allowance' })
@@ -1350,12 +1350,12 @@ try {
   // The paper is never marked: with rows open and a changed employee on screen, the page is the
   // same picture of paper as without the review.
   check((await paperLook()) === paperBefore.look && (await paperMarkup()) === paperBefore.markup, 'The payslip preview changed when rows of the month review were opened.')
-  await reviewCard.getByRole('button', { name: 'Show the payslip of PALMYRE JEAN MARC' }).click()
-  await rf.getByRole('img', { name: /Payslip of PALMYRE JEAN MARC/ }).waitFor()
-  const palmyrePaper = { look: await paperLook(), markup: await paperMarkup() }
-  check(palmyrePaper.look === paperBefore.look, `The paper of a changed employee is not plain white paper: ${palmyrePaper.look}`)
+  await reviewCard.getByRole('button', { name: 'Show the payslip of PLACEBO LUC HENRI' }).click()
+  await rf.getByRole('img', { name: /Payslip of PLACEBO LUC HENRI/ }).waitFor()
+  const placeboPaper = { look: await paperLook(), markup: await paperMarkup() }
+  check(placeboPaper.look === paperBefore.look, `The paper of a changed employee is not plain white paper: ${placeboPaper.look}`)
   check(!/Changed|Unchanged|last month|18,365/i.test(await rf.getByTestId('payslip-page').textContent()), 'Something from the review is printed on the payslip.')
-  check(JSON.parse(palmyrePaper.look).background === 'rgb(255, 255, 255)' && JSON.parse(palmyrePaper.look).filter === 'none' && JSON.parse(palmyrePaper.look).children === 1, `The paper is tinted or has something drawn beside it: ${palmyrePaper.look}`)
+  check(JSON.parse(placeboPaper.look).background === 'rgb(255, 255, 255)' && JSON.parse(placeboPaper.look).filter === 'none' && JSON.parse(placeboPaper.look).children === 1, `The paper is tinted or has something drawn beside it: ${placeboPaper.look}`)
   await reviewCard.getByRole('button', { name: 'Hide the lines of TESTER SAM' }).click()
 
   // Keyboard: every control of the review shows the 2px accent focus ring.
@@ -1391,7 +1391,7 @@ try {
   }
   check(await reviewCard.getByTestId('review-approve-unchanged').isDisabled(), 'Bulk-approve is still offered when no unchanged row is left.')
   check((await cannotIssue()).includes('3 selected payslips are changed, new or not comparable'), 'After bulk-approve the changed and new payslips no longer block the issue.')
-  for (const name of ['PALMYRE JEAN MARC', 'SAMPLE ALEX', 'EXEMPLE PRIYA']) await rf.getByLabel(`Mark ${name} as reviewed`).check()
+  for (const name of ['PLACEBO LUC HENRI', 'SAMPLE ALEX', 'EXEMPLE PRIYA']) await rf.getByLabel(`Mark ${name} as reviewed`).check()
   check((await cannotIssue()).includes('1 employee who left is not acknowledged yet: ANCIEN PAUL.'), `The employee who left does not block the issue: ${await cannotIssue()}`)
   await rf.getByLabel('Acknowledge that ANCIEN PAUL left').check()
   check((await cannotIssue()) === '' && (await rvIssue.isEnabled()), `A fully reviewed month cannot be issued: ${await cannotIssue()}`)
@@ -1434,7 +1434,7 @@ try {
 
   // Review again, then issue: what is sent is September's own payslips, nothing of August.
   await reviewCard.getByRole('button', { name: /^Approve 4 unchanged payslips$/ }).click()
-  for (const name of ['PALMYRE JEAN MARC', 'SAMPLE ALEX', 'EXEMPLE PRIYA']) await rf.getByLabel(`Mark ${name} as reviewed`).check()
+  for (const name of ['PLACEBO LUC HENRI', 'SAMPLE ALEX', 'EXEMPLE PRIYA']) await rf.getByLabel(`Mark ${name} as reviewed`).check()
   check((await cannotIssue()) === '' && (await rvIssue.isEnabled()), `The reviewed month cannot be issued: ${await cannotIssue()}`)
   await issueNow('September 2026')
   await rf.getByTestId('issue-summary').filter({ hasText: 'Issued: 7. Not issued: 0.' }).waitFor()

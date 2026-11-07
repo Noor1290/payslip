@@ -36,11 +36,11 @@ export interface SheetKeys {
 const CHOICES: SourceChoice[] = ['text', 'fixed', 'company', 'employee', 'payroll', 'calc', 'employment', 'month', 'today', 'field', 'empty']
 /** A piece that Pay month has no use for: a month has no day. */
 const DAY_PIECES: readonly DatePiece[] = ['D', 'DD']
-const SAMPLE_DAY = '2021-03-15'
+const SAMPLE_DAY = '2020-03-22'
 const PRESETS: { label: string; pieces: DateFormatPiece[] }[] = [
-  { label: '15-Mar-21', pieces: [{ piece: 'D' }, { text: '-' }, { piece: 'MMM' }, { text: '-' }, { piece: 'YY' }] },
-  { label: '15/03/2021', pieces: [{ piece: 'DD' }, { text: '/' }, { piece: 'MM' }, { text: '/' }, { piece: 'YYYY' }] },
-  { label: 'March 2021', pieces: [{ piece: 'MMMM' }, { text: ' ' }, { piece: 'YYYY' }] },
+  { label: '22-Mar-20', pieces: [{ piece: 'D' }, { text: '-' }, { piece: 'MMM' }, { text: '-' }, { piece: 'YY' }] },
+  { label: '22/03/2020', pieces: [{ piece: 'DD' }, { text: '/' }, { piece: 'MM' }, { text: '/' }, { piece: 'YYYY' }] },
+  { label: 'March 2020', pieces: [{ piece: 'MMMM' }, { text: ' ' }, { piece: 'YYYY' }] },
 ]
 
 function sourceFor(choice: SourceChoice, keys: SheetKeys, text: string): Source {
@@ -262,7 +262,7 @@ function DateFormatEditor({ pieces, noDay, disabled, onChange }: { pieces: DateF
         </button>
       </div>
       <p className="m-0 text-sm" data-testid="date-preview">
-        15 March 2021 is written <span className="num font-medium">{writeDate(pieces, SAMPLE_DAY)}</span>
+        22 March 2020 is written <span className="num font-medium">{writeDate(pieces, SAMPLE_DAY)}</span>
       </p>
     </div>
   )

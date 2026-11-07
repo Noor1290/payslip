@@ -39,9 +39,9 @@ function septemberWith(surname: string, key: string, value: number): Month {
 describe('marking a row as reviewed', () => {
   it('marks one row, and can be undone', async () => {
     const comparison = compare(september(), await issuedAugust())
-    const row = rowOf(comparison, 'PALMYRE JEAN MARC')
+    const row = rowOf(comparison, 'PLACEBO LUC HENRI')
     const marks = markReviewed({}, comparison, row)
-    expect(reviewedNames(marks, comparison)).toEqual(['PALMYRE JEAN MARC'])
+    expect(reviewedNames(marks, comparison)).toEqual(['PLACEBO LUC HENRI'])
     expect(reviewedNames(unmarkReviewed(marks, comparison, row), comparison)).toEqual([])
   })
 
@@ -51,7 +51,7 @@ describe('marking a row as reviewed', () => {
     const marks = approveUnchanged({}, comparison)
     expect(reviewedNames(marks, comparison)).toEqual(['DOE JANE', 'TESTER SAM', 'FICTIF MARIE', 'TEMPO LEA'])
     // Changed, New and Left stay to be looked at one by one.
-    for (const name of ['PALMYRE JEAN MARC', 'SAMPLE ALEX', 'EXEMPLE PRIYA', 'ANCIEN PAUL']) expect(isReviewed(marks, comparison, rowOf(comparison, name))).toBe(false)
+    for (const name of ['PLACEBO LUC HENRI', 'SAMPLE ALEX', 'EXEMPLE PRIYA', 'ANCIEN PAUL']) expect(isReviewed(marks, comparison, rowOf(comparison, name))).toBe(false)
     expect(bulkApprovable(marks, comparison)).toEqual([])
   })
 
@@ -66,21 +66,21 @@ describe('marking a row as reviewed', () => {
   it('a mark holds while nothing changes', async () => {
     const issued = await issuedAugust()
     const first = compare(september(), issued)
-    const marks = markAll(approveUnchanged({}, first), first, ['PALMYRE JEAN MARC'])
+    const marks = markAll(approveUnchanged({}, first), first, ['PLACEBO LUC HENRI'])
     const again = compare(september(), issued)
-    expect(reviewedNames(marks, again)).toEqual(['DOE JANE', 'PALMYRE JEAN MARC', 'TESTER SAM', 'FICTIF MARIE', 'TEMPO LEA'])
+    expect(reviewedNames(marks, again)).toEqual(['DOE JANE', 'PLACEBO LUC HENRI', 'TESTER SAM', 'FICTIF MARIE', 'TEMPO LEA'])
   })
 
   it('a mark is dropped when a figure of this month changes, even by one cent, for that employee only', async () => {
     const issued = await issuedAugust()
     const first = compare(september(), issued)
-    const marks = markAll(approveUnchanged({}, first), first, ['PALMYRE JEAN MARC'])
-    // PALMYRE's Travelling goes from 0 to 0.01; payroll totals are left as they were.
-    const next = compare(septemberWith('PALMYRE', 'Travelling', 0.01), issued)
-    expect(isReviewed(marks, next, rowOf(next, 'PALMYRE JEAN MARC'))).toBe(false)
+    const marks = markAll(approveUnchanged({}, first), first, ['PLACEBO LUC HENRI'])
+    // PLACEBO's Travelling goes from 0 to 0.01; payroll totals are left as they were.
+    const next = compare(septemberWith('PLACEBO', 'Travelling', 0.01), issued)
+    expect(isReviewed(marks, next, rowOf(next, 'PLACEBO LUC HENRI'))).toBe(false)
     expect(reviewedNames(marks, next)).toEqual(['DOE JANE', 'TESTER SAM', 'FICTIF MARIE', 'TEMPO LEA'])
     // An approved Unchanged row that becomes Changed is no longer approved.
-    const moved = compare(septemberWith('DOE', 'Travelling', 2450.01), issued)
+    const moved = compare(septemberWith('DOE', 'Travelling', 3150.01), issued)
     expect(rowOf(moved, 'DOE JANE').status).toBe('changed')
     expect(isReviewed(marks, moved, rowOf(moved, 'DOE JANE'))).toBe(false)
   })
@@ -121,7 +121,7 @@ describe('what the review asks for before the month is issued', () => {
     const issued = await issuedAugust()
     const comparison = compare(september(), issued)
     expect(gate(ready(issued), comparison, {})).toEqual([
-      '3 selected payslips are changed, new or not comparable and not reviewed yet: PALMYRE JEAN MARC, SAMPLE ALEX, EXEMPLE PRIYA.',
+      '3 selected payslips are changed, new or not comparable and not reviewed yet: PLACEBO LUC HENRI, SAMPLE ALEX, EXEMPLE PRIYA.',
       '4 unchanged payslips are not approved yet. Approve them in the month review.',
       '1 employee who left is not acknowledged yet: ANCIEN PAUL.',
     ])
@@ -131,7 +131,7 @@ describe('what the review asks for before the month is issued', () => {
     const issued = await issuedAugust()
     const comparison = compare(september(), issued)
     expect(gate(ready(issued), comparison, approveUnchanged({}, comparison))).toEqual([
-      '3 selected payslips are changed, new or not comparable and not reviewed yet: PALMYRE JEAN MARC, SAMPLE ALEX, EXEMPLE PRIYA.',
+      '3 selected payslips are changed, new or not comparable and not reviewed yet: PLACEBO LUC HENRI, SAMPLE ALEX, EXEMPLE PRIYA.',
       '1 employee who left is not acknowledged yet: ANCIEN PAUL.',
     ])
   })
@@ -139,7 +139,7 @@ describe('what the review asks for before the month is issued', () => {
   it('is satisfied when every selected row is reviewed and everyone who left is acknowledged', async () => {
     const issued = await issuedAugust()
     const comparison = compare(september(), issued)
-    const most = markAll(approveUnchanged({}, comparison), comparison, ['PALMYRE JEAN MARC', 'SAMPLE ALEX', 'EXEMPLE PRIYA'])
+    const most = markAll(approveUnchanged({}, comparison), comparison, ['PLACEBO LUC HENRI', 'SAMPLE ALEX', 'EXEMPLE PRIYA'])
     expect(gate(ready(issued), comparison, most)).toEqual(['1 employee who left is not acknowledged yet: ANCIEN PAUL.'])
     expect(gate(ready(issued), comparison, markAll(most, comparison, ['ANCIEN PAUL']))).toEqual([])
   })
@@ -148,10 +148,10 @@ describe('what the review asks for before the month is issued', () => {
     const issued = await issuedAugust()
     const comparison = compare(september(), issued)
     expect(gate(ready(issued), comparison, {}, [1])).toEqual([
-      '1 selected payslip is changed, new or not comparable and not reviewed yet: PALMYRE JEAN MARC.',
+      '1 selected payslip is changed, new or not comparable and not reviewed yet: PLACEBO LUC HENRI.',
       '1 employee who left is not acknowledged yet: ANCIEN PAUL.',
     ])
-    expect(gate(ready(issued), comparison, markAll({}, comparison, ['PALMYRE JEAN MARC', 'ANCIEN PAUL']), [1])).toEqual([])
+    expect(gate(ready(issued), comparison, markAll({}, comparison, ['PLACEBO LUC HENRI', 'ANCIEN PAUL']), [1])).toEqual([])
   })
 
   it('a selected payslip that cannot be compared must be reviewed too', async () => {
@@ -185,7 +185,7 @@ describe('the review and the payslips to issue', () => {
     const before = JSON.stringify(build(now))
     const issued = await issuedAugust()
     const comparison = compare(now, issued)
-    const marks = markAll(approveUnchanged({}, comparison), comparison, ['PALMYRE JEAN MARC', 'SAMPLE ALEX', 'EXEMPLE PRIYA', 'ANCIEN PAUL'])
+    const marks = markAll(approveUnchanged({}, comparison), comparison, ['PLACEBO LUC HENRI', 'SAMPLE ALEX', 'EXEMPLE PRIYA', 'ANCIEN PAUL'])
     expect(reviewProblems({ state: ready(issued), lastPeriod: LAST_PERIOD, comparison, marks, selected: everyone })).toEqual([])
     expect(JSON.stringify(withReview(build(now), []))).toBe(before)
   })
@@ -205,7 +205,7 @@ describe('the review and the payslips to issue', () => {
     expect(documentTexts(thisMonth.document)).toContain('Pay period: September 2026')
     expect(documentTexts(lastMonth.document)).toContain('Pay period: August 2026')
     // Every figure comes from September's payroll row, the source column named beside it.
-    expect(thisMonth.figures.lines.find((line) => line.id === 'basic')).toMatchObject({ cents: 1800000, source: 'Basic Salary' })
+    expect(thisMonth.figures.lines.find((line) => line.id === 'basic')).toMatchObject({ cents: 2360000, source: 'Basic Salary' })
     expect(mine.expectedRevision).toBe(0)
   })
 

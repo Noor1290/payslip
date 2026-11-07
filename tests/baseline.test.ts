@@ -92,7 +92,7 @@ describe('asking the dashboard for last month\'s payroll', () => {
     const refused = await loadPayrollMonth(answering(ok(noCompany)), BRN, LAST_PERIOD)
     expect(refused).toMatchObject({ ok: false, failure: { kind: 'bad-answer' } })
     expect(!refused.ok && refused.failure.detail).toMatch(/^Last month's payroll figures were not used: "Company Name" is missing/)
-    expect(!refused.ok && refused.failure.detail).not.toMatch(/18,000|X0000000000001/)
+    expect(!refused.ok && refused.failure.detail).not.toMatch(/23,600|X0000000000001/)
     expect(await loadPayrollMonth(answering({ ...ok(augustRows()), dataType: 'payslip-issue' }), BRN, LAST_PERIOD)).toMatchObject({ ok: false, failure: { kind: 'bad-answer' } })
     expect(await loadPayrollMonth(answering(ok([])), BRN, LAST_PERIOD)).toMatchObject({ ok: false, failure: { kind: 'bad-answer' } })
   })
@@ -104,9 +104,9 @@ describe('the payroll figures as the baseline', () => {
     const baseline = baselineFromPayroll(LAST_PERIOD, await loaded(port), template, mapping)
     expect(baseline).toMatchObject({ period: LAST_PERIOD, source: 'payroll' })
     expect(baseline.payslips.map((payslip) => [payslip.employeeName, payslip.revision, payslip.side?.template, payslip.side?.rates])).toEqual(
-      ['DOE JANE', 'PALMYRE JEAN MARC', 'SAMPLE ALEX', 'TESTER SAMUEL', 'FICTIF MARIE', 'TEMPO LEA', 'ANCIEN PAUL'].map((name) => [name, null, null, null]),
+      ['DOE JANE', 'PLACEBO LUC HENRI', 'SAMPLE ALEX', 'TESTER SAMUEL', 'FICTIF MARIE', 'TEMPO LEA', 'ANCIEN PAUL'].map((name) => [name, null, null, null]),
     )
-    expect(baseline.payslips[0].side?.figures.totals).toEqual({ earnings: 2108500, deductions: 49037, net: 2059463 })
+    expect(baseline.payslips[0].side?.figures.totals).toEqual({ earnings: 2738500, deductions: 63737, net: 2674763 })
   })
 
   it('gives the same statuses and figures as the issued payslips of that month would', async () => {
@@ -115,7 +115,7 @@ describe('the payroll figures as the baseline', () => {
     expect(fromPayroll.source).toBe('payroll')
     expect(fromPayroll.rows.map((row) => [row.employeeName, row.status])).toEqual([
       ['DOE JANE', 'unchanged'],
-      ['PALMYRE JEAN MARC', 'changed'],
+      ['PLACEBO LUC HENRI', 'changed'],
       ['SAMPLE ALEX', 'changed'],
       ['TESTER SAM', 'unchanged'],
       ['EXEMPLE PRIYA', 'new'],
@@ -143,7 +143,7 @@ describe('the payroll figures as the baseline', () => {
     expect(comparison.rows.find((row) => row.employeeName === 'TESTER SAM')?.notes).toEqual(['Name: "TESTER SAMUEL" last month, "TESTER SAM" now.'])
     expect(comparison.rows.find((row) => row.employeeName === 'DOE JANE')?.notes).toEqual([])
     // The figures are on the template in use now, reworded label and all.
-    expect(comparison.rows[0].lines.find((line) => line.label === 'Travelling allowance')).toMatchObject({ match: 'id', lastLabel: null, last: 245000, current: 245000 })
+    expect(comparison.rows[0].lines.find((line) => line.label === 'Travelling allowance')).toMatchObject({ match: 'id', lastLabel: null, last: 315000, current: 315000 })
   })
 
   it('a payroll row that cannot be put on the template is said, not compared', async () => {
@@ -158,7 +158,7 @@ describe('the payroll figures as the baseline', () => {
     const { hub, port } = withAugustPayroll()
     hub.state.runs[LAST_PERIOD] = augustRows().map((row, index) => (index === 1 ? { ...row, 'Basic Salary': '18,365' } : row))
     const comparison = compareMonth(PERIOD, current(september()), baselineFromPayroll(LAST_PERIOD, await loaded(port), template, mapping))
-    expect(comparison.rows[1]).toMatchObject({ employeeName: 'PALMYRE JEAN MARC', status: 'cannot-compare' })
+    expect(comparison.rows[1]).toMatchObject({ employeeName: 'PLACEBO LUC HENRI', status: 'cannot-compare' })
     expect(comparison.rows[1].problem).toBe('Last month\'s payroll figures cannot be put on this template. Basic Salary: "Basic Salary" is text, not a number.')
     expect(comparison.rows[0].status).toBe('unchanged')
   })

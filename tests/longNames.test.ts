@@ -165,8 +165,8 @@ describe('a long name goes on two lines (drawing 2)', () => {
     // Only the name cell differs from drawing 1.
     expect({ ...sheet.cells, C11: null }).toEqual({ ...asDrawing1.cells, C11: null })
     // A name a little too wide: 10.x on the page would round up past the column, so it rounds down.
-    const near = payslip(['PALMYRE-LONGNAME', 'Jean Marc'])
-    const nearSize = textOf(near.page, 'PALMYRE-LONGNAME Jean Marc').size
+    const near = payslip(['PLACEBO-LONGNAME', 'Luc Henri'])
+    const nearSize = textOf(near.page, 'PLACEBO-LONGNAME Luc Henri').size
     expect(nearSize).toBeLessThan(10)
     const [nearSheet] = await readWorkbook(await writePayslipWorkbook([near.doc]))
     expect((nearSheet.cells.C11.font as { size: number }).size).toBe(Math.floor((11 * nearSize) / 10))

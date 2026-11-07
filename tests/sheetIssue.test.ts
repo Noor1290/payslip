@@ -146,9 +146,9 @@ describe('issuing payslips of a layout from a file', () => {
   it("the payslip's totals are the cells it marks, as printed, not only the figures marked Earnings or Deductions", async () => {
     const input = await issueInput()
     const { computation } = input.prepared[0]
-    // DOE JANE: Gross Pay 21,085 includes figures the layout does not show on a side (Travelling).
-    expect(computation.totals).toEqual({ earnings: 2_108_500, deductions: 49_038, net: 2_059_463 })
-    expect((built(input)[0].lines[1] as { totals: unknown }).totals).toEqual({ earnings: 2_108_500, deductions: 49_038, net: 2_059_463 })
+    // DOE JANE: Gross Pay 27,385 includes figures the layout does not show on a side (Travelling).
+    expect(computation.totals).toEqual({ earnings: 2_738_500, deductions: 63_738, net: 2_674_763 })
+    expect((built(input)[0].lines[1] as { totals: unknown }).totals).toEqual({ earnings: 2_738_500, deductions: 63_738, net: 2_674_763 })
   })
 
   it('no statutory rates are stored with them: this option is not cross-checked against the rates', async () => {
@@ -296,7 +296,7 @@ describe('the month review, with the template it is given', () => {
     const body = await layout()
     const baseline = baselineFromPayroll('2026-08', { ...data, period: '2026-08' }, TABLE_TEMPLATE, DEFAULT_TABLE_MAPPING, sheetOf(body))
     const doe = baseline.payslips.find((payslip) => payslip.employeeName === 'DOE JANE')!
-    expect(doe.side?.figures.totals).toEqual({ earnings: 2_108_500, deductions: 49_038, net: 2_059_463 })
+    expect(doe.side?.figures.totals).toEqual({ earnings: 2_738_500, deductions: 63_738, net: 2_674_763 })
     expect(doe.side?.figures.lines.map((line) => line.label)).toEqual(['Basic Salary', 'CSG', 'Govt Increment', 'NSF', 'Allowances', 'PAYE'])
     // A figure missing there: that payslip is not compared, and the reason names the cell.
     const { Allowances: _allowances, ...without } = data.rows[0]
@@ -310,11 +310,11 @@ describe('the month review', () => {
     const august = asIssued(built({ ...(await issueInput()), period: PERIOD }))
     // Last month's payslips, as if issued for August.
     const lastMonth = august.map((payslip) => ({ ...payslip, lines: [{ ...(payslip.lines[0] as object), period: '2026-08' }, ...payslip.lines.slice(1)] }))
-    const september = await issueInput({ rows: [{ ...data.rows[0], 'Basic Salary': 18_500, 'Gross Pay': 21_585 }, ...data.rows.slice(1)] })
+    const september = await issueInput({ rows: [{ ...data.rows[0], 'Basic Salary': 24_100, 'Gross Pay': 27_885 }, ...data.rows.slice(1)] })
     const current = currentPayslips(september.data, september.prepared, { id: TEMPLATE_ID, version: 'v1' }, null)
     const comparison = compareMonth(PERIOD, current, baselineFromIssued('2026-08', lastMonth))
     expect(comparison.counts).toMatchObject({ changed: 1, unchanged: data.rows.length - 1, 'cannot-compare': 0 })
     const changed = comparison.rows.find((row) => row.status === 'changed')!
-    expect(changed.lines.filter((line) => line.changed).map((line) => [line.label, line.last, line.current])).toEqual([['Basic Salary', 1_800_000, 1_850_000]])
+    expect(changed.lines.filter((line) => line.changed).map((line) => [line.label, line.last, line.current])).toEqual([['Basic Salary', 2_360_000, 2_410_000]])
   })
 })

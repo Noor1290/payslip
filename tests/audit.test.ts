@@ -80,7 +80,7 @@ function imported(rows: readonly PayrollRow[], fileName = 'TEST Co A-pdf-fill-20
   return result.data
 }
 
-function prepare(rows: readonly PayrollRow[], period = '2026-09', mapping: TemplateMapping = DEFAULT_TABLE_MAPPING, issueDate = '2026-09-28'): PreparedPayslip[] {
+function prepare(rows: readonly PayrollRow[], period = '2026-09', mapping: TemplateMapping = DEFAULT_TABLE_MAPPING, issueDate = '2026-09-30'): PreparedPayslip[] {
   return preparePayslips(imported(rows), { template: TABLE_TEMPLATE, mapping, rateVersions: DEFAULT_STATUTORY_RATES, period }, issueDate)
 }
 
@@ -452,7 +452,7 @@ describe('the files', () => {
       expect(pdf.pages).toBe(1)
       expect(texts).toContain(prepared[index].computation.employeeName)
       expect(texts).toContain('Pay period: September 2026')
-      expect(texts).toContain('28-Sep-26')
+      expect(texts).toContain('30-Sep-26')
       expect(texts).toContain(['19,518.75', '88,400', '57,953.35'][index])
     }
   })

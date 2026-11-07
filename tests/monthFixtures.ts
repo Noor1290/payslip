@@ -3,7 +3,7 @@
 //
 // August differs from September on purpose:
 //   DOE JANE            the same figures                              -> Unchanged
-//   PALMYRE JEAN MARC   Basic Salary 18,365 then, 19,480 now          -> Changed
+//   PLACEBO LUC HENRI   Basic Salary 18,365 then, 19,480 now          -> Changed
 //   SAMPLE ALEX         Travelling 1,200.01 then, 1,200 now (one cent) -> Changed
 //   TESTER SAM          the same figures; "TESTER SAMUEL" then        -> Unchanged, with a note
 //   EXEMPLE PRIYA       not in August                                 -> New

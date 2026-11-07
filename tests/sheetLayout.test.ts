@@ -100,9 +100,9 @@ describe('reading an Excel layout', () => {
     expect(texts).toContain('Basic Salary')
     expect(texts).toContain('Date of Employment :')
     const json = JSON.stringify(body)
-    for (const figure of ['18000', '18500', '18050', '270', 'C14+C15']) expect(json).not.toContain(`"${figure}"`)
+    for (const figure of ['23600', '24100', '23510', '354', 'C14+C15']) expect(json).not.toContain(`"${figure}"`)
     expect(json).not.toContain('formula')
-    expect(Object.values(hints)).toContain('18000')
+    expect(Object.values(hints)).toContain('23600')
     expect(notes.join(' ')).toContain('start Empty')
   })
 
@@ -143,23 +143,23 @@ describe('every date format', () => {
   })
 
   it.each([
-    [[{ piece: 'D' }, { text: '-' }, { piece: 'MMM' }, { text: '-' }, { piece: 'YY' }], '15-Mar-21', '[$-409]d"-"mmm"-"yy'],
-    [[{ piece: 'DD' }, { text: '/' }, { piece: 'MM' }, { text: '/' }, { piece: 'YYYY' }], '15/03/2021', '[$-409]dd"/"mm"/"yyyy'],
-    [[{ piece: 'MMMM' }, { text: ' ' }, { piece: 'YYYY' }], 'March 2021', '[$-409]mmmm" "yyyy'],
-    [[{ text: 'Date: ' }, { piece: 'D' }], 'Date: 15', '[$-409]"Date: "d'],
+    [[{ piece: 'D' }, { text: '-' }, { piece: 'MMM' }, { text: '-' }, { piece: 'YY' }], '22-Mar-20', '[$-409]d"-"mmm"-"yy'],
+    [[{ piece: 'DD' }, { text: '/' }, { piece: 'MM' }, { text: '/' }, { piece: 'YYYY' }], '22/03/2020', '[$-409]dd"/"mm"/"yyyy'],
+    [[{ piece: 'MMMM' }, { text: ' ' }, { piece: 'YYYY' }], 'March 2020', '[$-409]mmmm" "yyyy'],
+    [[{ text: 'Date: ' }, { piece: 'D' }], 'Date: 22', '[$-409]"Date: "d'],
   ] as [DateFormatPiece[], string, string][])('%#: any separator, on the page and in Excel', (pieces, text, excel) => {
-    expect(writeDate(pieces, '2021-03-15')).toBe(text)
+    expect(writeDate(pieces, '2020-03-22')).toBe(text)
     expect(excelDateFormat(pieces)).toBe(excel)
   })
 
   it('a D in a separator stays a D: pieces are not found in a typed string', () => {
-    expect(writeDate([{ text: 'Day MM ' }, { piece: 'DD' }], '2021-03-15')).toBe('Day MM 15')
+    expect(writeDate([{ text: 'Day MM ' }, { piece: 'DD' }], '2020-03-22')).toBe('Day MM 22')
   })
 
   it('date of employment, pay month, today and any other date field', () => {
     const body = row([{ type: 'date', of: 'employment' }, { type: 'date', of: 'month' }, { type: 'date', of: 'today' }, { type: 'date', of: 'field', key: 'Started' }])
-    const payroll = { 'Date of Employment': '15/03/2021', Started: '2020-01-02' }
-    expect(value(body, payroll, 'c0').text).toBe('15-Mar-21')
+    const payroll = { 'Date of Employment': '22/03/2020', Started: '2020-01-02' }
+    expect(value(body, payroll, 'c0').text).toBe('22-Mar-20')
     expect(value(body, payroll, 'c1').text).toBe('September 2026')
     expect(value(body, payroll, 'c2').text).toBe('30-Sep-26')
     expect(value(body, payroll, 'c3').text).toBe('2-Jan-20')

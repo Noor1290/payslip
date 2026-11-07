@@ -5,7 +5,7 @@ import { DEFAULT_TABLE_MAPPING, TABLE_TEMPLATE } from '../src/lib/template'
 import { loadFixture } from './helpers'
 
 export const PERIOD = '2026-09'
-export const ISSUE_DATE = '2026-09-28'
+export const ISSUE_DATE = '2026-09-30'
 
 /** The layout models of the seven fake employees: the input of every recording. */
 export function fixtureDocuments(): PayslipDocument[] {

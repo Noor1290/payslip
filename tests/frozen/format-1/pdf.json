@@ -17,7 +17,7 @@
       "embedded": true,
       "program": "CIDFontType0C",
       "header": "01000404",
-      "glyphs": 56
+      "glyphs": 55
     }
   ],
   "texts": [
@@ -92,7 +92,7 @@
       "size": 10
     },
     {
-      "text": "15-Mar-21",
+      "text": "22-Mar-20",
       "x": 407.5,
       "y": 187,
       "font": "TeXGyrePagella-Regular",
@@ -148,7 +148,7 @@
       "size": 10
     },
     {
-      "text": "18,000",
+      "text": "23,600",
       "x": 238.5,
       "y": 272,
       "font": "TeXGyrePagella-Regular",
@@ -197,7 +197,7 @@
       "size": 10
     },
     {
-      "text": "279.52",
+      "text": "363.52",
       "x": 524,
       "y": 306,
       "font": "TeXGyrePagella-Regular",
@@ -211,7 +211,7 @@
       "size": 10
     },
     {
-      "text": "2,450",
+      "text": "3,150",
       "x": 243.5,
       "y": 323,
       "font": "TeXGyrePagella-Regular",
@@ -225,7 +225,7 @@
       "size": 10
     },
     {
-      "text": "210.85",
+      "text": "273.85",
       "x": 524,
       "y": 323,
       "font": "TeXGyrePagella-Regular",
@@ -330,7 +330,7 @@
       "size": 10
     },
     {
-      "text": "21,085",
+      "text": "27,385",
       "x": 238.5,
       "y": 442,
       "font": "TeXGyrePagella-Regular",
@@ -344,7 +344,7 @@
       "size": 10
     },
     {
-      "text": "490.37",
+      "text": "637.37",
       "x": 524,
       "y": 442,
       "font": "TeXGyrePagella-Regular",
@@ -358,7 +358,7 @@
       "size": 10
     },
     {
-      "text": "20,594.63",
+      "text": "26,747.63",
       "x": 511.5,
       "y": 493,
       "font": "TeXGyrePagella-Regular",
@@ -386,7 +386,7 @@
       "size": 10
     },
     {
-      "text": "28-Sep-26",
+      "text": "30-Sep-26",
       "x": 223.5,
       "y": 544,
       "font": "TeXGyrePagella-Regular",

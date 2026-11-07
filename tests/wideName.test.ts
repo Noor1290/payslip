@@ -33,8 +33,8 @@ const NAMES = {
   oneWordTooLong: ['ABRACADABRAVERYLONGFAKESURNAMEWITHOUTANYSPACEATALLEVERYWHERE', 'Marie'],
   hyphenated: ['RAMKHELAWON-DOE-PERSAUD', 'Marie Anne Josee'],
   hyphenatedTwoLines: ['RAMKHELAWON-DOE-PERSAUD-BHAGWANSINGH', 'JEAN PIERRE MARIE EMMANUEL CHRISTOPHE'],
-  smallerInColumn: ['PALMYRE-DOE', 'Jean Marc'],
-  belowNineInColumn: ['PALMYRE-LONG', 'Jean Marc'],
+  smallerInColumn: ['PLACEBO-DOE', 'Luc Henri'],
+  belowNineInColumn: ['PLACEBO-LONG', 'Luc Henri'],
   short: ['DOE', 'JANE'],
 } as const
 const full = ([surname, other]: readonly [string, string]) => `${surname} ${other}`
@@ -202,9 +202,9 @@ describe('a long name has a wider place on its row (drawing 4)', () => {
     expect(size).toBeGreaterThanOrEqual(9)
   })
 
-  it('one line never below 9 points: a name its column takes only at 8.8 goes to the wide place, at the normal size', () => {
+  it('one line never below 9 points: a name its column takes only at 8.9 goes to the wide place, at the normal size', () => {
     const { doc, page } = payslip(NAMES.belowNineInColumn)
-    expect(layoutPage(asDrawing3(doc)).texts.find((t) => t.text === full(NAMES.belowNineInColumn))!.size).toBe(8.8)
+    expect(layoutPage(asDrawing3(doc)).texts.find((t) => t.text === full(NAMES.belowNineInColumn))!.size).toBe(8.9)
     const [name] = nameRow(doc, page).lines
     expect(name.size).toBe(10)
     expect(name.x).toBeLessThan(shortRow.lines[0].x)
@@ -269,7 +269,7 @@ describe('Excel: merged cells for the wide name, the columns unchanged', () => {
     expect(sheet.merges).toContain('C11:D11')
     expect(sheet.cells.C11).toMatchObject({ value: full(NAMES.fiveWords39), font: { name: 'Book Antiqua', size: 11 }, alignment: { horizontal: 'left', vertical: 'middle' } })
     expect(sheet.cells.D11.value).toBeUndefined()
-    expect(sheet.cells.E11.value).toBe('2021-03-15T00:00:00.000Z')
+    expect(sheet.cells.E11.value).toBe('2020-03-22T00:00:00.000Z')
     expect(sheet.cells.E11.numFmt).toBe(`"Date of Employment : "${FORMAT_DATE}`)
     expect(sheet.cells.E11.alignment).toEqual({ horizontal: 'right', vertical: 'middle' })
     // The label and the date together are a little wider than column E at 11 points, by the page's measure: 10, never cut off.

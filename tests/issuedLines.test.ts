@@ -79,7 +79,7 @@ describe('the lines of an issued payslip', () => {
     const read = decodeLines(stored(encoded[0]))
     if (!read.ok) throw new Error(read.problem)
     expect(read.figures.lines.map((line) => line.id)).toEqual(computations[0].lines.map((line) => line.id))
-    expect(read.figures.lines[0]).toEqual({ id: 'basic', label: 'Basic Salary', side: 'earnings', cents: 1800000, source: 'Basic Salary', status: 'ok' })
+    expect(read.figures.lines[0]).toEqual({ id: 'basic', label: 'Basic Salary', side: 'earnings', cents: 2360000, source: 'Basic Salary', status: 'ok' })
     expect(read.figures.totals).toEqual(computations[0].totals)
     // The totals stored are the plain addition of the lines stored.
     const sum = (side: string) => read.figures.lines.filter((line) => line.side === side).reduce((total, line) => total + line.cents, 0)
@@ -151,8 +151,8 @@ describe('stored lines are refused, never guessed at', () => {
 
   it('with an unknown field, a wrong type, or a missing part', () => {
     expect(change((lines) => (lines[3].colour = 'red')).ok).toBe(false)
-    expect(change((lines) => ((lines[1].totals as Record<string, unknown>).net = '20594.63')).ok).toBe(false)
-    expect(change((lines) => ((lines[1].totals as Record<string, unknown>).net = 20594.63)).ok).toBe(false)
+    expect(change((lines) => ((lines[1].totals as Record<string, unknown>).net = '26747.63')).ok).toBe(false)
+    expect(change((lines) => ((lines[1].totals as Record<string, unknown>).net = 26747.63)).ok).toBe(false)
     expect(change((lines) => delete lines[0].columnWidths).ok).toBe(false)
     expect(change((lines) => lines.splice(1, 1)).ok).toBe(false)
     expect(change(() => {}).ok).toBe(true)

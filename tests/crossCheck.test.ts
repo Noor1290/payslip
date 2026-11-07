@@ -45,7 +45,7 @@ describe('employee NSF cross-check: 1% of min(base, ceiling)', () => {
     expect(crossCheckNsf(-5, false, rates)).toBe(0)
   })
   it('below the ceiling: 1% of the base', () => {
-    expect(crossCheckNsf(21085, false, rates)).toBe(210.85)
+    expect(crossCheckNsf(27385, false, rates)).toBe(273.85)
     expect(crossCheckNsf(10475.75, false, rates)).toBe(104.76) // 104.7575
   })
 })
@@ -56,8 +56,8 @@ describe('employee CSG cross-check: 1.5% at or below the threshold, 3% strictly 
     expect(crossCheckCsg(50000, rates)).toBe(750)
     expect(crossCheckCsg(50000.01, rates)).toBe(1500) // 1,500.0003, not marginal
   })
-  it('rounds half-up like the payroll app (its fix C5): 18,635 x 1.5% = 279.525 is 279.53 (rehearsal fix F8)', () => {
-    expect(crossCheckCsg(18635, rates)).toBe(279.53)
+  it('rounds half-up like the payroll app (its fix C5): 24,235 x 1.5% = 363.525 is 363.53 (rehearsal fix F8)', () => {
+    expect(crossCheckCsg(24235, rates)).toBe(363.53)
     expect(crossCheckCsg(20115, rates)).toBe(301.73) // 301.725
     expect(crossCheckCsg(18115, rates)).toBe(271.73) // 271.725: rehearsal E2E006, the float is 271.72499...
   })
