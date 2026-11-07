@@ -143,3 +143,11 @@ Stage 1, approved by the owner on 2 November 2026. `...` stands for a name, numb
 - (Publish to several companies, a layout with a fixed value) A value for one company only is not copied: each ticked company keeps its own, and a company that has none shows the value for all companies.
 - (Several companies, the report) A required cell is empty, downloaded anyway: ..., cell ...
 - (Several companies, the report, once per company below 85%) the Payslips page notice approved in Stage 3.
+
+## Cleanup, Stage 1 (A8): the example date (approved 7 November 2026)
+
+The example date was the old fake date of employment, which may have come from a real payslip. It is now 22 March 2020.
+
+- (Cell panel, a date cell, the three ready-made formats) 22-Mar-20 / 22/03/2020 / March 2020
+- (Cell panel, the live preview, line "How it is written" above) 22 March 2020 is written ...
+- (Payslips page, a date of employment that cannot be read) Date of Employment can't be read as a date. Write it as DD/MM/YYYY (for example 22/03/2020) or YYYY-MM-DD in the payroll app.
