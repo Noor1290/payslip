@@ -358,7 +358,11 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **Decided (6 November 2026, owner).** The 9-point rule for long names is measured in points of the sheet. The layout has page settings (Portrait or Landscape, Excel's Normal or Narrow margins, fitted to one page or at 100%); the Template page shows the scale it prints at and warns below 85%.
 
-## 47. "From your file": a date format cannot start with a text
+## 47. (Fixed) "From your file": a date format cannot start with a text
+
+**Fixed (8 November 2026, branch `cleanup`).** The date format has a "Text before the date" box: "Pay period: " then MMMM YYYY writes "Pay period: September 2026" in one cell, on the preview, the PDF and in Excel (as a quoted text in the cell's number format). Choosing a preset, adding or removing a piece keeps the text; emptying the box takes it away. A format still holds at most 12 pieces. `tests/dateTextBefore.test.ts`, and a step in `scripts/check-sheet.mjs`.
+
+As found:
 
 **What happens.** Found in the rehearsal with the owner's layout (6 November 2026, fake copy). Its cell E9 holds "Pay period: September 2026" in one cell. The pieces of a date format always start with a part of the date (D, MM, MMMM...) and the separators only go between them, so "Pay period: " cannot be written before the month: the editor offers no place for it. The stored layout could hold it (a piece of text may come first); only the editor does not offer it. Today: "Pay period:" goes in its own cell beside the pay month, as the rehearsal did (and as the BRN line does).
 

@@ -24,7 +24,7 @@ import { DEFAULT_TABLE_MAPPING } from '../lib/template'
 
 /** Which of the payroll's totals each total of the payslip is checked against. */
 const TOTAL_CHECK = { earnings: 'gross', deductions: 'deductions', net: 'net' } as const
-import { writeDate, writeNumber } from '../lib/sheetFormats'
+import { datePieces, MOST_DATE_PIECES, textBefore, withDate, withLastPieceRemoved, withPieceAdded, withTextBefore, writeDate, writeNumber } from '../lib/sheetFormats'
 import { choiceOf, COMPANY_LABELS, SOURCE_LABELS, type SourceChoice } from '../lib/sheetWording'
 
 /** The fields found in the payroll data, for the lists to choose from. */
@@ -215,21 +215,26 @@ function CalcEditor({ body, cell, terms, once, keys, disabled, onChange, onOnce 
   )
 }
 
-/** A date format built from pieces, with a live preview. */
+/** A date format built from pieces, with a live preview. A text may come before the date. */
 function DateFormatEditor({ pieces, noDay, disabled, onChange }: { pieces: DateFormatPiece[]; noDay: boolean; disabled: boolean; onChange: (pieces: DateFormatPiece[]) => void }) {
   const offered = DATE_PIECES.filter((piece) => !noDay || !DAY_PIECES.includes(piece))
-  const set = (index: number, next: DateFormatPiece) => onChange(pieces.map((one, i) => (i === index ? next : one)))
+  const date = datePieces(pieces)
+  const set = (index: number, next: DateFormatPiece) => onChange(withDate(pieces, date.map((one, i) => (i === index ? next : one))))
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap gap-1.5">
         {PRESETS.filter((preset) => !noDay || !preset.pieces.some((one) => 'piece' in one && DAY_PIECES.includes(one.piece))).map((preset) => (
-          <button key={preset.label} type="button" className="btn btn-sm" disabled={disabled} onClick={() => onChange(preset.pieces)}>
+          <button key={preset.label} type="button" className="btn btn-sm" disabled={disabled} onClick={() => onChange(withDate(pieces, preset.pieces))}>
             {preset.label}
           </button>
         ))}
       </div>
+      <label className="field">
+        <span className="field-label">Text before the date</span>
+        <input className="input input-sm w-48" value={textBefore(pieces)} maxLength={20} disabled={disabled} onChange={(event) => onChange(withTextBefore(pieces, event.target.value))} />
+      </label>
       <div className="flex flex-wrap items-end gap-1.5">
-        {pieces.map((one, index) =>
+        {date.map((one, index) =>
           'piece' in one ? (
             <select key={index} className="input input-sm w-auto" aria-label={`Piece ${index + 1} of the date`} value={one.piece} disabled={disabled} onChange={(event) => set(index, { piece: event.target.value as DatePiece })}>
               {offered.map((piece) => (
@@ -252,11 +257,11 @@ function DateFormatEditor({ pieces, noDay, disabled, onChange }: { pieces: DateF
         )}
       </div>
       <div className="flex flex-wrap gap-1.5">
-        <button type="button" className="btn btn-sm btn-ghost" disabled={disabled || pieces.length >= 12} onClick={() => onChange([...pieces, { text: ' ' }, { piece: offered[0] }].slice(0, 12))}>
+        <button type="button" className="btn btn-sm btn-ghost" disabled={disabled || pieces.length + 2 > MOST_DATE_PIECES} onClick={() => onChange(withPieceAdded(pieces, offered[0]))}>
           <Plus aria-hidden="true" />
           Add a piece
         </button>
-        <button type="button" className="btn btn-sm btn-ghost" disabled={disabled || pieces.length <= 1} onClick={() => onChange(pieces.slice(0, -2).length > 0 ? pieces.slice(0, -2) : pieces.slice(0, 1))}>
+        <button type="button" className="btn btn-sm btn-ghost" disabled={disabled || date.length <= 1} onClick={() => onChange(withLastPieceRemoved(pieces))}>
           <Minus aria-hidden="true" />
           Remove the last piece
         </button>
