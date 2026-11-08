@@ -631,6 +631,36 @@ try {
   check(details.includes('Version of July 2026, revision 4') && details.includes('Total Deductions') && details.includes('Reason: Rounding'), `The reopened payslip does not show its rates and accepted differences: ${details}`)
   await accessible('issued payslips')
   await shot('issued-month')
+  // C20: at phone width (390 px) nothing makes the page scroll sideways, and no table cell is cut off
+  // where it cannot be scrolled to.
+  const atPhoneWidth = async (where) => {
+    const frame = page.frames().find((one) => one.url().startsWith(`${HUB}/payslip/`))
+    const found = await frame.evaluate(() => {
+      // The app scrolls inside <main>: that is the page here.
+      const main = document.querySelector('main')
+      const width = main.clientWidth
+      const cut = []
+      for (const element of document.querySelectorAll('main *')) {
+        const box = element.getBoundingClientRect()
+        if (box.width === 0 || box.right <= main.getBoundingClientRect().right + 1) continue
+        let inScroll = false
+        for (let parent = element.parentElement; parent && parent !== main; parent = parent.parentElement) if (['auto', 'scroll'].includes(getComputedStyle(parent).overflowX)) inScroll = true
+        if (!inScroll) cut.push(`${element.tagName.toLowerCase()} ends at ${Math.round(box.right)} px`)
+      }
+      return { width, page: Math.max(main.scrollWidth, document.documentElement.scrollWidth - document.documentElement.clientWidth + width), cut: cut.slice(0, 3) }
+    })
+    check(found.page <= found.width, `Phone width, ${where}: the page is ${found.page} px wide in ${found.width} px.`)
+    check(found.cut.length === 0, `Phone width, ${where}: cut off: ${found.cut.join('; ')}.`)
+  }
+  await page.evaluate(() => (document.getElementById('app').style.width = '390px'))
+  await page.waitForTimeout(300)
+  await atPhoneWidth('Issued payslips')
+  await shot('phone-issued')
+  await nav('Payslips')
+  await atPhoneWidth('Payslips')
+  await shot('phone-payslips')
+  await nav('Issued payslips')
+  await page.evaluate(() => (document.getElementById('app').style.width = ''))
   const [zip] = await Promise.all([page.waitForEvent('download'), app.getByRole('button', { name: 'Download issued PDFs (zip)' }).click()])
   check(zip.suggestedFilename() === 'ABC Co Ltd - payslips - 2026-10 - issued.zip', `Issued PDFs: unexpected file name ${zip.suggestedFilename()}`)
   const [xlsx] = await Promise.all([page.waitForEvent('download'), app.getByRole('button', { name: 'Download issued Excel' }).click()])

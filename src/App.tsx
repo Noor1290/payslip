@@ -245,7 +245,7 @@ export default function App() {
             <p className="m-0 text-xs text-muted">Payroll Hub</p>
           </div>
         </div>
-        <nav aria-label="Sections" className="flex gap-1">
+        <nav aria-label="Sections" className="flex flex-wrap gap-1">
           {SCREENS.filter(({ id }) => (id !== 'issued' && id !== 'many') || insideDashboard).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
