@@ -151,3 +151,10 @@ The example date was the old fake date of employment, which may have come from a
 - (Cell panel, a date cell, the three ready-made formats) 22-Mar-20 / 22/03/2020 / March 2020
 - (Cell panel, the live preview, line "How it is written" above) 22 March 2020 is written ...
 - (Payslips page, a date of employment that cannot be read) Date of Employment can't be read as a date. Write it as DD/MM/YYYY (for example 22/03/2020) or YYYY-MM-DD in the payroll app.
+
+## Cleanup, Stage 3 (approved 8 November 2026)
+
+- (Cell panel, a date cell, "How it is written", known issue 47) Text before the date
+- (Import error, TODO C21) Row ...: the field "ID" is missing, empty or not text. Each employee needs a field named exactly "ID".
+- (Import error, TODO C21) Row ...: the field "Surname" is missing, empty or not text. Each employee needs a field named exactly "Surname".
+- (removed) Row ...: ID is missing or is not text. / Row ...: Surname is missing or is not text.
