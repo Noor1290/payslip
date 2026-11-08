@@ -78,9 +78,18 @@ describe('importing a payroll JSON file', () => {
     list[2] = { ...list[2], ID: '' }
     list[4] = { ...list[4], ID: list[0].ID }
     const text = messages(importRows(list)).join(' | ')
-    expect(text).toMatch(/Row 3: ID is missing/)
+    expect(text).toMatch(/Row 3: the field "ID" is missing/)
     expect(text).toMatch(/Row 5: ID is the same as row 1/)
     expect(text).not.toContain(String(list[0].ID))
+  })
+
+  it('says the fields must be named exactly "ID" and "Surname" (C21)', () => {
+    const list = rows()
+    const { ID: id, Surname: surname, ...rest } = list[1]
+    list[1] = { ...rest, 'Employee ID': id, Name: surname }
+    const text = messages(importRows(list)).join(' | ')
+    expect(text).toContain('Row 2: the field "ID" is missing, empty or not text. Each employee needs a field named exactly "ID".')
+    expect(text).toContain('Row 2: the field "Surname" is missing, empty or not text. Each employee needs a field named exactly "Surname".')
   })
 
   it('two keys with the same name in a row are an error', () => {

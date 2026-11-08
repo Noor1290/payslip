@@ -212,7 +212,7 @@ export function importPayrollRows(
 
     const id = row.ID
     if (typeof id !== 'string' || id === '') {
-      fail(rowNumber, `Row ${rowNumber}: ID is missing or is not text.`)
+      fail(rowNumber, `Row ${rowNumber}: the field "ID" is missing, empty or not text. Each employee needs a field named exactly "ID".`)
       usable = false
     } else {
       const first = firstRowById.get(id)
@@ -223,7 +223,7 @@ export function importPayrollRows(
       } else firstRowById.set(id, rowNumber)
     }
     if (typeof row.Surname !== 'string' || row.Surname === '') {
-      fail(rowNumber, `Row ${rowNumber}: Surname is missing or is not text.`)
+      fail(rowNumber, `Row ${rowNumber}: the field "Surname" is missing, empty or not text. Each employee needs a field named exactly "Surname".`)
       usable = false
     }
     if ('Other names' in row && row['Other names'] !== null && typeof row['Other names'] !== 'string') {
