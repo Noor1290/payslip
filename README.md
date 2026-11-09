@@ -29,7 +29,7 @@ Then import `samples/ABC Co Ltd-pdf-fill-2026-09.json`, or press "Try with fake 
 | `node scripts/prove-tests-can-fail.mjs` | Changes one value at a time and expects the tests to fail |
 | `npm run check:encoding` | No mojibake, no changed non-ASCII character |
 | `npm run lint` and `npm run typecheck` | Lint and TypeScript strict |
-| `npm run build` then `npm run check:build` | The built app makes 0 requests to outside servers and writes nothing to browser storage |
+| `npm run build` then `npm run check:build` | The built app makes 0 requests to outside servers and writes nothing to browser storage but the chosen theme (after the theme button) |
 | `npm run check:bridge` | Inside a (fake) dashboard frame with the real bridge file: data waits until confirmed, a repeated message is not imported twice, invalid rows are refused, Add to and Replace, nothing stored. Rates and templates against a stand-in dashboard (`scripts/lib/fake-hub.mjs`): save, stale, no-change, forbidden, another company, no answer, draft, publish, which template is used. Issued payslips: a declined load, locked, issue, reopen identical, re-issue, stale, an unknown employee, a member read-only from the start. Set `PAYSLIP_SHOTS` to a folder to keep three screenshots |
 | `npm run check:a11y` | Names on controls, focus ring, contrast in both themes, reduced motion, dialog keyboard behaviour |
 

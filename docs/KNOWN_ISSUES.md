@@ -1,8 +1,8 @@
 # Known issues
 
-Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and deliberately not changed, because each one needs the owner's decision. All evidence uses fake data (ABC Co Ltd).
+Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and deliberately not changed, because each one needs the owner's decision. Later items were found in later work. An item marked Fixed, Settled, Decided or Obsolete is kept for the record (checked again on 9 November 2026). All evidence uses fake data (ABC Co Ltd).
 
-## 1. A long name has little room on the payslip
+## 1. (Decided and built) A long name has little room on the payslip
 
 **What happens.** As in the reference, the name sits in one column (about 115 points wide on the A4 page) because "Date of Employment :" starts in the next column. A name wider than that is set in a smaller size so it is never cut off; below 6 points the app stops and shows an error instead of printing over the next column.
 
@@ -58,11 +58,13 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **To decide.** The real effective dates of the versions you save.
 
-## 8. The chosen theme is not remembered
+## 8. (Fixed) The chosen theme is not remembered
 
 **What happens.** Nothing is stored in the browser, so after a reload the app follows the system theme again.
 
 **To decide.** Whether the theme is worth an exception to "nothing is stored in the browser".
+
+**Fixed (9 November 2026, branch `cleanup`, the owner's choice of 8 November).** The theme is the one thing this app keeps in the browser: the word "light" or "dark" under `payslip_theme`, written only when the theme button is clicked. Until then the app follows the computer's setting, as before. It is set before the page is first drawn, so it does not flash. Payroll data is still never stored. `src/lib/theme.ts`; tests: `tests/theme.test.ts`, and `npm run check:build` (nothing stored before the button; after it, only `payslip_theme`; the theme kept after a reload).
 
 ## 9. (Obsolete) The link with the real dashboard can only be seen after both are deployed
 
@@ -74,11 +76,13 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **To decide.** Nothing. To see it for real: deploy this app, then do item 2 of `docs/HUB_CHANGES.md` in the hub repo and deploy the dashboard.
 
-## 10. "Get from dashboard" always asks for the latest run
+## 10. (Fixed) "Get from dashboard" always asks for the latest run
 
 **What happens.** The button asks the dashboard for its latest payroll run. There is no way yet to ask for a particular month from inside this app; the dashboard can still send any month it chooses.
 
 **To decide.** Whether to add a month choice. Decided for Phase 5 (8 October 2026): kept separate. The month review asks for last month's payroll by itself, as a named month, when it needs it (issue 33); the button still asks for the latest run.
+
+**Fixed (rehearsal fix F3, October 2026).** Next to "Get from dashboard" a month can be chosen: "Latest saved month" or one of the recent months. Tests: `tests/recentMonths.test.ts` and `npm run check:bridge`.
 
 ## 11. "Add to" needs the same company, the same month and nobody twice
 
@@ -102,7 +106,7 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **Phase 4.** Settled: the dashboard now sends `meta.role` with every answer about rates, templates and issued payslips, and a member sees read-only from the start. The first refused save still does the same, in case the hint is missing.
 
-## 14. The template to use is chosen again each time the app opens
+## 14. (Settled) The template to use is chosen again each time the app opens
 
 **What happens.** Nothing is stored in the browser, so the choice of template is not remembered. Each time: with exactly one published template it is preselected; with more than one I must pick, and payslips cannot be exported until I do; with none the built-in Table is used. The Payslips page always shows which template and version is in use.
 
@@ -340,11 +344,13 @@ Found while building Phases 1 to 5 and fixing the PDF font (October 2026) and de
 
 **Fixed (25 October 2026, owner's request).** The dashboard adds each company's issued payslips for the month to its `load` answer, behind the same single question and gate (no extra question). A payslip issued and unchanged is taken from its stored copy, exactly as on the Payslips page (`issueStatuses`, `decodeLines`), so it keeps the drawing it was issued with; the report lists each one ("Taken from the issued copy (revision N): NAME"). One that changed since it was issued is drawn from this month's figures. Tests: `tests/manyCompanies.test.ts`, "a payslip already issued for the month".
 
-## 44. "From your file": what Stage 1 leaves out
+## 44. (Done) "From your file": what Stage 1 leaves out
 
 **What happens.** A layout from a file can be uploaded, set up, saved, published, previewed, downloaded and, since 6 November 2026, issued (lines format 2) and compared in the month review. Long names, the address split and the page settings are built (6 November 2026, PAYSLIP_FROM_FILE_STAGE2_PROMPT.md, Stage 1), and the cross-checks of the three totals the layout marks, required cells and "Treat as zero" for a cell (its Stage 2). Several companies and "Publish to" work with a layout too (its Stage 4): each company prints its own values, and publishing never copies them.
 
 **To decide.** Nothing. Stage 2 of PAYSLIP_FROM_FILE_PROMPT.md.
+
+**Done (6 November 2026, live).** Everything Stage 1 left out was built in Stage 2 and is deployed. What an upload cannot keep, and wide sheets, are items 45 and 46.
 
 ## 45. "From your file": what an upload cannot keep
 

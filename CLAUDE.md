@@ -7,7 +7,7 @@ A frontend-only app (React + Vite + TypeScript + Tailwind, GitHub Pages) that tu
 - Do not guess which payroll field fills which line. Mapping is explicit, validated, and shown to me. A missing or wrongly typed field is a visible error, never a blank or a zero.
 - Frontend only. The app never talks to Supabase. Saving and loading (templates, issued payslips) goes through the hub via the bridge; the hub's user must be signed in and an admin of the company.
 - postMessage: only accept messages from `window.parent` AND the exact hub origin; the target origin is always the exact origin, never "*"; validate every message with Zod. Do not edit the copied `src/payrollHubBridge.js`.
-- Payroll data lives in memory only. Never put it in localStorage, sessionStorage, IndexedDB, URLs, logs or analytics. Generated PDFs and Excel files stay in memory until downloaded.
+- Payroll data lives in memory only. Never put it in localStorage, sessionStorage, IndexedDB, URLs, logs or analytics. Generated PDFs and Excel files stay in memory until downloaded. The one thing kept in the browser is the chosen theme ("light" or "dark" under `payslip_theme`, only after the theme button is clicked; known issue 8).
 - The repo is PUBLIC: fake data only (company "ABC Co Ltd", invented names and IDs) in tests, samples, screenshots and docs. Never commit a real payslip, real NIC numbers or real salaries. Never use or mention a service-role key.
 - The app must keep working on its own, outside the hub, with a manually imported payroll JSON.
 - No requests to outside servers at runtime: fonts, icons and libraries are bundled.

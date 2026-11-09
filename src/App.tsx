@@ -21,9 +21,9 @@ import { ManyScreen } from './screens/ManyScreen'
 import { PayslipsScreen } from './screens/PayslipsScreen'
 import { RatesScreen } from './screens/RatesScreen'
 import { TemplateScreen } from './screens/TemplateScreen'
+import { rememberTheme, storedTheme, type Theme } from './lib/theme'
 
 type Screen = 'payslips' | 'issued' | 'template' | 'rates' | 'many'
-type Theme = 'dark' | 'light'
 
 const SCREENS: { id: Screen; label: string; icon: typeof ReceiptText }[] = [
   { id: 'payslips', label: 'Payslips', icon: ReceiptText },
@@ -33,15 +33,16 @@ const SCREENS: { id: Screen; label: string; icon: typeof ReceiptText }[] = [
   { id: 'many', label: 'Several companies', icon: Building2 },
 ]
 
+// The theme chosen earlier in this browser, or else the computer's own setting.
 function initialTheme(): Theme {
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  return storedTheme() ?? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
 }
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('payslips')
-  // The theme is chosen inside this app and kept in memory only (nothing is stored in the browser).
+  // The theme is the one thing kept in the browser, once chosen with the button (src/lib/theme.ts).
   const [theme, setTheme] = useState<Theme>(initialTheme)
-  const [themeChosen, setThemeChosen] = useState(false)
+  const [themeChosen, setThemeChosen] = useState(() => storedTheme() !== null)
 
   // Payroll data and everything derived from it live in memory only.
   const [data, setData] = useState<ImportedPayroll | null>(null)
@@ -290,8 +291,10 @@ export default function App() {
             type="button"
             className="btn btn-sm btn-ghost"
             onClick={() => {
+              const next = theme === 'dark' ? 'light' : 'dark'
               setThemeChosen(true)
-              setTheme(theme === 'dark' ? 'light' : 'dark')
+              setTheme(next)
+              rememberTheme(next)
             }}
           >
             {theme === 'dark' ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}

@@ -239,12 +239,33 @@ try {
   await page.getByRole('button', { name: 'Statutory rates', exact: true }).click()
   await page.getByRole('heading', { name: 'Worked example' }).waitFor()
 
-  const storage = await page.evaluate(async () => ({
-    local: localStorage.length,
-    session: sessionStorage.length,
-    databases: indexedDB.databases ? (await indexedDB.databases()).length : 0,
-    cookies: document.cookie.length,
-  }))
+  // Nothing is stored until the theme button is clicked; then only the theme word (known issue 8).
+  const readStorage = () =>
+    page.evaluate(async () => ({
+      local: localStorage.length,
+      session: sessionStorage.length,
+      databases: indexedDB.databases ? (await indexedDB.databases()).length : 0,
+      cookies: document.cookie.length,
+      items: Object.fromEntries(Object.keys(localStorage).map((key) => [key, localStorage.getItem(key)])),
+    }))
+  const before = await readStorage()
+  if (before.local + before.session + before.databases + before.cookies > 0) {
+    problems.push(`Something was written to browser storage before the theme was chosen: ${JSON.stringify(before)}`)
+  }
+  const themeButton = page.getByRole('button', { name: /^(Light|Dark) theme$/ })
+  const chosen = (await themeButton.textContent()).includes('Light') ? 'light' : 'dark'
+  await themeButton.click()
+  const afterChoice = await readStorage()
+  if (JSON.stringify(afterChoice.items) !== JSON.stringify({ payslip_theme: chosen })) {
+    problems.push(`After the theme button, browser storage holds ${JSON.stringify(afterChoice.items)}, not only payslip_theme = ${chosen}.`)
+  }
+  await page.reload()
+  await page.getByRole('button', { name: /^(Light|Dark) theme$/ }).waitFor()
+  const keptTheme = await page.evaluate(() => document.documentElement.dataset.theme ?? null)
+  note(`theme chosen: ${chosen}; after a reload: ${keptTheme}`)
+  if (keptTheme !== chosen) problems.push(`The chosen theme (${chosen}) was not kept after a reload: ${keptTheme}.`)
+  const { items, ...storage } = await readStorage()
+  storage.local -= items.payslip_theme ? 1 : 0
   note(`requests: ${requests}, to other origins: ${outside.length}`)
   note(`browser storage after use: ${JSON.stringify(storage)}`)
   if (outside.length > 0) problems.push(`Requests to outside servers: ${[...new Set(outside)].join(', ')}`)
@@ -261,4 +282,4 @@ if (problems.length > 0) {
   console.error(`\nBuild check FAILED:\n- ${problems.join('\n- ')}`)
   process.exit(1)
 }
-console.log('Build check passed: 0 requests to outside servers, nothing in browser storage.')
+console.log('Build check passed: 0 requests to outside servers, nothing in browser storage but the chosen theme.')

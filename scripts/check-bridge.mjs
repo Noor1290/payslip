@@ -1490,8 +1490,13 @@ try {
 
   const rvMessages = await rv.seededPage.evaluate(() => window.log)
   check(rvMessages.every((m) => m.from === 'payslip' && m.to === 'dashboard' && m.origin === 'https://noor1290.github.io'), 'Month review: a message did not come from this app at the hub origin.')
-  const rvStorage = await rvFrame().evaluate(async () => localStorage.length + sessionStorage.length + (indexedDB.databases ? (await indexedDB.databases()).length : 0) + document.cookie.length)
-  check(rvStorage === 0, 'Month review: something was written to browser storage.')
+  // The theme button was clicked above: the chosen theme is the one thing kept (known issue 8).
+  const rvStorage = await rvFrame().evaluate(async () => ({
+    others: localStorage.length - (localStorage.getItem('payslip_theme') === null ? 0 : 1) + sessionStorage.length + (indexedDB.databases ? (await indexedDB.databases()).length : 0) + document.cookie.length,
+    theme: localStorage.getItem('payslip_theme'),
+  }))
+  check(rvStorage.others === 0, 'Month review: something was written to browser storage.')
+  check(rvStorage.theme === 'dark' || rvStorage.theme === 'light', `Month review: the chosen theme was not kept (${rvStorage.theme}).`)
   check(!rvFrame().url().includes('X000') && !/[?#]/.test(rvFrame().url()), 'Month review: something was put in the URL.')
   await rv.seededPage.close()
   console.log('  month review: declined load blocks, payroll fallback (declined, no run, compared and labelled), four statuses, changed lines, one cent, notes, paper untouched, bulk-approve for unchanged only, left acknowledged, template banner, marks dropped, issue is this month only, identical re-issue asked twice')
