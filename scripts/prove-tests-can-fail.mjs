@@ -247,6 +247,11 @@ const changes = [
   ['A font header with offset size 5 passes as valid', 'src/writers/fontProgram.ts', 'if (offsetSize < 1 || offsetSize > 4) return', 'if (offsetSize < 1 || offsetSize > 5) return'],  ['Excel divider is no longer thick', 'src/writers/excelWriter.ts', "border.right = { style: 'thick', color: BLACK }", "border.right = { style: 'medium', color: BLACK }"],
   ['Excel totals become plain values', 'src/writers/excelWriter.ts', 'target.value = { formula, result: centsToNumber(cents) }', 'target.value = centsToNumber(cents)'],
   ['Excel page is no longer A4', 'src/writers/excelWriter.ts', 'paperSize: 9,', 'paperSize: 1,'],
+  // Company lists (company-list, the dashboard's migration 0024).
+  ['A dashboard from before the lists is taken for a failure', 'src/lib/companyList.ts', "answer.failure.kind === 'no-answer' && /not registered/i.test(answer.failure.hubError ?? '')", 'false'],
+  ['The company opened from its card is not opened after the reload', 'src/lib/companyList.ts', 'open: one.open ? { period: one.open_period ?? null } : null', 'open: null'],
+  ['The month of the card is lost after the reload', 'src/lib/companyList.ts', '{ period: one.open_period ?? null }', '{ period: null }'],
+  ['A company circle gets another colour than in the dashboard', 'src/lib/companyLook.ts', '[162, 200, 230, 262, 300, 340, 30, 75]', '[200, 162, 230, 262, 300, 340, 30, 75]'],
 ]
 
 function runTests() {

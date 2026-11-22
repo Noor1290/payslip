@@ -25,6 +25,8 @@ interface Props {
   port: HubPort
   /** Told while a run is going on, so the dashboard asks before it reloads this app. */
   onRunning: (running: boolean) => void
+  /** Which companies (by BRN) may be offered: those on the Payslip list. Null: every one. */
+  keep?: ((brn: string) => boolean) | null
 }
 
 /** From this many companies on, the list can be searched. */
@@ -59,7 +61,7 @@ function summarise(outcome: CompanyOutcome): Summary {
  * Payslips for several companies at once, for one month, downloaded as one zip. Nothing is
  * issued: issuing stays on each company's own Payslips page, with its month review.
  */
-export function ManyScreen({ port, onRunning }: Props) {
+export function ManyScreen({ port, onRunning, keep = null }: Props) {
   const [list, setList] = useState<List>({ status: 'loading' })
   const [reloads, setReloads] = useState(0)
   const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set())
@@ -89,7 +91,8 @@ export function ManyScreen({ port, onRunning }: Props) {
     onRunning(running)
   }, [running, onRunning])
 
-  const all = list.status === 'loaded' ? list.companies : []
+  // Only the companies on the Payslip list (and the one selected), when the list is known.
+  const all = useMemo(() => (list.status === 'loaded' ? list.companies.filter((company) => keep === null || keep(company.brn)) : []), [list, keep])
   const wanted = all.length >= SEARCH_FROM ? query.trim().toLowerCase() : ''
   const shown = useMemo(
     () => (wanted ? all.filter((company) => company.name.toLowerCase().includes(wanted) || company.brn.toLowerCase().includes(wanted)) : all),

@@ -9,6 +9,21 @@
 
 export function createFakeHub() {
   const state = {
+    /**
+     * "company-list" (the dashboard's migration 0024): the BRNs on the Payslip list; null, every
+     * company (so the checks written before the lists see every company, as before).
+     * `openOnStart`: the first answer marks the selected company `open`, as right after its card was
+     * tapped, so the app goes straight to Payslips (the checks written before the main page start
+     * there). `listLegacy`: a dashboard from before the lists.
+     */
+    lists: null,
+    openOnStart: true,
+    listLegacy: false,
+    /** The company and month a card asked to open (open-company), until the next "companies". */
+    pendingOpen: null,
+    /** Set when the dashboard would reload the app's frame (a company was switched). */
+    reload: false,
+    pickerOpened: 0,
     signedIn: true,
     role: 'admin',
     company: { name: 'ABC Co Ltd', brn: 'C1234567' },
@@ -690,9 +705,55 @@ export function createFakeHub() {
 
   // ---------- one message in, one answer out (or none: `undefined` is a lost answer) ----------
 
+  // ---------- company-list: the companies of this app, the picker, opening a company ----------
+  const listIdOf = (brn) => `10000000-0000-4000-8000-${String(brn).replace(/\D/g, '').padStart(12, '0').slice(-12)}`
+  function answerList(params) {
+    if (state.listLegacy) return { ok: false, error: 'This app is not registered for that kind of data.' }
+    if (!state.signedIn) return refuse('unavailable')
+    const own = { name: state.company.name, brn: state.company.brn, role: state.role }
+    const everyone = [own, ...state.others]
+    const answer = (rows) => ({ ok: true, dataType: 'company-list', rows, meta: { label: own.name, brn: own.brn, role: own.role === 'admin' ? 'admin' : 'member' } })
+    if (params.brn !== undefined && params.brn.trim().toUpperCase() !== own.brn) return refuse('wrong-company')
+    if (params.action === 'companies') {
+      const pending = state.pendingOpen
+      state.pendingOpen = null
+      // Once, as the dashboard does: the next answer no longer marks it.
+      const open = state.openOnStart || (pending && pending.brn === own.brn)
+      state.openOnStart = false
+      return answer(
+        [...everyone]
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((company) => ({
+            company_id: listIdOf(company.brn),
+            brn: company.brn,
+            name: company.name,
+            admin: company.role === 'admin',
+            selected: company === own,
+            lists: state.lists === null || state.lists.includes(company.brn) ? ['payslips'] : [],
+            ...(company === own && open ? { open: true, ...(pending?.period ? { open_period: pending.period } : {}) } : {}),
+          })),
+      )
+    }
+    if (params.action === 'open-picker') {
+      state.pickerOpened += 1
+      return answer([])
+    }
+    if (params.action === 'open-company') {
+      const target = everyone.find((company) => listIdOf(company.brn) === params.company_id)
+      if (!target) return refuse('forbidden')
+      if (target === own) return answer([{ switched: false }])
+      // The dashboard would now select it and reload this app.
+      state.pendingOpen = { brn: target.brn, period: params.period ?? null }
+      state.reload = true
+      return answer([{ switched: true }])
+    }
+    return refuse('invalid')
+  }
+
   function handle(type, payload) {
     state.log.push({ type, payload: copy(payload) })
     const dataType = payload?.dataType
+    if (dataType === 'company-list' && type === 'request-data') return answerList(payload.params ?? {})
     // The app may ask for a payroll run; it may never save one.
     if (dataType === 'payroll-result' && type === 'request-data') return answerPayroll(payload)
     // Read only: the app may ask, never send.

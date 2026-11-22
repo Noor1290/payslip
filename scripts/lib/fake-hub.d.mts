@@ -3,6 +3,15 @@ type FakeTemplate = { id: string; name: string; body: object; revision: number; 
 type FakeVersion = { templateId: string; version: number; name: string; body: object; publishedAt: string; by: 'you' | 'other' }
 type FakeInUse = { templateId: string; version: number } | null
 export interface FakeHubState {
+  /** company-list: the BRNs on the Payslip list; null, every company. */
+  lists: string[] | null
+  /** The first answer marks the selected company `open` (the app goes straight to Payslips). */
+  openOnStart: boolean
+  /** A dashboard from before the lists. */
+  listLegacy: boolean
+  pendingOpen: { brn: string; period: string | null } | null
+  reload: boolean
+  pickerOpened: number
   signedIn: boolean
   role: 'admin' | 'viewer'
   company: { name: string; brn: string | null } | null

@@ -650,3 +650,194 @@ input[type='checkbox'] {
   border-radius: 4px;
   padding: 0 4px;
 }
+
+/* ------------------------------------------------------------------
+   Your companies: the app's main page (company-list). The same circle
+   colours as the dashboard's company picker.
+   ------------------------------------------------------------------ */
+:root {
+  --avatar-fg-l: 0.84;
+  --avatar-bg-a: 0.2;
+}
+:root[data-theme='light'] {
+  --avatar-fg-l: 0.42;
+  --avatar-bg-a: 0.14;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --avatar-fg-l: 0.42;
+    --avatar-bg-a: 0.14;
+  }
+}
+
+.home-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.month-pill {
+  height: 34px;
+  padding: 0 34px 0 14px;
+  border-radius: 9999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.month-pill:hover {
+  border-color: var(--line-strong);
+}
+
+.company-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.company-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--elevated) 70%, transparent);
+  box-shadow: var(--inner-glow);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+.company-card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  background: var(--surface-hover);
+  box-shadow:
+    var(--inner-glow),
+    0 14px 30px -18px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.company-card:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+.company-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.company-card:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.company-card[aria-busy='true'] {
+  opacity: 1;
+  border-color: var(--accent);
+}
+.company-card .go {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--subtle);
+  transition:
+    transform 160ms ease,
+    color 160ms ease;
+}
+.company-card:hover:not(:disabled) .go {
+  transform: translateX(3px);
+  color: var(--accent);
+}
+.company-text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+.company-name {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.company-brn {
+  overflow: hidden;
+  color: var(--subtle);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.company-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.company-tag {
+  padding: 1px 8px;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--fg);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.avatar {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  place-items: center;
+  border-radius: 9999px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.company-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 56px 24px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 20px;
+  text-align: center;
+}
+.company-empty h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+.back-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .company-card:hover:not(:disabled),
+  .company-card:active:not(:disabled),
+  .company-card:hover:not(:disabled) .go {
+    transform: none;
+  }
+}
+.spin {
+  animation: spin 900ms linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

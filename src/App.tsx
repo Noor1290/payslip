@@ -1,11 +1,14 @@
-import { Building2, CircleAlert, Download, FileCheck2, Inbox, LayoutTemplate, Moon, Percent, ReceiptText, Sun } from 'lucide-react'
+import { Building2, CircleAlert, Download, FileCheck2, Inbox, LayoutGrid, LayoutTemplate, Moon, Percent, Plus, ReceiptText, Sun } from 'lucide-react'
+import { CompanyHome } from './components/CompanyHome'
+import { FailurePanel } from './components/FailurePanel'
+import { isListed, loadCompanyList, openCompany, openPicker, type ListedCompany } from './lib/companyList'
 import { smallPrintNotice } from './components/SheetPageSettings'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ImportDialog, type IncomingPayroll } from './components/ImportDialog'
 import { preparePayslips } from './lib/build'
 import { formatPeriod, recentMonths, todayIso } from './lib/dates'
 import { HUB_APP_ID, mergePayroll, PAYROLL_RESULT, readHubPayload, readHubReply, type MergeResult } from './lib/hubBridge'
-import { bridgePort, type HubRole } from './lib/hubWire'
+import { bridgePort, normaliseBrn, type Failure, type HubRole } from './lib/hubWire'
 import { ratesSnapshot } from './lib/issueStore'
 import type { ImportedPayroll } from './lib/payrollFile'
 import { prepareSheetPayslips } from './lib/sheetDocument'
@@ -23,9 +26,18 @@ import { RatesScreen } from './screens/RatesScreen'
 import { TemplateScreen } from './screens/TemplateScreen'
 import { rememberTheme, storedTheme, type Theme } from './lib/theme'
 
-type Screen = 'payslips' | 'issued' | 'template' | 'rates' | 'many'
+type Screen = 'home' | 'payslips' | 'issued' | 'template' | 'rates' | 'many'
+
+/** This app's list of companies (company-list, the dashboard's migration 0024). */
+type ListState =
+  | { status: 'loading' }
+  /** A dashboard from before the lists: the app opens on Payslips, as it did. */
+  | { status: 'legacy' }
+  | { status: 'failed'; failure: Failure }
+  | { status: 'loaded'; companies: ListedCompany[]; selected: ListedCompany }
 
 const SCREENS: { id: Screen; label: string; icon: typeof ReceiptText }[] = [
+  { id: 'home', label: 'Your companies', icon: LayoutGrid },
   { id: 'payslips', label: 'Payslips', icon: ReceiptText },
   { id: 'issued', label: 'Issued payslips', icon: FileCheck2 },
   { id: 'template', label: 'Template', icon: LayoutTemplate },
@@ -39,7 +51,8 @@ function initialTheme(): Theme {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('payslips')
+  // Inside the dashboard the app opens on Your companies; on its own, on Payslips.
+  const [screen, setScreen] = useState<Screen>(() => (window.PayrollHubBridge.isEmbedded() ? 'home' : 'payslips'))
   // The theme is the one thing kept in the browser, once chosen with the button (src/lib/theme.ts).
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const [themeChosen, setThemeChosen] = useState(() => storedTheme() !== null)
@@ -74,6 +87,12 @@ export default function App() {
   const [askMonth, setAskMonth] = useState('')
   const askMonths = useMemo(() => recentMonths(), [])
   const [dashboardError, setDashboardError] = useState<string | null>(null)
+  // Your companies: the companies on the Payslip list, the month shown, the card being opened.
+  const [list, setList] = useState<ListState>({ status: 'loading' })
+  const [listReload, setListReload] = useState(0)
+  const [homeMonth, setHomeMonth] = useState(() => recentMonths(new Date(), 2)[1])
+  const [opening, setOpening] = useState<string | null>(null)
+  const [homeFailure, setHomeFailure] = useState<Failure | null>(null)
 
   useEffect(() => {
     if (themeChosen) document.documentElement.dataset.theme = theme
@@ -93,6 +112,54 @@ export default function App() {
     window.PayrollHubBridge.init({ appId: HUB_APP_ID, onData: receiveFromDashboard })
     return window.PayrollHubBridge.onStatus(setConnected)
   }, [receiveFromDashboard])
+
+  useEffect(() => {
+    if (!insideDashboard || !connected) return
+    let current = true
+    // Read again when Your companies or Several companies is opened: quietly, keeping what is shown.
+    setList((now) => (now.status === 'loaded' ? now : { status: 'loading' }))
+    void loadCompanyList(bridgePort).then((answer) => {
+      if (!current) return
+      if (answer.ok) {
+        setList({ status: 'loaded', companies: answer.companies, selected: answer.selected })
+        // Right after a card was tapped (the dashboard then reloaded this app): straight to it.
+        if (answer.open) {
+          if (answer.open.period) {
+            setHomeMonth(answer.open.period)
+            setAskMonth(answer.open.period)
+          }
+          setScreen((now) => (now === 'home' ? 'payslips' : now))
+        }
+        return
+      }
+      if (answer.legacy) {
+        setList({ status: 'legacy' })
+        setScreen((now) => (now === 'home' ? 'payslips' : now))
+        return
+      }
+      setList({ status: 'failed', failure: answer.failure })
+    })
+    return () => {
+      current = false
+    }
+  }, [insideDashboard, connected, listReload])
+
+  // The list may have changed meanwhile (in the dashboard, by someone else): read it again when
+  // a page that shows it is opened.
+  const listShown = screen === 'home' || screen === 'many'
+  const [listShownBefore, setListShownBefore] = useState(listShown)
+  if (listShown !== listShownBefore) {
+    setListShownBefore(listShown)
+    if (listShown && list.status === 'loaded') setListReload((n) => n + 1)
+  }
+
+  // Several companies offers only the companies on the list, and the one selected.
+  const keepOnList = useMemo(() => {
+    if (list.status !== 'loaded') return null
+    const listed = new Set(list.companies.filter(isListed).map((one) => normaliseBrn(one.brn)))
+    const selected = normaliseBrn(list.selected.brn)
+    return (brn: string) => listed.has(normaliseBrn(brn)) || normaliseBrn(brn) === selected
+  }, [list])
 
   useEffect(() => {
     if (!insideDashboard || !connected) return
@@ -247,7 +314,7 @@ export default function App() {
           </div>
         </div>
         <nav aria-label="Sections" className="flex flex-wrap gap-1">
-          {SCREENS.filter(({ id }) => (id !== 'issued' && id !== 'many') || insideDashboard).map(({ id, label, icon: Icon }) => (
+          {SCREENS.filter(({ id }) => (id === 'home' ? insideDashboard && list.status !== 'legacy' : (id !== 'issued' && id !== 'many') || insideDashboard)).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               type="button"
@@ -262,6 +329,19 @@ export default function App() {
           ))}
         </nav>
         <div className="ml-auto flex flex-wrap items-center gap-2">
+          {list.status === 'loaded' && screen !== 'home' && !isListed(list.selected) && (
+            <>
+              <span className="badge tone-warn" data-testid="not-listed">
+                Not on the list
+              </span>
+              {list.selected.admin && (
+                <button type="button" className="btn btn-sm btn-ghost" onClick={() => void openPicker(bridgePort, list.selected.brn).then(setHomeFailure)}>
+                  <Plus aria-hidden="true" />
+                  Add
+                </button>
+              )}
+            </>
+          )}
           {insideDashboard && (
             <>
               <span className={`badge ${connected ? 'tone-accent' : ''}`} role="status">
@@ -365,6 +445,44 @@ export default function App() {
           </div>
         )}
 
+        {screen === 'home' && insideDashboard && (
+          <div className="mx-auto max-w-[1500px]">
+            <CompanyHome
+              companies={list.status === 'loaded' ? list.companies.filter(isListed) : []}
+              loading={!connected || list.status === 'loading'}
+              canChoose={list.status === 'loaded' && list.companies.some((one) => one.admin)}
+              months={askMonths}
+              period={homeMonth}
+              onPeriod={setHomeMonth}
+              opening={opening}
+              failure={list.status === 'failed' ? list.failure : homeFailure}
+              onRetry={list.status === 'failed' ? () => setListReload((n) => n + 1) : undefined}
+              onChoose={() => {
+                if (list.status !== 'loaded') return
+                setHomeFailure(null)
+                void openPicker(bridgePort, list.selected.brn).then(setHomeFailure)
+              }}
+              onOpen={(company) => {
+                if (list.status !== 'loaded') return
+                setHomeFailure(null)
+                setOpening(company.company_id)
+                void openCompany(bridgePort, list.selected.brn, company.company_id, homeMonth).then((answer) => {
+                  // Switched: the dashboard reloads this app, which then opens that company.
+                  if (answer.ok && answer.switched) return
+                  setOpening(null)
+                  if (!answer.ok) return setHomeFailure(answer.failure)
+                  setAskMonth(homeMonth)
+                  setScreen('payslips')
+                })
+              }}
+            />
+          </div>
+        )}
+        {homeFailure && screen !== 'home' && (
+          <div className="mx-auto mb-4 max-w-[1500px]">
+            <FailurePanel failure={homeFailure} />
+          </div>
+        )}
         {screen === 'payslips' && (
           <PayslipsScreen
             data={data}
@@ -397,7 +515,7 @@ export default function App() {
         {screen === 'issued' && insideDashboard && (
           <IssuedScreen issuing={issuing} port={bridgePort} company={issuedCompany} readOnly={readOnly} period={period} />
         )}
-        {screen === 'many' && insideDashboard && <ManyScreen port={bridgePort} onRunning={setManyRunning} />}
+        {screen === 'many' && insideDashboard && <ManyScreen port={bridgePort} onRunning={setManyRunning} keep={keepOnList} />}
         {screen === 'template' && (
           <TemplateScreen
             data={data}

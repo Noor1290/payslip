@@ -1501,6 +1501,78 @@ try {
   await rv.seededPage.close()
   console.log('  month review: declined load blocks, payroll fallback (declined, no run, compared and labelled), four statuses, changed lines, one cent, notes, paper untouched, bulk-approve for unchanged only, left acknowledged, template banner, marks dropped, issue is this month only, identical re-issue asked twice')
 
+  // 14. Your companies (company-list): the main page. Cards for the companies on the Payslip
+  // list only; names and contrast in both themes; the keyboard; a card opens its company in the
+  // month shown; "Not on the list" with Add; the dashboard's picker; Several companies offers only
+  // the companies on the list.
+  const homePage = await context.newPage()
+  homePage.on('pageerror', (error) => pageErrors.push(String(error)))
+  await homePage.addInitScript(() => {
+    window.seedHub = (fake) => {
+      fake.state.openOnStart = false
+      fake.state.lists = ['C1234567', 'C5555555']
+      const other = (name, brn, role = 'admin') => ({ name, brn, role, templates: [], versions: [], inUse: null, payroll: null })
+      fake.state.others = [other('Blue Lagoon Trading Ltd', 'C5555555'), other('Coral Bay Ltd', 'C6666666'), other('XYZ Trading Ltd', 'C2222222', 'member')]
+    }
+  })
+  await homePage.goto(`${HUB}/payroll-hub/`)
+  const hf = homePage.frameLocator('#app')
+  const homeFrame = () => homePage.frame({ url: `${HUB}/payslip/` })
+  await hf.getByTestId('company-home').waitFor()
+  await hf.getByRole('button', { name: /ABC Co Ltd/ }).waitFor()
+  const homeCards = await hf.getByTestId('company-home').getByRole('list', { name: 'Your companies' }).getByRole('button').allTextContents()
+  check(homeCards.length === 2 && homeCards[0].includes('ABC Co Ltd') && homeCards[1].includes('Blue Lagoon Trading Ltd'), `Your companies: not the two companies on the list: ${JSON.stringify(homeCards)}`)
+  for (const scheme of ['dark', 'light']) {
+    await homePage.emulateMedia({ colorScheme: scheme })
+    await homePage.waitForTimeout(500)
+    for (const html of await homeFrame().evaluate(unnamedControls)) check(false, `Your companies (${scheme}): control without a name: ${html}`)
+    for (const item of await homeFrame().evaluate(lowContrast)) check(false, `Your companies (${scheme}): low contrast ${item}`)
+  }
+  await hf.getByRole('button', { name: /ABC Co Ltd/ }).focus()
+  await homePage.keyboard.press('Tab')
+  const homeRing = await homeFrame().evaluate(() => {
+    const style = getComputedStyle(document.activeElement)
+    return { text: document.activeElement.textContent, outline: `${style.outlineWidth} ${style.outlineStyle}` }
+  })
+  check(homeRing.text.includes('Blue Lagoon') && homeRing.outline === '2px solid', `Your companies: the keyboard does not reach the next card with a 2px ring: ${JSON.stringify(homeRing)}`)
+  // Several companies: only the companies on the list (Coral Bay Ltd is an admin company, not on it).
+  await hf.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Several companies', exact: true }).click()
+  const manyList = hf.getByRole('list', { name: 'Your companies' })
+  await manyList.getByRole('checkbox').first().waitFor()
+  const manyText = await manyList.textContent()
+  check(manyText.includes('Blue Lagoon Trading Ltd') && !manyText.includes('Coral Bay Ltd'), 'Several companies: a company that is not on the Payslip list is offered.')
+  await hf.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Your companies', exact: true }).click()
+  // The selected company's card opens Payslips, with the month shown on Your companies.
+  await hf.getByLabel('Month', { exact: true }).selectOption({ label: 'July 2026' })
+  await hf.getByRole('button', { name: /ABC Co Ltd/ }).click()
+  await hf.getByTestId('company-home').waitFor({ state: 'detached' })
+  check((await hf.getByLabel('Month to get from the dashboard').inputValue()) === '2026-07', 'A card did not carry its month to "Get from dashboard".')
+  check((await hf.getByTestId('company-home').count()) === 0, 'A card did not open the company.')
+  // Another company's card: the dashboard selects it (and would reload the app).
+  await hf.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Your companies', exact: true }).click()
+  await hf.getByRole('button', { name: /Blue Lagoon/ }).click()
+  await homePage.waitForFunction(() => window.hub.state.reload === true)
+  await homePage.close()
+
+  const offPage = await context.newPage()
+  offPage.on('pageerror', (error) => pageErrors.push(String(error)))
+  await offPage.addInitScript(() => {
+    window.seedHub = (fake) => {
+      fake.state.lists = []
+    }
+  })
+  await offPage.goto(`${HUB}/payroll-hub/`)
+  const of = offPage.frameLocator('#app')
+  await of.getByTestId('not-listed').waitFor()
+  await of.getByRole('button', { name: 'Add', exact: true }).click()
+  await offPage.waitForFunction(() => window.hub.state.pickerOpened === 1)
+  await of.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Your companies', exact: true }).click()
+  await of.getByTestId('no-companies').waitFor()
+  await of.getByRole('button', { name: 'Choose companies' }).click()
+  await offPage.waitForFunction(() => window.hub.state.pickerOpened === 2)
+  await offPage.close()
+  console.log('  your companies: only the listed companies, both themes, keyboard, a card opens its company in that month, not on the list, the picker, several companies limited to the list')
+
   check(outside.length === 0, `Requests to other addresses: ${[...new Set(outside)].join(', ')}`)
   check(pageErrors.length === 0, `Page errors: ${pageErrors.join(' | ')}`)
 } finally {
