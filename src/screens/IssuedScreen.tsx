@@ -125,7 +125,7 @@ export function IssuedScreen({ issuing, port, company, readOnly, period: payMont
           </button>
         </div>
         <p className="m-0 border-t border-line px-5 py-3 text-xs text-subtle">
-          The dashboard asks you first, and must be unlocked: this sends national IDs and pay to this app. They stay in this tab's memory and
+          The dashboard asks you first: this sends national IDs and pay to this app. They stay in this tab's memory and
           are gone when the tab is closed.
         </p>
         {cannotOpen && (

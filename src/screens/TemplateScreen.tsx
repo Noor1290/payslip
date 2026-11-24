@@ -26,7 +26,7 @@ import {
   type LabelKey,
   type ListRef,
 } from '../lib/templateEdit'
-import type { Templates } from '../lib/useTemplates'
+import { NO_DATA, type Templates } from '../lib/useTemplates'
 
 interface Props {
   data: ImportedPayroll | null
@@ -35,6 +35,8 @@ interface Props {
   embedded: boolean
   /** The date on the payslip, for the grid's preview of Today's date. */
   issueDate: string
+  /** Goes to the Payslips page, where "Get from dashboard" is (hotfix 3). */
+  onOpenPayslips?: () => void
 }
 
 const HEADER_LABELS: [LabelKey, string][] = [
@@ -74,7 +76,7 @@ const PUBLISH_TARGETS: [PublishTarget, string][] = [
 /** What the user is about to do while the editor holds something that would be lost. */
 type Leaving = { title: string; go: () => void }
 
-export function TemplateScreen({ data, templates: t, embedded, issueDate }: Props) {
+export function TemplateScreen({ data, templates: t, embedded, issueDate, onOpenPayslips }: Props) {
   const [leaving, setLeaving] = useState<Leaving | null>(null)
   const [uploadProblem, setUploadProblem] = useState<string | null>(null)
   const [reading, setReading] = useState(false)
@@ -251,6 +253,18 @@ export function TemplateScreen({ data, templates: t, embedded, issueDate }: Prop
         <p className="m-0 text-muted">How the payslip looks, and which payroll column fills each line.</p>
       </div>
 
+      {embedded && !data && (
+        <div className="panel tone-warn flex-wrap" role="status" data-testid="template-no-data">
+          <Info aria-hidden="true" />
+          <p className="m-0 min-w-0 flex-1 text-sm">{NO_DATA}</p>
+          {onOpenPayslips && (
+            <button type="button" className="btn btn-sm" onClick={onOpenPayslips}>
+              Go to Payslips
+            </button>
+          )}
+        </div>
+      )}
+
       {t.notice?.kind === 'ok' && <SavedPanel testId="template-saved">{t.notice.text}</SavedPanel>}
       {t.notice?.kind === 'failure' && (
         <FailurePanel failure={t.notice.failure} testId="template-outcome">
@@ -322,18 +336,18 @@ export function TemplateScreen({ data, templates: t, embedded, issueDate }: Prop
               )}
               <span className="mt-2 flex flex-wrap gap-2">
                 {embedded && (t.choice.kind !== 'built-in' || t.choiceNeeded) && (
-                  <button type="button" className="btn btn-sm" onClick={() => void t.pickBuiltIn()} disabled={working}>
+                  <button type="button" className="btn btn-sm btn-wrap" onClick={() => void t.pickBuiltIn()} disabled={working}>
                     Use the built-in template
                   </button>
                 )}
                 {embedded && (
                   <button
                     type="button"
-                    className="btn btn-sm"
+                    className="btn btn-sm btn-wrap"
                     disabled={working || t.cannotSave !== null || list.status !== 'loaded'}
                     onClick={() => guarded("Publish the built-in template as this company's template?", () => void t.publishBuiltIn())}
                   >
-                    Publish the built-in template as this company's template
+                    Publish as this company's template
                   </button>
                 )}
               </span>

@@ -194,7 +194,7 @@ export function IssuePanel({ period, brn, month, issuing, readOnly, build, templ
             Issue {payslips.length > 0 ? payslips.length : ''} {payslips.length === 1 ? 'payslip' : 'payslips'}
           </button>
         </div>
-        <p className="m-0 text-xs text-subtle">The dashboard asks you before it sends issued payslips to this app, and it must be unlocked to issue.</p>
+        <p className="m-0 text-xs text-subtle">The dashboard asks you before it sends issued payslips to this app.</p>
       </div>
     </section>
 

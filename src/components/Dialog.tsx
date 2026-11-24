@@ -106,7 +106,7 @@ export function Dialog({ title, description, icon, tone = 'accent', width, onClo
           </div>
         </div>
         {children && <div className="min-h-0 overflow-auto px-5 pt-4">{children}</div>}
-        <div className="flex justify-end gap-2 px-5 py-4">{actions}</div>
+        <div className="dialog-actions px-5 py-4">{actions}</div>
       </div>
     </div>,
     document.body,

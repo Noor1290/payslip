@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { cellAt, cellName, columnName, mergeAt, type SheetBody, type SheetCell, type SheetStyle } from '../lib/sheetBody'
 import { columnPoints } from '../writers/sheetGeometry'
 import { sourceSummary } from '../lib/sheetWording'
+import { blockEdges, type BlockEdges } from '../lib/sheetGridEdges'
 
 export interface SheetPlace {
   row: number
@@ -11,10 +12,16 @@ export interface SheetPlace {
 const EDGE_CSS: Record<string, string> = { hair: '1px dotted', thin: '1px solid', dotted: '1px dotted', dashed: '1px dashed', medium: '2px solid', double: '3px double', thick: '3px solid' }
 /** Points on the sheet to pixels on screen: the grid is drawn at its Excel size. */
 const PIXELS = 4 / 3
+/** Excel's pale gridline, only where the cell has no line of its own, so it never covers one. */
+const GRIDLINE = '1px solid #eceef1'
 
-function look(style: SheetStyle | undefined, figure: boolean): CSSProperties {
-  if (!style) return {}
-  const edge = (side: 'top' | 'left' | 'bottom' | 'right') => (style[side] ? `${EDGE_CSS[style[side].style]} #${style[side].color}` : undefined)
+function look(style: SheetStyle | undefined, edges: BlockEdges, figure: boolean): CSSProperties {
+  const edge = (side: 'top' | 'left' | 'bottom' | 'right') => {
+    const found = edges[side]
+    return found ? `${EDGE_CSS[found.style]} #${found.color}` : GRIDLINE
+  }
+  const lines = { borderTop: edge('top'), borderLeft: edge('left'), borderBottom: edge('bottom'), borderRight: edge('right') }
+  if (!style) return lines
   return {
     fontFamily: `'${style.font.name}', 'Payslip Pagella', serif`,
     fontSize: `${style.font.size * PIXELS}px`,
@@ -23,10 +30,7 @@ function look(style: SheetStyle | undefined, figure: boolean): CSSProperties {
     textDecoration: style.font.underline ? 'underline' : 'none',
     color: `#${style.font.color ?? '000000'}`,
     background: style.fill ? `#${style.fill}` : '#ffffff',
-    borderTop: edge('top'),
-    borderLeft: edge('left'),
-    borderBottom: edge('bottom'),
-    borderRight: edge('right'),
+    ...lines,
     textAlign: style.horizontal ?? (figure ? 'right' : 'left'),
     verticalAlign: style.vertical ?? 'bottom',
     whiteSpace: style.wrap ? 'normal' : 'nowrap',
@@ -88,7 +92,7 @@ export function SheetGrid({
                 const text = cell ? (printed?.get(cell.id)?.text ?? (cell.source.type === 'text' || cell.source.type === 'fixed' ? cell.source.value : '')) : ''
                 const chip = cell && !printed && cell.source.type !== 'empty' && cell.source.type !== 'text' && cell.source.type !== 'fixed'
                 return (
-                  <td key={col} rowSpan={merge?.rows} colSpan={merge?.cols} className={isSelected ? 'sheet-selected' : undefined} style={look(style, cell !== null && (printed?.get(cell.id)?.figure ?? (cell.format.type !== 'text')))}>
+                  <td key={col} rowSpan={merge?.rows} colSpan={merge?.cols} className={isSelected ? 'sheet-selected' : undefined} style={look(style, blockEdges(body, rowIndex, col), cell !== null && (printed?.get(cell.id)?.figure ?? (cell.format.type !== 'text')))}>
                     <button
                       type="button"
                       className="sheet-cell"

@@ -252,6 +252,9 @@ const changes = [
   ['The company opened from its card is not opened after the reload', 'src/lib/companyList.ts', 'open: one.open ? { period: one.open_period ?? null } : null', 'open: null'],
   ['The month of the card is lost after the reload', 'src/lib/companyList.ts', '{ period: one.open_period ?? null }', '{ period: null }'],
   ['A company circle gets another colour than in the dashboard', 'src/lib/companyLook.ts', '[162, 200, 230, 262, 300, 340, 30, 75]', '[200, 162, 230, 262, 300, 340, 30, 75]'],
+  ['Hotfix 1: a merged block takes its right edge from its first cell', 'src/lib/sheetGridEdges.ts', "right = heavier(right, heavier(sideOf(r, col + cols - 1, 'right'), sideOf(r, col + cols, 'left')))", "right = heavier(right, heavier(sideOf(r, col, 'right'), sideOf(r, col + cols, 'left')))"],
+  ['Hotfix 1: the line named by the neighbour on a shared edge is ignored', 'src/lib/sheetGridEdges.ts', "left = heavier(left, heavier(sideOf(r, col, 'left'), sideOf(r, col - 1, 'right')))", "left = heavier(left, sideOf(r, col, 'left'))"],
+  ['Hotfix 2: a page says the dashboard must be unlocked', 'src/components/IssuePanel.tsx', 'The dashboard asks you before it sends issued payslips to this app.', 'The dashboard asks you before it sends issued payslips to this app, and it must be unlocked to issue.'],
 ]
 
 function runTests() {

@@ -11,6 +11,7 @@ import { strFromU8, unzipSync } from 'fflate'
 import { chromium } from 'playwright'
 import { createFakeHub } from './lib/fake-hub.mjs'
 import { fakeLayoutBytes } from './lib/fake-layout.mjs'
+import { buttonsOutside, WIDTHS } from './lib/overflow.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(root, 'dist')
@@ -84,6 +85,15 @@ try {
   }
   const nav = (name) => app.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name, exact: true }).click()
 
+  // Hotfix 3: with no payroll data open, the Template page says where to get it, and goes there.
+  await nav('Template')
+  const noData = app.getByTestId('template-no-data')
+  check((await noData.count()) === 1 && (await noData.textContent()).includes('On Payslips, press Get from dashboard.'), 'The Template page does not say where to get payroll data.')
+  if ((await noData.count()) === 1) {
+    await noData.getByRole('button', { name: 'Go to Payslips' }).click()
+    check((await app.getByRole('heading', { name: 'No payroll data yet' }).count()) === 1, '"Go to Payslips" does not open the Payslips page.')
+  }
+
   await page.evaluate((rows) => window.send('delivery-0001', { dataType: 'payroll-result', rows, meta: { period: '2026-09' } }), fixture)
   await app.getByRole('button', { name: 'Review and import' }).click().catch(() => {})
   const dialog = app.getByRole('dialog', { name: 'Import payroll data' })
@@ -99,6 +109,16 @@ try {
   check(notes.includes('start Empty'), 'The upload does not say that numbers start Empty.')
   check(notes.includes('TeX Gyre Pagella'), 'The upload does not say which fonts change.')
   await shot('2-uploaded-grid')
+  // Hotfix 1: the lines as in the file. A merged band keeps the right edge of its last cell, and
+  // the pale gridline never covers a line (it was an outline painted over every border).
+  const lines = await app.getByRole('button', { name: /^Cell B4:/ }).evaluate((button) => {
+    const td = getComputedStyle(button.closest('td'))
+    return { right: td.borderRightWidth, left: td.borderLeftWidth, outline: td.outlineStyle }
+  })
+  check(lines.right === '2px' && lines.left === '2px', `The merged band B4:E4 is drawn without its medium edges (left ${lines.left}, right ${lines.right}).`)
+  check(lines.outline === 'none', 'The pale gridline is painted over the layout\'s own lines.')
+  const divider = await app.getByRole('button', { name: /^Cell C14:/ }).evaluate((button) => getComputedStyle(button.closest('td')).borderRightWidth)
+  check(divider === '3px', `The thick line between Earnings and Deductions is drawn ${divider} wide.`)
 
   // Choose cells.
   const open = async (name) => {
@@ -243,6 +263,16 @@ try {
   await checks.getByRole('button', { name: 'Treat as zero for this employee' }).click()
   const zeroDialog = app.getByRole('dialog', { name: 'Treat cell C16 (Allowances) as zero?' })
   await zeroDialog.waitFor()
+  {
+    // Hotfix 4: a dialog's buttons stay inside it at every width.
+    const frame = page.frames().find((found) => found.url().startsWith(`${HUB}/payslip/`))
+    for (const width of WIDTHS) {
+      await page.evaluate((w) => (document.getElementById('app').style.width = `${w}px`), width)
+      await page.waitForTimeout(150)
+      for (const line of await frame.evaluate(buttonsOutside)) problems.push(`Treat as zero dialog, ${width} px: ${line} lies outside its card or window.`)
+    }
+    await page.evaluate(() => (document.getElementById('app').style.width = '1560px'))
+  }
   if (shots) await zeroDialog.screenshot({ path: join(shots, '15-treat-as-zero.png') })
   await zeroDialog.getByLabel('Reason').fill('No allowance this month')
   await zeroDialog.getByRole('button', { name: 'Treat as zero' }).click()
@@ -434,6 +464,26 @@ try {
 
   check(outside.length === 0, `Requests to other addresses: ${[...new Set(outside)].join(', ')}`)
   check(pageErrors.length === 0, `Page errors: ${pageErrors.join(' | ')}`)
+
+  // Hotfix 4: on every page, at every width, no button lies outside its card or window.
+  const frame = page.frames().find((found) => found.url().startsWith(`${HUB}/payslip/`))
+  for (const section of ['Your companies', 'Payslips', 'Issued payslips', 'Template', 'Statutory rates', 'Several companies']) {
+    // A section's button may also carry a badge ("Unsaved").
+    const button = app.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: new RegExp(`^${section}`) })
+    if ((await button.count()) !== 1) {
+      problems.push(`The section "${section}" was not found for the button check.`)
+      continue
+    }
+    await button.click()
+    await page.waitForTimeout(300)
+    for (const width of WIDTHS) {
+      await page.setViewportSize({ width: width + 40, height: 1040 })
+      await page.evaluate((w) => (document.getElementById('app').style.width = `${w}px`), width)
+      await page.waitForTimeout(150)
+      for (const line of await frame.evaluate(buttonsOutside)) problems.push(`${section}, ${width} px: ${line} lies outside its card or window.`)
+    }
+    await page.evaluate(() => (document.getElementById('app').style.width = '1560px'))
+  }
 } finally {
   await browser.close()
 }

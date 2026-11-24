@@ -286,6 +286,40 @@ input[type='month']:focus-within {
   padding: 0 12px;
   font-size: 13px;
 }
+/* A dialog's buttons wrap instead of running out of it; on a phone they stack, the main one on top (hotfix 4). */
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.dialog-actions .btn {
+  height: auto;
+  min-height: 40px;
+  padding-block: 6px;
+  white-space: normal;
+  text-align: center;
+}
+@media (max-width: 639px) {
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+  .dialog-actions .btn {
+    width: 100%;
+  }
+}
+/* A long button in a card wraps onto a second line instead of running out of it (hotfix 4). */
+.btn-wrap {
+  height: auto;
+  min-height: 40px;
+  padding-block: 6px;
+  white-space: normal;
+  text-align: center;
+}
+.btn-sm.btn-wrap {
+  min-height: 32px;
+  padding-block: 4px;
+}
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
@@ -619,8 +653,6 @@ input[type='checkbox'] {
 .sheet-grid td {
   padding: 0;
   overflow: hidden;
-  outline: 1px solid #eceef1;
-  outline-offset: -1px;
 }
 .sheet-cell {
   display: block;

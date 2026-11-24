@@ -521,6 +521,7 @@ export default function App() {
             data={data}
             embedded={insideDashboard}
             issueDate={issueDate}
+            onOpenPayslips={() => setScreen('payslips')}
             templates={{
               ...templates,
               reload: () => {

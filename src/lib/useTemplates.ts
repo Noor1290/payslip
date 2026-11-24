@@ -39,6 +39,9 @@ import {
   type PublishTarget,
 } from './publishMany'
 
+/** Shown on the Template page when no payroll data is open inside the dashboard (hotfix 3, text T1). */
+export const NO_DATA = 'No payroll data is open. On Payslips, press Get from dashboard.'
+
 export type TemplatesList =
   | { status: 'standalone' | 'waiting' | 'loading' }
   | { status: 'loaded'; items: TemplateSummary[]; company: HubCompany; role: HubRole | null }
@@ -215,7 +218,7 @@ export function useTemplates({ embedded, connected, brn, port, readOnly, onForbi
   const cannotSave = !embedded
     ? 'Opened on its own, the app cannot save templates. Your changes are used for this session only. Open the app from the Payroll Hub dashboard to save them for a company.'
     : brn === null
-      ? 'Import or get payroll data first. A save must carry the BRN of the company in the payroll data, so a template cannot go to the wrong company.'
+      ? NO_DATA
       : forOtherCompany
         ? `This draft belongs to the company with BRN ${editor?.brn}. The payroll data that is open is for another company (BRN ${brn}).`
         : readOnly
